@@ -14,15 +14,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (method === "GET") {
     const oauthRoot = config.getBungieOauthRoot();
     const clientId = config.getBungieOauthClientId();
-    const state = { t: new Date().getTime(), r: returnUrl || "" };
+    const state: BungieOAuthState = { t: new Date().getTime(), r: (returnUrl as string) || "" };
     const encodedState = base42EncodeString(JSON.stringify(state));
 
-    res.redirect(
-      302,
-      `${oauthRoot}?client_id=${clientId}&response_type=code&state=${encodeURIComponent(
-        encodedState
-      )}`
-    );
+    const oauthUrl = new URL(oauthRoot);
+    oauthUrl.searchParams.set("client_id", clientId);
+    oauthUrl.searchParams.set("response_type", "code");
+    oauthUrl.searchParams.set("state", encodedState);
+
+    res.redirect(302, oauthUrl.toString());
   } else {
     res.status(405);
   }

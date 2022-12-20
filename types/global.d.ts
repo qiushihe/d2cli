@@ -15,3 +15,18 @@ type NoInfer<T> = [
   T,
   "Generic typing for parameter with ‹NoInfer› must be explicitly providedǃ"
 ][T extends any ? 0 : 1];
+
+/**
+ * Opaque state used during Bungie OAuth handshake.
+ */
+type BungieOAuthState = {
+  /**
+   * Time stamp of the moment the state object is created.
+   */
+  t: number;
+
+  /**
+   * Return URL.
+   */
+  r: string;
+};
