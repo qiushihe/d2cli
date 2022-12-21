@@ -10,7 +10,7 @@ describe("service / bungie / BungieService", () => {
   });
 
   it("should do something", async () => {
-    // await service.test();
+    await service.test();
     expect(service).not.toBeNull();
     expect(1).toEqual(1);
   });

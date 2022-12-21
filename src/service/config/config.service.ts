@@ -1,7 +1,9 @@
+import * as process from "process";
+
 export class ConfigService {
   private static defaultInstance: ConfigService;
 
-  static getDefaultInstance() {
+  static getDefaultInstance(): ConfigService {
     if (!ConfigService.defaultInstance) {
       ConfigService.defaultInstance = new ConfigService();
     }
@@ -22,10 +24,18 @@ export class ConfigService {
   }
 
   getBungieOauthRoot(): string {
-    return process.env.BUNGIE_OAUTH_ROOT || "";
+    return "https://www.bungie.net/en/OAuth/Authorize";
+  }
+
+  getBungieOauthTokenRoot(): string {
+    return "https://www.bungie.net/platform/app/oauth/token";
   }
 
   getBungieOauthClientId(): string {
     return process.env.BUNGIE_OAUTH_CLIENT_ID || "";
+  }
+
+  getBungieOauthClientSecret(): string {
+    return process.env.BUNGIE_OAUTH_CLIENT_SECRET || "";
   }
 }

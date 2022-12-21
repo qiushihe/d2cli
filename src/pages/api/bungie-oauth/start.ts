@@ -2,19 +2,17 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 import { base42EncodeString } from "~src/helper/string.helper";
 import { ConfigService } from "~src/service/config/config.service";
+import { D2QDB } from "~type/d2qdb";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
   const config = ConfigService.getDefaultInstance();
 
-  const {
-    query: { returnUrl },
-    method,
-  } = req;
+  if (req.method === "GET") {
+    const query = req.query as D2QDB.BungieOAuthStartQuery;
 
-  if (method === "GET") {
     const oauthRoot = config.getBungieOauthRoot();
     const clientId = config.getBungieOauthClientId();
-    const state: BungieOAuthState = { t: new Date().getTime(), r: (returnUrl as string) || "" };
+    const state: D2QDB.BungieOAuthState = { t: new Date().getTime(), r: query.returnUrl || "" };
     const encodedState = base42EncodeString(JSON.stringify(state));
 
     const oauthUrl = new URL(oauthRoot);
@@ -26,4 +24,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   } else {
     res.status(405);
   }
-}
+};
+
+export default handleRequest;

@@ -1,16 +1,8 @@
 import fetch, { Response } from "node-fetch";
 
 import { ConfigService } from "~src/service/config/config.service";
-
-type BungieApiResponse = {
-  [key: string]: any;
-  Response?: any;
-  ErrorCode: number;
-  ThrottleSeconds: number;
-  ErrorStatus: string;
-  Message: string;
-  MessageData: any;
-};
+import { BungieApi } from "~type/bungie-api";
+import { D2QDB } from "~type/d2qdb";
 
 export class BungieService {
   private config: ConfigService;
@@ -22,19 +14,113 @@ export class BungieService {
   async test() {
     console.log("!!! BungieService#test", "API Key", this.config.getBungieApiKey());
 
-    const [reqErr, res] = await this.sendBungieRequest("GET", `/Destiny2/Manifest`, null);
-    if (reqErr) {
-      console.log("!!! reqErr", reqErr);
+    const [membershipsErr, memberships] = await this.getDestiny2Memberships("28547862");
+    if (membershipsErr) {
+      console.log("!!! membershipsErr", membershipsErr);
     } else {
-      console.log("!!! res", "status", res.status);
+      const membership = memberships[0];
+      console.log("!!! membership", membership);
 
-      const [bungieResErr, bungieRes] = await this.extractBungieResponse(res);
-      if (bungieResErr) {
-        console.log("!!! bungieResErr", bungieResErr);
+      const [charactersErr, characters] = await this.getDestiny2Characters(membership);
+      if (charactersErr) {
+        console.log("!!! charactersErr", charactersErr);
       } else {
-        console.log("!!! bungieRes", JSON.stringify(bungieRes, null, 2));
+        console.log("!!! characters", characters);
       }
     }
+  }
+
+  async getDestiny2Characters(
+    membership: D2QDB.Destiny2Membership
+  ): Promise<[Error, null] | [null, D2QDB.Destiny2Character[]]> {
+    const [profileErr, profileRes] = await this.sendBungieRequest(
+      "GET",
+      `/Destiny2/${membership.type}/Profile/${membership.id}?components=${BungieApi.ComponentType.Characters}`,
+      null
+    );
+    if (profileErr) {
+      return [profileErr, null];
+    } else {
+      const [profileJsonErr, profileJson] =
+        await this.extractBungieResponse<BungieApi.Destiny2Profile>(profileRes);
+      if (profileJsonErr) {
+        return [profileJsonErr, null];
+      } else {
+        if (!profileJson.Response) {
+          return [new Error("Profile missing response data"), null];
+        }
+        if (!profileJson.Response.characters) {
+          return [new Error("Profile missing characters data"), null];
+        }
+
+        const charactersData = profileJson.Response.characters.data;
+        const characters = Object.keys(charactersData).map<D2QDB.Destiny2Character>(
+          (characterId) => {
+            const character = charactersData[characterId];
+            return { id: character.characterId, lightLevel: character.light };
+          }
+        );
+
+        return [null, characters];
+      }
+    }
+  }
+
+  async getDestiny2Memberships(
+    bungieNetMembershipId: string
+  ): Promise<[Error, null] | [null, D2QDB.Destiny2Membership[]]> {
+    const [bungieNetUserErr, bungieNetUserRes] = await this.sendBungieRequest(
+      "GET",
+      `/User/GetBungieNetUserById/${bungieNetMembershipId}`,
+      null
+    );
+    if (bungieNetUserErr) {
+      return [bungieNetUserErr, null];
+    }
+
+    const [bungieNetUserJsonErr, bungieNetUserJson] = await this.extractBungieResponse(
+      bungieNetUserRes
+    );
+    if (bungieNetUserJsonErr) {
+      return [bungieNetUserJsonErr, null];
+    }
+
+    const uniqueName = bungieNetUserJson.Response.uniqueName.split("#", 2);
+
+    const [searchDestinyPlayersErr, searchDestinyPlayersRes] = await this.sendBungieRequest(
+      "POST",
+      `/Destiny2/SearchDestinyPlayerByBungieName/All`,
+      { displayName: uniqueName[0], displayNameCode: uniqueName[1] }
+    );
+    if (searchDestinyPlayersErr) {
+      return [searchDestinyPlayersErr, null];
+    }
+
+    const [searchDestinyPlayersJsonErr, searchDestinyPlayersJson] =
+      await this.extractBungieResponse<BungieApi.Destiny2Membership[]>(searchDestinyPlayersRes);
+    if (searchDestinyPlayersJsonErr) {
+      return [searchDestinyPlayersJsonErr, null];
+    }
+    if (!searchDestinyPlayersJson.Response) {
+      return [new Error("Missing response in Destiny 2 players search result."), null];
+    }
+
+    const effectiveMemberships = searchDestinyPlayersJson.Response.filter((membership) => {
+      return membership.applicableMembershipTypes.includes(membership.crossSaveOverride);
+    });
+
+    const destiny2Memberships = effectiveMemberships.map<D2QDB.Destiny2Membership>((membership) => {
+      return {
+        type: membership.membershipType,
+        id: membership.membershipId,
+        displayName: [
+          membership.bungieGlobalDisplayName,
+          membership.bungieGlobalDisplayNameCode
+        ].join("#")
+      };
+    });
+
+    return [null, destiny2Memberships];
   }
 
   // ThrottleSeconds will now be populated with an integer value of how many seconds you should wait to clear your
@@ -52,9 +138,9 @@ export class BungieService {
   //   "MessageData": {}
   // }
 
-  private async extractBungieResponse(
+  private async extractBungieResponse<TResponse = any>(
     res: Response
-  ): Promise<[Error, null] | [null, BungieApiResponse]> {
+  ): Promise<[Error, null] | [null, BungieApi.Destiny2ApiResponse<TResponse>]> {
     const [resJsonErr, resJson] = await this.extractResponseJson(res);
     if (resJsonErr) {
       return [resJsonErr, null];
@@ -69,7 +155,7 @@ export class BungieService {
       ) {
         return [new Error(`Invalid Bungie API response: ${JSON.stringify(resJson)}`), null];
       } else {
-        return [null, resJson as BungieApiResponse];
+        return [null, resJson as BungieApi.Destiny2ApiResponse<TResponse>];
       }
     }
   }
@@ -84,9 +170,9 @@ export class BungieService {
         method,
         "Content-Type": "application/json",
         headers: {
-          "X-API-Key": this.config.getBungieApiKey(),
+          "X-API-Key": this.config.getBungieApiKey()
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: body ? JSON.stringify(body) : undefined
       });
       return [null, response];
     } catch (err) {

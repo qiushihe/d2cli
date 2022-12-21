@@ -4,6 +4,8 @@ type PingResponse = {
   ping: string;
 };
 
-export default function handler(req: NextApiRequest, res: NextApiResponse<PingResponse>) {
+const handleRequest = (req: NextApiRequest, res: NextApiResponse<PingResponse>) => {
   res.status(200).json({ ping: "pong" });
-}
+};
+
+export default handleRequest;
