@@ -1,5 +1,3 @@
-import * as process from "process";
-
 export class ConfigService {
   private static defaultInstance: ConfigService;
 
@@ -37,5 +35,9 @@ export class ConfigService {
 
   getBungieOauthClientSecret(): string {
     return process.env.BUNGIE_OAUTH_CLIENT_SECRET || "";
+  }
+
+  getHttpBasicAuthCredentials(): string {
+    return process.env.HTTP_BASIC_AUTH_CREDENTIALS || "";
   }
 }
