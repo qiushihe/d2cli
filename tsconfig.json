@@ -37,5 +37,10 @@
     "typeRoots": [
       "./type", "./node_modules/@types"],
     "types": ["node"]
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
   }
 }
