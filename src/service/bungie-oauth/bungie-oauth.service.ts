@@ -1,3 +1,4 @@
+import { encode } from "js-base64";
 import fetch, { Response } from "node-fetch";
 
 import { ConfigService } from "~src/service/config/config.service";
@@ -24,9 +25,12 @@ export class BungieOauthService {
     authorizationCode: string,
     startTime: number
   ): Promise<[Error, null] | [null, D2QDB.BungieOAuthAccessToken]> {
-    const authorizationToken = new Buffer(
-      [this.config.getBungieOauthClientId(), this.config.getBungieOauthClientSecret()].join(":")
-    ).toString("base64");
+    const authorizationString = [
+      this.config.getBungieOauthClientId(),
+      this.config.getBungieOauthClientSecret()
+    ].join(":");
+
+    const authorizationToken = encode(authorizationString);
 
     const fields = [
       "grant_type=authorization_code",
