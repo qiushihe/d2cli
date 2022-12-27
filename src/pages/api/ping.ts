@@ -1,3 +1,5 @@
+import "~src/module/register";
+
 import { NextApiRequest, NextApiResponse } from "next";
 
 type PingResponse = {

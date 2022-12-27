@@ -1,8 +1,11 @@
+import "~src/module/register";
+
 import { setCookie } from "cookies-next";
 import { NextApiRequest, NextApiResponse } from "next";
 import { isEmpty } from "ramda";
 
 import { base42DecodeString, base42EncodeString } from "~src/helper/string.helper";
+import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { D2QDB } from "~type/d2qdb";
 
@@ -16,7 +19,8 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
     const { t: timestamp, r: returnUrlString } = state;
 
     if (isEmpty(returnUrlString)) {
-      const bungieOauth = BungieOauthService.getDefaultInstance();
+      const bungieOauth =
+        AppModule.getDefaultInstance().resolve<BungieOauthService>("BungieOauthService");
 
       const [accessTokenErr, accessToken] = await bungieOauth.getAccessToken(
         authorizationCode,

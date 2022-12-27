@@ -1,8 +1,12 @@
+import "~src/module/register";
+
 import { NextRequest, NextResponse } from "next/server";
 
+import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 
-const AUTH_CREDENTIALS = ConfigService.getDefaultInstance()
+const AUTH_CREDENTIALS = AppModule.getDefaultInstance()
+  .resolve<ConfigService>("ConfigService")
   .getHttpBasicAuthCredentials()
   .split(",")
   .map((credential) => credential.split(":"))

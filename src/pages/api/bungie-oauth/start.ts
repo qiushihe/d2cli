@@ -1,11 +1,14 @@
+import "~src/module/register";
+
 import { NextApiRequest, NextApiResponse } from "next";
 
 import { base42EncodeString } from "~src/helper/string.helper";
+import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 import { D2QDB } from "~type/d2qdb";
 
 const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
-  const config = ConfigService.getDefaultInstance();
+  const config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
 
   if (req.method === "GET") {
     const query = req.query as D2QDB.BungieOAuthStartQuery;

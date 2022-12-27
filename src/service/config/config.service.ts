@@ -1,13 +1,4 @@
 export class ConfigService {
-  private static defaultInstance: ConfigService;
-
-  static getDefaultInstance(): ConfigService {
-    if (!ConfigService.defaultInstance) {
-      ConfigService.defaultInstance = new ConfigService();
-    }
-    return ConfigService.defaultInstance;
-  }
-
   getBungieApiRoot(): string {
     return "https://www.bungie.net/Platform";
   }

@@ -1,23 +1,15 @@
 import fetch, { Response } from "node-fetch";
 
+import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 import { BungieApi } from "~type/bungie-api";
 import { D2QDB } from "~type/d2qdb";
 
 export class BungieService {
-  private static defaultInstance: BungieService;
-
-  static getDefaultInstance(): BungieService {
-    if (!BungieService.defaultInstance) {
-      BungieService.defaultInstance = new BungieService();
-    }
-    return BungieService.defaultInstance;
-  }
-
   private readonly config: ConfigService;
 
   constructor() {
-    this.config = ConfigService.getDefaultInstance();
+    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
   }
 
   async test() {

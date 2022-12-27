@@ -1,3 +1,4 @@
+import "~src/module/register";
 import "~src/style/globals.css";
 
 import { AppProps } from "next/app";

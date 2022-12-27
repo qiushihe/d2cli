@@ -1,17 +1,15 @@
-import { beforeEach, describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
+
+import { useModule } from "~test/use-module";
 
 import { BungieService } from "./bungie.service";
 
 describe("service / bungie / BungieService", () => {
-  let service: BungieService;
-
-  beforeEach(async () => {
-    service = new BungieService();
-  });
+  const { getModule } = useModule<BungieService>("BungieService");
 
   it("should do something", async () => {
-    // await service.test();
-    expect(service).not.toBeNull();
+    // await getModule().test();
+    expect(getModule()).not.toBeNull();
     expect(1).toEqual(1);
   });
 });

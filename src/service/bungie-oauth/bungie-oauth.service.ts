@@ -1,24 +1,16 @@
 import * as Base64 from "base64-js";
 import fetch, { Response } from "node-fetch";
 
+import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 import { BungieApi } from "~type/bungie-api";
 import { D2QDB } from "~type/d2qdb";
 
 export class BungieOauthService {
-  private static defaultInstance: BungieOauthService;
-
-  static getDefaultInstance(): BungieOauthService {
-    if (!BungieOauthService.defaultInstance) {
-      BungieOauthService.defaultInstance = new BungieOauthService();
-    }
-    return BungieOauthService.defaultInstance;
-  }
-
   private readonly config: ConfigService;
 
   constructor() {
-    this.config = ConfigService.getDefaultInstance();
+    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
   }
 
   async getAccessToken(

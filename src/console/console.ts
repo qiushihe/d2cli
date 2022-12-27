@@ -1,7 +1,10 @@
+import "~src/module/register";
+
 import { loadEnvConfig } from "@next/env";
 import * as Logger from "purdy";
 import * as repl from "repl";
 
+import { AppModule } from "~src/module/app.module";
 import { BungieService } from "~src/service/bungie/bungie.service";
 
 class InteractiveJSConsole {
@@ -19,7 +22,7 @@ class InteractiveJSConsole {
 
     server.context.D2QDB = {
       service: {
-        bungieService: BungieService.getDefaultInstance()
+        bungieService: AppModule.getDefaultInstance().resolve("BungieService")
       },
       cmd: {
         test: async () => {
