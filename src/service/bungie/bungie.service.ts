@@ -5,7 +5,16 @@ import { BungieApi } from "~type/bungie-api";
 import { D2QDB } from "~type/d2qdb";
 
 export class BungieService {
-  private config: ConfigService;
+  private static defaultInstance: BungieService;
+
+  static getDefaultInstance(): BungieService {
+    if (!BungieService.defaultInstance) {
+      BungieService.defaultInstance = new BungieService();
+    }
+    return BungieService.defaultInstance;
+  }
+
+  private readonly config: ConfigService;
 
   constructor() {
     this.config = ConfigService.getDefaultInstance();

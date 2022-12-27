@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 
 import { base42EncodeString } from "~src/helper/string.helper";
 import { ConfigService } from "~src/service/config/config.service";

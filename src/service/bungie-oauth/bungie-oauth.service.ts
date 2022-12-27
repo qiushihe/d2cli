@@ -1,4 +1,4 @@
-import { encode } from "js-base64";
+import * as Base64 from "base64-js";
 import fetch, { Response } from "node-fetch";
 
 import { ConfigService } from "~src/service/config/config.service";
@@ -15,7 +15,7 @@ export class BungieOauthService {
     return BungieOauthService.defaultInstance;
   }
 
-  private config: ConfigService;
+  private readonly config: ConfigService;
 
   constructor() {
     this.config = ConfigService.getDefaultInstance();
@@ -30,7 +30,7 @@ export class BungieOauthService {
       this.config.getBungieOauthClientSecret()
     ].join(":");
 
-    const authorizationToken = encode(authorizationString);
+    const authorizationToken = Base64.fromByteArray(new TextEncoder().encode(authorizationString));
 
     const fields = [
       "grant_type=authorization_code",

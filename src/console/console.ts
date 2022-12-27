@@ -1,8 +1,13 @@
+import { loadEnvConfig } from "@next/env";
 import * as Logger from "purdy";
 import * as repl from "repl";
 
+import { BungieService } from "~src/service/bungie/bungie.service";
+
 class InteractiveJSConsole {
   async run() {
+    loadEnvConfig(process.cwd());
+
     const awaitOutside = require("await-outside");
 
     const server = repl.start({
@@ -13,6 +18,9 @@ class InteractiveJSConsole {
     });
 
     server.context.D2QDB = {
+      service: {
+        bungieService: BungieService.getDefaultInstance()
+      },
       cmd: {
         test: async () => {
           console.log("Waiting for 5 seconds ...");

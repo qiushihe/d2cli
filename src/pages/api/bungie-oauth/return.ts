@@ -1,5 +1,5 @@
 import { setCookie } from "cookies-next";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import { isEmpty } from "ramda";
 
 import { base42DecodeString, base42EncodeString } from "~src/helper/string.helper";
