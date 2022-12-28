@@ -10,4 +10,4 @@
 
 .env
 .env.test
-.bungie-access-token.json
+.session

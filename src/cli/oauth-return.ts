@@ -1,12 +1,11 @@
 import "~src/module/register";
 
-import * as fs from "fs";
-import * as path from "path";
 import * as R from "ramda";
 
 import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
+import { SessionService } from "~src/service/session/session.service";
 import { D2QDB } from "~type/d2qdb";
 
 class OauthReturn {
@@ -27,22 +26,32 @@ class OauthReturn {
     const state = JSON.parse(base42DecodeString(encodedState)) as D2QDB.BungieOAuthState;
     const { t: timestamp } = state;
 
-    const bungieOauth =
+    const bungieOauthService =
       AppModule.getDefaultInstance().resolve<BungieOauthService>("BungieOauthService");
 
-    const [accessTokenErr, accessToken] = await bungieOauth.getAccessToken(
+    const [accessTokenErr, accessToken] = await bungieOauthService.getAccessToken(
       authorizationCode,
       timestamp
     );
     if (accessTokenErr) {
       console.error(`[OauthReturn] Error getting access token: ${accessTokenErr.message}`);
     } else {
-      const accessTokenFilePath = path.join(__dirname, "../../.bungie-access-token.json");
+      const sessionService =
+        AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-      // TODO: Encrypt access token
-      fs.writeFileSync(accessTokenFilePath, JSON.stringify(accessToken, null, 2), "utf8");
+      const [reloadSessionErr] = await sessionService.reload();
+      if (reloadSessionErr) {
+        console.error(`[OauthReturn] Unable to reload session: ${reloadSessionErr.message}`);
+      } else {
+        console.log(`[OauthReturn] Session reloaded`);
 
-      console.log(`[OauthReturn] Bungie Access Token written to: ${accessTokenFilePath}`);
+        const setTokenErr = await sessionService.setBungieAccessToken(accessToken);
+        if (setTokenErr) {
+          console.error(`[OauthReturn] Unable to store access token: ${setTokenErr.message}`);
+        } else {
+          console.log(`[OauthReturn] Access token stored`);
+        }
+      }
     }
   }
 }

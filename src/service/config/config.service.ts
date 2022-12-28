@@ -1,4 +1,14 @@
 export class ConfigService {
+  private repoRootPath: string | null = null;
+
+  setRepoRootPath(path: string) {
+    this.repoRootPath = path;
+  }
+
+  getRepoRootPath(): string {
+    return this.repoRootPath || "";
+  }
+
   getBungieApiRoot(): string {
     return "https://www.bungie.net/Platform";
   }

@@ -4,6 +4,7 @@ import * as repl from "repl";
 
 import { AppModule } from "~src/module/app.module";
 import { BungieService } from "~src/service/bungie/bungie.service";
+import { SessionService } from "~src/service/session/session.service";
 
 class InteractiveJSConsole {
   async run() {
@@ -20,7 +21,8 @@ class InteractiveJSConsole {
 
     server.context.D2QDB = {
       service: {
-        bungieService: AppModule.getDefaultInstance().resolve("BungieService")
+        bungieService: AppModule.getDefaultInstance().resolve<BungieService>("BungieService"),
+        sessionService: AppModule.getDefaultInstance().resolve<SessionService>("SessionService")
       },
       cmd: {
         test: async () => {
