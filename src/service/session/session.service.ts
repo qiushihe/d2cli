@@ -10,10 +10,6 @@ import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 import { D2QDB } from "~type/d2qdb";
 
-interface SessionData {
-  bungleAccessToken?: D2QDB.BungieOAuthAccessToken | null;
-}
-
 const DATA_FILENAME = "data.json";
 
 export class SessionService {
@@ -21,6 +17,32 @@ export class SessionService {
 
   constructor() {
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+  }
+
+  async getLoginStatus(): Promise<[Error, null] | [null, D2QDB.LoginStatus]> {
+    const [reloadErr, sessionData] = await this.reload();
+    if (reloadErr) {
+      return [reloadErr, null];
+    }
+
+    const status: D2QDB.LoginStatus = { isLoggedIn: false, isLoginExpired: false };
+
+    const accessToken = sessionData.bungleAccessToken;
+    if (accessToken) {
+      status.isLoggedIn = true;
+
+      if (accessToken.expiredAt && accessToken.expiredAt <= this.getNowTime()) {
+        if (accessToken.refreshTokenExpiredAt) {
+          if (accessToken.refreshTokenExpiredAt <= this.getNowTime()) {
+            status.isLoginExpired = true;
+          }
+        } else {
+          status.isLoginExpired = true;
+        }
+      }
+    }
+
+    return [null, status];
   }
 
   async setBungieAccessToken(accessToken: D2QDB.BungieOAuthAccessToken): Promise<Error | null> {
@@ -39,7 +61,7 @@ export class SessionService {
     return null;
   }
 
-  async reload(): Promise<[Error, null] | [null, SessionData]> {
+  async reload(): Promise<[Error, null] | [null, D2QDB.SessionData]> {
     const [sessionExistsErr, sessionExists] = await fsExists(this.getSessionPath());
     if (sessionExistsErr) {
       return [sessionExistsErr, null];
@@ -79,11 +101,11 @@ export class SessionService {
     return [null, sessionData];
   }
 
-  private async saveWithError(path: string, sessionData: SessionData): Promise<Error | null> {
+  private async saveWithError(path: string, sessionData: D2QDB.SessionData): Promise<Error | null> {
     return await fsWriteFile(path, JSON.stringify(sessionData, null, 2));
   }
 
-  private async loadWithError(path: string): Promise<[Error, null] | [null, SessionData]> {
+  private async loadWithError(path: string): Promise<[Error, null] | [null, D2QDB.SessionData]> {
     let sessionDataString: string;
     const [sessionDataStringErr, dataString] = await fsReadFile(path);
     if (sessionDataStringErr) {
@@ -92,7 +114,7 @@ export class SessionService {
       sessionDataString = dataString;
     }
 
-    let sessionData: SessionData;
+    let sessionData: D2QDB.SessionData;
     try {
       sessionData = JSON.parse(sessionDataString);
     } catch (err) {
@@ -108,5 +130,9 @@ export class SessionService {
 
   private getSessionDataPath(): string {
     return path.resolve(this.getSessionPath(), DATA_FILENAME);
+  }
+
+  private getNowTime(): number {
+    return new Date().getTime();
   }
 }

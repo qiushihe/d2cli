@@ -103,7 +103,14 @@ export class BungieService {
       return [searchDestinyPlayersJsonErr, null];
     }
     if (!searchDestinyPlayersJson.Response) {
-      return [new Error("Missing response in Destiny 2 players search result."), null];
+      return [
+        new Error(
+          `Missing response in Destiny 2 players search result: ${JSON.stringify(
+            searchDestinyPlayersJson
+          )}`
+        ),
+        null
+      ];
     }
 
     const effectiveMemberships = searchDestinyPlayersJson.Response.filter((membership) => {

@@ -3,8 +3,9 @@ import "~src/module/register";
 import * as repl from "repl";
 
 import { AppModule } from "~src/module/app.module";
-import { BungieService } from "~src/service/bungie/bungie.service";
-import { SessionService } from "~src/service/session/session.service";
+
+import { CLI_COMMANDS, makeCmd } from "./command";
+import { getServices } from "./service";
 
 class InteractiveJSConsole {
   async run() {
@@ -19,18 +20,11 @@ class InteractiveJSConsole {
       ignoreUndefined: true
     });
 
+    const makeServerCmd = makeCmd(server);
+    Object.entries(CLI_COMMANDS).forEach(([key, value]) => makeServerCmd(key, value));
+
     server.context.D2QDB = {
-      service: {
-        bungieService: AppModule.getDefaultInstance().resolve<BungieService>("BungieService"),
-        sessionService: AppModule.getDefaultInstance().resolve<SessionService>("SessionService")
-      },
-      cmd: {
-        test: async () => {
-          console.log("Waiting for 5 seconds ...");
-          await new Promise((resolve) => setTimeout(resolve, 5000));
-          console.log("Done waiting for 5 seconds!");
-        }
-      }
+      service: getServices(AppModule.getDefaultInstance())
     };
 
     awaitOutside.addAwaitOutsideToReplServer(server);
