@@ -1,18 +1,6 @@
 export namespace D2QDB {
-  export type BungieOAuthStartQuery = {
-    [key: string]: any;
-    returnUrl?: string;
-  };
-
-  export type BungieOAuthReturnQuery = {
-    [key: string]: any;
-    code: string;
-    state: string;
-  };
-
   export type BungieOAuthState = {
     t: number;
-    r: string;
   };
 
   export type BungieOAuthAccessToken = {
