@@ -1,3 +1,6 @@
+// IMPORTANT: This file is NOT run within the working directory of the project's repo!
+//            Therefore, this file MUST NOT import from any other files from the project!
+
 import { spawn } from "child_process";
 import path from "path";
 import * as process from "process";
