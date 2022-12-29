@@ -49,7 +49,7 @@ export class SessionService {
 
   async setBungieAccessToken(
     sessionId: string,
-    accessToken: BungieOAuthAccessToken
+    accessToken: BungieOAuthAccessToken | null
   ): Promise<Error | null> {
     const [reloadErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadErr) {

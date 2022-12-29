@@ -1,8 +1,8 @@
 import * as repl from "repl";
 
 export type CliRuntimeContext = {
+  repoRootPath: string;
   sessionId: string;
-  service: { [key: string]: any };
 };
 
 export type CliCmdDefinition = {

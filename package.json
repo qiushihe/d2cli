@@ -8,8 +8,7 @@
     "test:lint": "eslint --ext .js --ext .ts .",
     "test:lint:fix": "eslint --ext .js --ext .ts --fix .",
     "test:unit": "jest --config jest.config.js --runInBand --logHeapUsage",
-    "console": "ts-node -r tsconfig-paths/register src/cli/console.ts",
-    "oauth-start": "ts-node -r tsconfig-paths/register src/cli/oauth-start.ts"
+    "console": "ts-node -r tsconfig-paths/register src/cli/console.ts"
   },
   "dependencies": {
     "@babel/core": "^7.20.5",

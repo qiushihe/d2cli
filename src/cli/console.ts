@@ -1,6 +1,7 @@
 import "~src/module/register";
 
 import minimist from "minimist";
+import * as path from "path";
 import * as repl from "repl";
 
 import { AppModule } from "~src/module/app.module";
@@ -12,6 +13,7 @@ import { getServices } from "./service";
 
 type RunConsoleOptions = {
   argv: string[];
+  repoRootPath: string;
 };
 
 type RunConsoleArgv = {
@@ -31,7 +33,7 @@ class InteractiveJSConsole {
 
     const runtimeContext: CliRuntimeContext = {
       sessionId,
-      service: getServices(AppModule.getDefaultInstance())
+      repoRootPath: options.repoRootPath
     };
 
     const awaitOutside = require("await-outside");
@@ -43,7 +45,10 @@ class InteractiveJSConsole {
       ignoreUndefined: true
     });
 
-    server.context.D2QDB = runtimeContext;
+    server.context.D2QDB = {
+      ...runtimeContext,
+      service: getServices(AppModule.getDefaultInstance())
+    };
 
     const makeServerCmd = makeCmd(server, runtimeContext);
     Object.entries(CLI_COMMANDS).forEach(([key, value]) => makeServerCmd(key, value));
@@ -54,6 +59,7 @@ class InteractiveJSConsole {
 
 new InteractiveJSConsole()
   .run({
-    argv: process.argv.slice(2)
+    argv: process.argv.slice(2),
+    repoRootPath: path.join(__dirname, "../..")
   })
   .then();

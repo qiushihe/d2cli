@@ -14,7 +14,7 @@ const promiseWithResolve = <T>(): [Promise<T>, (value: T) => void] => {
 };
 
 class OauthReturnRaw {
-  async run() {
+  async run(): Promise<number> {
     const workingDir = process.argv[2];
     const oauthReturnRawUrl = new URL(process.argv[3]);
 
@@ -45,17 +45,25 @@ class OauthReturnRaw {
 
     cmd.stderr.on("data", process.stderr.write.bind(process.stderr));
 
-    const [cmdPromise, resolveCmdPromise] = promiseWithResolve<number | undefined>();
+    const [cmdPromise, resolveCmdPromise] = promiseWithResolve<number>();
 
     cmd.on("exit", (code) => {
       resolveCmdPromise(code === null || code === undefined ? 0 : code);
     });
 
     const cmdExitCode = await cmdPromise;
-    console.log(`[OauthReturnRaw] OAuth Return Handler exit code: ${cmdExitCode}`);
+    if (cmdExitCode === 0) {
+      console.log("[OauthReturnRaw] OAuth Return Handler completed successfully");
+      console.log("[OauthReturnRaw] You may now close this window");
+    } else {
+      console.log(
+        `[OauthReturnRaw] OAuth Return Handler did not complete successfully (code: ${cmdExitCode})`
+      );
+      console.log("[OauthReturnRaw] You can probably still close this window (question mark?)");
+    }
 
-    process.exit(cmdExitCode);
+    return cmdExitCode;
   }
 }
 
-new OauthReturnRaw().run().then();
+new OauthReturnRaw().run().then((code) => process.exit(code));
