@@ -2,9 +2,10 @@ import * as Base64 from "base64-js";
 import fetch, { Response } from "node-fetch";
 
 import { AppModule } from "~src/module/app.module";
+import { OAuthAccessToken as BungieApiOAuthAccessToken } from "~src/service/bungie-api/bungie-api.types";
 import { ConfigService } from "~src/service/config/config.service";
-import { BungieApi } from "~type/bungie-api";
-import { D2QDB } from "~type/d2qdb";
+
+import { BungieOAuthAccessToken } from "./bungie-oauth.types";
 
 export class BungieOauthService {
   private readonly config: ConfigService;
@@ -16,7 +17,7 @@ export class BungieOauthService {
   async getAccessToken(
     authorizationCode: string,
     startTime: number
-  ): Promise<[Error, null] | [null, D2QDB.BungieOAuthAccessToken]> {
+  ): Promise<[Error, null] | [null, BungieOAuthAccessToken]> {
     const authorizationString = [
       this.config.getBungieOauthClientId(),
       this.config.getBungieOauthClientSecret()
@@ -52,7 +53,7 @@ export class BungieOauthService {
       ];
     }
 
-    const tokenResponse = (await res.json()) as BungieApi.OAuthAccessToken;
+    const tokenResponse = (await res.json()) as BungieApiOAuthAccessToken;
 
     const token = {
       type: tokenResponse.token_type,
@@ -61,7 +62,7 @@ export class BungieOauthService {
       refreshToken: undefined,
       refreshTokenExpiredAt: undefined,
       membershipId: tokenResponse.membership_id
-    } as D2QDB.BungieOAuthAccessToken;
+    } as BungieOAuthAccessToken;
 
     if (tokenResponse.refresh_token) {
       token.refreshToken = tokenResponse.refresh_token;

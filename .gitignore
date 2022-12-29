@@ -10,4 +10,4 @@
 
 .env
 .env.test
-.session
+.fs-storage

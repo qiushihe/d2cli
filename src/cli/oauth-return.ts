@@ -5,8 +5,8 @@ import * as R from "ramda";
 import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
+import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { SessionService } from "~src/service/session/session.service";
-import { D2QDB } from "~type/d2qdb";
 
 class OauthReturn {
   async run() {
@@ -23,7 +23,7 @@ class OauthReturn {
     console.log(`[OauthReturn] Authorization Code: ${authorizationCode}`);
     console.log(`[OauthReturn] Encoded State: ${encodedState}`);
 
-    const state = JSON.parse(base42DecodeString(encodedState)) as D2QDB.BungieOAuthState;
+    const state = JSON.parse(base42DecodeString(encodedState)) as BungieOAuthState;
     const { t: timestamp } = state;
 
     const bungieOauthService =

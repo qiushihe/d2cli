@@ -1,9 +1,14 @@
 import fetch, { Response } from "node-fetch";
 
 import { AppModule } from "~src/module/app.module";
+import { ComponentType as BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
+import { Destiny2ApiResponse as BungieDestiny2ApiResponse } from "~src/service/bungie-api/bungie-api.types";
+import { Destiny2Membership as BungieApiDestiny2Membership } from "~src/service/bungie-api/bungie-api.types";
+import { Destiny2Profile as BungieApiDestiny2Profile } from "~src/service/bungie-api/bungie-api.types";
 import { ConfigService } from "~src/service/config/config.service";
-import { BungieApi } from "~type/bungie-api";
-import { D2QDB } from "~type/d2qdb";
+
+import { Destiny2Membership } from "./bungie.types";
+import { Destiny2Character } from "./bungie.types";
 
 export class BungieService {
   private readonly config: ConfigService;
@@ -32,18 +37,18 @@ export class BungieService {
   }
 
   async getDestiny2Characters(
-    membership: D2QDB.Destiny2Membership
-  ): Promise<[Error, null] | [null, D2QDB.Destiny2Character[]]> {
+    membership: Destiny2Membership
+  ): Promise<[Error, null] | [null, Destiny2Character[]]> {
     const [profileErr, profileRes] = await this.sendBungieRequest(
       "GET",
-      `/Destiny2/${membership.type}/Profile/${membership.id}?components=${BungieApi.ComponentType.Characters}`,
+      `/Destiny2/${membership.type}/Profile/${membership.id}?components=${BungieApiComponentType.Characters}`,
       null
     );
     if (profileErr) {
       return [profileErr, null];
     } else {
       const [profileJsonErr, profileJson] =
-        await this.extractBungieResponse<BungieApi.Destiny2Profile>(profileRes);
+        await this.extractBungieResponse<BungieApiDestiny2Profile>(profileRes);
       if (profileJsonErr) {
         return [profileJsonErr, null];
       } else {
@@ -55,12 +60,10 @@ export class BungieService {
         }
 
         const charactersData = profileJson.Response.characters.data;
-        const characters = Object.keys(charactersData).map<D2QDB.Destiny2Character>(
-          (characterId) => {
-            const character = charactersData[characterId];
-            return { id: character.characterId, lightLevel: character.light };
-          }
-        );
+        const characters = Object.keys(charactersData).map<Destiny2Character>((characterId) => {
+          const character = charactersData[characterId];
+          return { id: character.characterId, lightLevel: character.light };
+        });
 
         return [null, characters];
       }
@@ -69,7 +72,7 @@ export class BungieService {
 
   async getDestiny2Memberships(
     bungieNetMembershipId: string
-  ): Promise<[Error, null] | [null, D2QDB.Destiny2Membership[]]> {
+  ): Promise<[Error, null] | [null, Destiny2Membership[]]> {
     const [bungieNetUserErr, bungieNetUserRes] = await this.sendBungieRequest(
       "GET",
       `/User/GetBungieNetUserById/${bungieNetMembershipId}`,
@@ -98,7 +101,7 @@ export class BungieService {
     }
 
     const [searchDestinyPlayersJsonErr, searchDestinyPlayersJson] =
-      await this.extractBungieResponse<BungieApi.Destiny2Membership[]>(searchDestinyPlayersRes);
+      await this.extractBungieResponse<BungieApiDestiny2Membership[]>(searchDestinyPlayersRes);
     if (searchDestinyPlayersJsonErr) {
       return [searchDestinyPlayersJsonErr, null];
     }
@@ -117,7 +120,7 @@ export class BungieService {
       return membership.applicableMembershipTypes.includes(membership.crossSaveOverride);
     });
 
-    const destiny2Memberships = effectiveMemberships.map<D2QDB.Destiny2Membership>((membership) => {
+    const destiny2Memberships = effectiveMemberships.map<Destiny2Membership>((membership) => {
       return {
         type: membership.membershipType,
         id: membership.membershipId,
@@ -148,7 +151,7 @@ export class BungieService {
 
   private async extractBungieResponse<TResponse = any>(
     res: Response
-  ): Promise<[Error, null] | [null, BungieApi.Destiny2ApiResponse<TResponse>]> {
+  ): Promise<[Error, null] | [null, BungieDestiny2ApiResponse<TResponse>]> {
     const [resJsonErr, resJson] = await this.extractResponseJson(res);
     if (resJsonErr) {
       return [resJsonErr, null];
@@ -163,7 +166,7 @@ export class BungieService {
       ) {
         return [new Error(`Invalid Bungie API response: ${JSON.stringify(resJson)}`), null];
       } else {
-        return [null, resJson as BungieApi.Destiny2ApiResponse<TResponse>];
+        return [null, resJson as BungieDestiny2ApiResponse<TResponse>];
       }
     }
   }

@@ -6,8 +6,8 @@ import * as ProtocolRegistry from "protocol-registry";
 
 import { base42EncodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
+import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
-import { D2QDB } from "~type/d2qdb";
 
 class OAuthStart {
   async run() {
@@ -17,7 +17,7 @@ class OAuthStart {
 
     const oauthRoot = config.getBungieOauthRoot();
     const clientId = config.getBungieOauthClientId();
-    const state: D2QDB.BungieOAuthState = { t: new Date().getTime() };
+    const state: BungieOAuthState = { t: new Date().getTime() };
     const encodedState = base42EncodeString(JSON.stringify(state));
 
     const oauthUrl = new URL(oauthRoot);

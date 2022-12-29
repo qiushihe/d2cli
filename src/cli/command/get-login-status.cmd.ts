@@ -1,8 +1,9 @@
 import { AppModule } from "~src/module/app.module";
 import { SessionService } from "~src/service/session/session.service";
-import { D2QDB } from "~type/d2qdb";
 
-export const getLoginStatus: D2QDB.CliCmdDefinition = {
+import { CliCmdDefinition } from "../cli.types";
+
+export const getLoginStatus: CliCmdDefinition = {
   description: "Get login status of current session",
   action: async () => {
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");

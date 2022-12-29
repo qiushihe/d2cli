@@ -1,31 +1,30 @@
-import * as path from "path";
-
-import { exists as fsExists } from "~src/helper/fs.helper";
-import { isDirectory as fsIsDirectory } from "~src/helper/fs.helper";
-import { recursiveRemove as fsRecursiveRemove } from "~src/helper/fs.helper";
-import { readFile as fsReadFile } from "~src/helper/fs.helper";
-import { writeFile as fsWriteFile } from "~src/helper/fs.helper";
-import { makeDirectory as fsMakeDirectory } from "~src/helper/fs.helper";
 import { AppModule } from "~src/module/app.module";
+import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
-import { D2QDB } from "~type/d2qdb";
+import { FsStorageService } from "~src/service/storage/fs-storage.service";
+import { IStorageInterface } from "~src/service/storage/storage.interface";
+import { StorageFile } from "~src/service/storage/storage.interface";
 
-const DATA_FILENAME = "data.json";
+import { SessionData } from "./session.types";
+import { LoginStatus } from "./session.types";
 
 export class SessionService {
   private readonly config: ConfigService;
+  private readonly storageService: IStorageInterface;
 
   constructor() {
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+    this.storageService =
+      AppModule.getDefaultInstance().resolve<FsStorageService>("FsStorageService");
   }
 
-  async getLoginStatus(): Promise<[Error, null] | [null, D2QDB.LoginStatus]> {
+  async getLoginStatus(): Promise<[Error, null] | [null, LoginStatus]> {
     const [reloadErr, sessionData] = await this.reload();
     if (reloadErr) {
       return [reloadErr, null];
     }
 
-    const status: D2QDB.LoginStatus = { isLoggedIn: false, isLoginExpired: false };
+    const status: LoginStatus = { isLoggedIn: false, isLoginExpired: false };
 
     const accessToken = sessionData.bungleAccessToken;
     if (accessToken) {
@@ -45,91 +44,48 @@ export class SessionService {
     return [null, status];
   }
 
-  async setBungieAccessToken(accessToken: D2QDB.BungieOAuthAccessToken): Promise<Error | null> {
-    const [sessionDataErr, sessionData] = await this.loadWithError(this.getSessionDataPath());
-    if (sessionDataErr) {
-      return sessionDataErr;
+  async setBungieAccessToken(accessToken: BungieOAuthAccessToken): Promise<Error | null> {
+    const [reloadErr, sessionFile] = await this.reloadFile();
+    if (reloadErr) {
+      return reloadErr;
     }
 
-    sessionData.bungleAccessToken = accessToken;
+    sessionFile.content.bungleAccessToken = accessToken;
 
-    const saveErr = await this.saveWithError(this.getSessionDataPath(), sessionData);
-    if (saveErr) {
-      return saveErr;
+    const writeErr = await this.storageService.write(sessionFile);
+    if (writeErr) {
+      return writeErr;
     }
 
     return null;
   }
 
-  async reload(): Promise<[Error, null] | [null, D2QDB.SessionData]> {
-    const [sessionExistsErr, sessionExists] = await fsExists(this.getSessionPath());
-    if (sessionExistsErr) {
-      return [sessionExistsErr, null];
-    }
-    if (!sessionExists) {
-      const mkdirErr = await fsMakeDirectory(this.getSessionPath());
-      if (mkdirErr) {
-        return [mkdirErr, null];
-      }
+  async reload(): Promise<[Error, null] | [null, SessionData]> {
+    const [reloadFileErr, sessionFile] = await this.reloadFile();
+    if (reloadFileErr) {
+      return [reloadFileErr, null];
     }
 
-    const [sessionIsDirectoryErr, sessionIsDirectory] = await fsIsDirectory(this.getSessionPath());
-    if (sessionIsDirectoryErr) {
-      return [sessionIsDirectoryErr, null];
-    }
-    if (!sessionIsDirectory) {
-      const rmErr = await fsRecursiveRemove(this.getSessionPath());
-      if (rmErr) {
-        return [rmErr, null];
-      }
-
-      const mkdirErr = await fsMakeDirectory(this.getSessionPath());
-      if (mkdirErr) {
-        return [mkdirErr, null];
-      }
-    }
-
-    const [sessionDataErr, sessionData] = await this.loadWithError(this.getSessionDataPath());
-    if (sessionDataErr) {
-      return [sessionDataErr, null];
-    }
-    const saveErr = await this.saveWithError(this.getSessionDataPath(), sessionData);
-    if (saveErr) {
-      return [saveErr, null];
-    }
-
-    return [null, sessionData];
+    return [null, sessionFile.content as SessionData];
   }
 
-  private async saveWithError(path: string, sessionData: D2QDB.SessionData): Promise<Error | null> {
-    return await fsWriteFile(path, JSON.stringify(sessionData, null, 2));
-  }
+  private async reloadFile(): Promise<[Error, null] | [null, StorageFile<SessionData>]> {
+    let path = "sessions/default.json";
+    let sessionFile: StorageFile<SessionData>;
 
-  private async loadWithError(path: string): Promise<[Error, null] | [null, D2QDB.SessionData]> {
-    let sessionDataString: string;
-    const [sessionDataStringErr, dataString] = await fsReadFile(path);
-    if (sessionDataStringErr) {
-      return [sessionDataStringErr, null];
+    const [readErr, file] = await this.storageService.read<SessionData>(path);
+    if (readErr) {
+      sessionFile = { path, content: {} };
     } else {
-      sessionDataString = dataString;
+      sessionFile = file;
     }
 
-    let sessionData: D2QDB.SessionData;
-    try {
-      sessionData = JSON.parse(sessionDataString);
-    } catch (err) {
-      return [err as Error, null];
+    const writeErr = await this.storageService.write(sessionFile);
+    if (writeErr) {
+      return [writeErr, null];
     }
 
-    return [null, sessionData];
-  }
-
-  private getSessionPath(): string {
-    return path.resolve(this.config.getRepoRootPath(), ".session");
-  }
-
-  private getSessionDataPath(): string {
-    return path.resolve(this.getSessionPath(), DATA_FILENAME);
+    return [null, sessionFile];
   }
 
   private getNowTime(): number {
