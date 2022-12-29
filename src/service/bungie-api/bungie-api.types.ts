@@ -1,4 +1,4 @@
-export enum ComponentType {
+export enum BungieApiComponentType {
   None = 0,
   Profiles = 100,
   VendorReceipts = 101,
@@ -37,7 +37,7 @@ export enum ComponentType {
   Craftables = 1300
 }
 
-export type OAuthAccessToken = {
+export type BungieApiOAuthAccessToken = {
   access_token: string;
   token_type: string;
   expires_in: number;
@@ -46,7 +46,7 @@ export type OAuthAccessToken = {
   membership_id: string;
 };
 
-export type Destiny2ApiResponse<TResponse = any> = {
+export type BungieApiDestiny2Response<TResponse = any> = {
   [key: string]: any;
   Response?: TResponse;
   ErrorCode: number;
@@ -56,7 +56,7 @@ export type Destiny2ApiResponse<TResponse = any> = {
   MessageData: any;
 };
 
-export type Destiny2Membership = {
+export type BungieApiDestiny2Membership = {
   iconPath: string;
   crossSaveOverride: number;
   applicableMembershipTypes: number[];
@@ -68,7 +68,7 @@ export type Destiny2Membership = {
   bungieGlobalDisplayNameCode: number;
 };
 
-export type Destiny2Character = {
+export type BungieApiDestiny2Character = {
   membershipId: string;
   membershipType: number;
   characterId: string;
@@ -105,11 +105,11 @@ export type Destiny2Character = {
   titleRecordHash: number;
 };
 
-export type Destiny2Profile = {
+export type BungieApiDestiny2Profile = {
   responseMintedTimestamp: string;
   secondaryComponentsMintedTimestamp: string;
   characters?: {
-    data: { [characterId: string]: Destiny2Character };
+    data: { [characterId: string]: BungieApiDestiny2Character };
     privacy: number;
   };
 };

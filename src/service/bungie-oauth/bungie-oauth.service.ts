@@ -2,7 +2,7 @@ import * as Base64 from "base64-js";
 import fetch, { Response } from "node-fetch";
 
 import { AppModule } from "~src/module/app.module";
-import { OAuthAccessToken as BungieApiOAuthAccessToken } from "~src/service/bungie-api/bungie-api.types";
+import { BungieApiOAuthAccessToken } from "~src/service/bungie-api/bungie-api.types";
 import { ConfigService } from "~src/service/config/config.service";
 
 import { BungieOAuthAccessToken } from "./bungie-oauth.types";
@@ -55,14 +55,14 @@ export class BungieOauthService {
 
     const tokenResponse = (await res.json()) as BungieApiOAuthAccessToken;
 
-    const token = {
+    const token: BungieOAuthAccessToken = {
       type: tokenResponse.token_type,
       token: tokenResponse.access_token,
       expiredAt: startTime + tokenResponse.expires_in * 1000,
       refreshToken: undefined,
       refreshTokenExpiredAt: undefined,
       membershipId: tokenResponse.membership_id
-    } as BungieOAuthAccessToken;
+    };
 
     if (tokenResponse.refresh_token) {
       token.refreshToken = tokenResponse.refresh_token;

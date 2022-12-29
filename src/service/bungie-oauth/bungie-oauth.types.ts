@@ -1,5 +1,13 @@
 export type BungieOAuthState = {
+  /**
+   * Time in milliseconds for when this state is created.
+   */
   t: number;
+
+  /**
+   * The session ID for this state.
+   */
+  s: string;
 };
 
 export type BungieOAuthAccessToken = {

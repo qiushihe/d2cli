@@ -8,6 +8,7 @@ import { base42EncodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
+import { DEFAULT_SESSION_ID } from "~src/service/session/session.service";
 
 class OAuthStart {
   async run() {
@@ -17,7 +18,7 @@ class OAuthStart {
 
     const oauthRoot = config.getBungieOauthRoot();
     const clientId = config.getBungieOauthClientId();
-    const state: BungieOAuthState = { t: new Date().getTime() };
+    const state: BungieOAuthState = { t: new Date().getTime(), s: DEFAULT_SESSION_ID };
     const encodedState = base42EncodeString(JSON.stringify(state));
 
     const oauthUrl = new URL(oauthRoot);

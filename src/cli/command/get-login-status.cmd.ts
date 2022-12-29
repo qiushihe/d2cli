@@ -1,4 +1,5 @@
 import { AppModule } from "~src/module/app.module";
+import { DEFAULT_SESSION_ID } from "~src/service/session/session.service";
 import { SessionService } from "~src/service/session/session.service";
 
 import { CliCmdDefinition } from "../cli.types";
@@ -8,7 +9,7 @@ export const getLoginStatus: CliCmdDefinition = {
   action: async () => {
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-    const [loginStatusErr, loginStatus] = await sessionService.getLoginStatus();
+    const [loginStatusErr, loginStatus] = await sessionService.getLoginStatus(DEFAULT_SESSION_ID);
     if (loginStatusErr) {
       console.error(`Unable to get login status: ${loginStatusErr.message}`);
     } else {

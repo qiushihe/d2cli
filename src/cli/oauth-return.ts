@@ -24,7 +24,7 @@ class OauthReturn {
     console.log(`[OauthReturn] Encoded State: ${encodedState}`);
 
     const state = JSON.parse(base42DecodeString(encodedState)) as BungieOAuthState;
-    const { t: timestamp } = state;
+    const { t: timestamp, s: sessionId } = state;
 
     const bungieOauthService =
       AppModule.getDefaultInstance().resolve<BungieOauthService>("BungieOauthService");
@@ -39,13 +39,13 @@ class OauthReturn {
       const sessionService =
         AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-      const [reloadSessionErr] = await sessionService.reload();
+      const [reloadSessionErr] = await sessionService.reload(sessionId);
       if (reloadSessionErr) {
         console.error(`[OauthReturn] Unable to reload session: ${reloadSessionErr.message}`);
       } else {
         console.log(`[OauthReturn] Session reloaded`);
 
-        const setTokenErr = await sessionService.setBungieAccessToken(accessToken);
+        const setTokenErr = await sessionService.setBungieAccessToken(sessionId, accessToken);
         if (setTokenErr) {
           console.error(`[OauthReturn] Unable to store access token: ${setTokenErr.message}`);
         } else {

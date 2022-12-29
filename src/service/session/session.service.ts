@@ -2,11 +2,14 @@ import { AppModule } from "~src/module/app.module";
 import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
 import { FsStorageService } from "~src/service/storage/fs-storage.service";
-import { IStorageInterface } from "~src/service/storage/storage.interface";
-import { StorageFile } from "~src/service/storage/storage.interface";
+import { IStorageInterface } from "~src/service/storage/storage.types";
+import { StorageNamespace } from "~src/service/storage/storage.types";
+import { StorageFile } from "~src/service/storage/storage.types";
 
 import { SessionData } from "./session.types";
 import { LoginStatus } from "./session.types";
+
+export const DEFAULT_SESSION_ID = "default";
 
 export class SessionService {
   private readonly config: ConfigService;
@@ -18,8 +21,8 @@ export class SessionService {
       AppModule.getDefaultInstance().resolve<FsStorageService>("FsStorageService");
   }
 
-  async getLoginStatus(): Promise<[Error, null] | [null, LoginStatus]> {
-    const [reloadErr, sessionData] = await this.reload();
+  async getLoginStatus(sessionId: string): Promise<[Error, null] | [null, LoginStatus]> {
+    const [reloadErr, sessionData] = await this.reload(sessionId);
     if (reloadErr) {
       return [reloadErr, null];
     }
@@ -44,15 +47,18 @@ export class SessionService {
     return [null, status];
   }
 
-  async setBungieAccessToken(accessToken: BungieOAuthAccessToken): Promise<Error | null> {
-    const [reloadErr, sessionFile] = await this.reloadFile();
+  async setBungieAccessToken(
+    sessionId: string,
+    accessToken: BungieOAuthAccessToken
+  ): Promise<Error | null> {
+    const [reloadErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadErr) {
       return reloadErr;
     }
 
     sessionFile.content.bungleAccessToken = accessToken;
 
-    const writeErr = await this.storageService.write(sessionFile);
+    const writeErr = await this.storageService.write(StorageNamespace.SESSIONS, sessionFile);
     if (writeErr) {
       return writeErr;
     }
@@ -60,8 +66,8 @@ export class SessionService {
     return null;
   }
 
-  async reload(): Promise<[Error, null] | [null, SessionData]> {
-    const [reloadFileErr, sessionFile] = await this.reloadFile();
+  async reload(sessionId: string): Promise<[Error, null] | [null, SessionData]> {
+    const [reloadFileErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadFileErr) {
       return [reloadFileErr, null];
     }
@@ -69,18 +75,23 @@ export class SessionService {
     return [null, sessionFile.content as SessionData];
   }
 
-  private async reloadFile(): Promise<[Error, null] | [null, StorageFile<SessionData>]> {
-    let path = "sessions/default.json";
+  private async reloadFile(
+    sessionId: string
+  ): Promise<[Error, null] | [null, StorageFile<SessionData>]> {
+    let filename = `session-${sessionId}.json`;
     let sessionFile: StorageFile<SessionData>;
 
-    const [readErr, file] = await this.storageService.read<SessionData>(path);
+    const [readErr, file] = await this.storageService.read<SessionData>(
+      StorageNamespace.SESSIONS,
+      filename
+    );
     if (readErr) {
-      sessionFile = { path, content: {} };
+      sessionFile = { filename, content: {} };
     } else {
       sessionFile = file;
     }
 
-    const writeErr = await this.storageService.write(sessionFile);
+    const writeErr = await this.storageService.write(StorageNamespace.SESSIONS, sessionFile);
     if (writeErr) {
       return [writeErr, null];
     }

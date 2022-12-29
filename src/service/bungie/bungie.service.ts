@@ -1,10 +1,10 @@
 import fetch, { Response } from "node-fetch";
 
 import { AppModule } from "~src/module/app.module";
-import { ComponentType as BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
-import { Destiny2ApiResponse as BungieDestiny2ApiResponse } from "~src/service/bungie-api/bungie-api.types";
-import { Destiny2Membership as BungieApiDestiny2Membership } from "~src/service/bungie-api/bungie-api.types";
-import { Destiny2Profile as BungieApiDestiny2Profile } from "~src/service/bungie-api/bungie-api.types";
+import { BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
+import { BungieApiDestiny2Response } from "~src/service/bungie-api/bungie-api.types";
+import { BungieApiDestiny2Membership } from "~src/service/bungie-api/bungie-api.types";
+import { BungieApiDestiny2Profile } from "~src/service/bungie-api/bungie-api.types";
 import { ConfigService } from "~src/service/config/config.service";
 
 import { Destiny2Membership } from "./bungie.types";
@@ -151,7 +151,7 @@ export class BungieService {
 
   private async extractBungieResponse<TResponse = any>(
     res: Response
-  ): Promise<[Error, null] | [null, BungieDestiny2ApiResponse<TResponse>]> {
+  ): Promise<[Error, null] | [null, BungieApiDestiny2Response<TResponse>]> {
     const [resJsonErr, resJson] = await this.extractResponseJson(res);
     if (resJsonErr) {
       return [resJsonErr, null];
@@ -166,7 +166,7 @@ export class BungieService {
       ) {
         return [new Error(`Invalid Bungie API response: ${JSON.stringify(resJson)}`), null];
       } else {
-        return [null, resJson as BungieDestiny2ApiResponse<TResponse>];
+        return [null, resJson as BungieApiDestiny2Response<TResponse>];
       }
     }
   }
