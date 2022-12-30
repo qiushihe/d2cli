@@ -51,8 +51,8 @@ export const login: CliCmdDefinition = {
     oauthUrl.searchParams.set("state", encodedState);
     logger.debug("Done URL construction");
 
-    const handlerPath = path.join(context.repoRootPath, "dist/src/cli/oauth-return-raw.js");
-    logger.debug(`OAuth return raw handler path: ${handlerPath}`);
+    const handlerPath = path.join(context.repoRootPath, "dist/src/cli/oauth-return.js");
+    logger.debug(`OAuth return handler path: ${handlerPath}`);
 
     await ProtocolRegistry.register({
       protocol: "dtwoqdb",

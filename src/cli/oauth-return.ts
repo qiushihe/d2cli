@@ -1,5 +1,6 @@
 import "~src/module/register";
 
+import process from "process";
 import * as R from "ramda";
 
 import { base42DecodeString } from "~src/helper/string.helper";
@@ -12,17 +13,19 @@ import { SessionDataName } from "~src/service/session/session.types";
 
 class OauthReturn {
   async run() {
-    const oauthReturnUrl = new URL(process.argv[2]);
-
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
       .getLogger("cli:OauthReturn");
 
-    const [authorizationCode, encodedState] = R.pipe(
-      R.split("/"),
-      R.filter(R.complement(R.isEmpty)),
-      R.remove(0, 2)
-    )(`${oauthReturnUrl.host}${oauthReturnUrl.pathname}`);
+    const workingDir = process.argv[2];
+    process.chdir(workingDir);
+    logger.debug(`!!! Working directory changed to: ${workingDir}`);
+
+    const oauthReturnUrl = new URL(process.argv[3]);
+    logger.debug(`!!! OAuth return URL: ${oauthReturnUrl}`);
+
+    const authorizationCode = oauthReturnUrl.searchParams.get("code") || "";
+    const encodedState = oauthReturnUrl.searchParams.get("state") || "";
 
     logger.info("Extracted authorization code and encoded state");
     logger.debug(`Authorization Code: ${authorizationCode}`);
@@ -58,7 +61,8 @@ class OauthReturn {
         if (setTokenErr) {
           logger.error(`Unable to store access token: ${setTokenErr.message}`);
         } else {
-          logger.info(`Access token stored`);
+          logger.log(`Access token stored`);
+          logger.log(`You may now close this window`);
         }
       }
     }
