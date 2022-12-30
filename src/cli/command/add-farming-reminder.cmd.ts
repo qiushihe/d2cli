@@ -1,3 +1,4 @@
+import { realTmpDir as fsRealTmpDir } from "~src/helper/fs.helper";
 import { AppModule } from "~src/module/app.module";
 import { LogService } from "~src/service/log/log.service";
 
@@ -10,6 +11,13 @@ export const addFarmingReminder: CliCmdDefinition = {
       .resolve<LogService>("LogService")
       .getLogger("cmd:addFarmingReminder");
 
-    logger.info("WIP");
+    const [tmpDirPathErr, tmpDirPath] = await fsRealTmpDir();
+    if (tmpDirPathErr) {
+      return logger.loggedError(
+        `Unable to obtain temporary directory path: ${tmpDirPathErr.message}`
+      );
+    }
+
+    logger.debug(`Temporary directory path: ${tmpDirPath}`);
   }
 };
