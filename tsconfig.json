@@ -1,6 +1,18 @@
 {
-  "include": ["**/*.ts", "**/*.json"],
-  "exclude": ["build", "node_modules"],
+  "include": [
+    "**/*.ts",
+
+    // Including this file makes the root of `dist` no longer "only contains other directories",
+    // and that would prevent `tsc` from flattening the `dist` directory down to the `src`
+    // directory.
+    // This way the `dist` directory can always have consistent structure no matter what other
+    // files are added/removed in the future.
+    // Because it's important for `dist` to have a consistent directory structure.
+    // Because that's important.
+    // It just is.
+    "tsconfig.json"
+  ],
+  "exclude": ["test", "build", "node_modules"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
