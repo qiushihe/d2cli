@@ -1,7 +1,6 @@
 import "~src/module/register";
 
 import process from "process";
-import * as R from "ramda";
 
 import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";

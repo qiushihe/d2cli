@@ -24,7 +24,7 @@ export class BungieService {
     const logger = this.getLogger();
 
     const [, bungieApiKey] = this.config.getAppConfig(AppConfigName.BungieApiKey);
-    logger.debug("!!! BungieService#test", "API Key", bungieApiKey!);
+    logger.debug("!!! BungieService#test", "API Key", bungieApiKey);
 
     const [membershipsErr, memberships] = await this.getDestiny2Memberships("28547862");
     if (membershipsErr) {

@@ -46,7 +46,7 @@ export class ConfigService {
       logLevelName = _logLevelName || "";
     }
 
-    let logLevel = (LOG_LEVEL as Record<string, number>)[logLevelName];
+    const logLevel = (LOG_LEVEL as Record<string, number>)[logLevelName];
     if (logLevel === null || logLevel === undefined) {
       logLevelName = "error";
     }

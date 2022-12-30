@@ -4,7 +4,7 @@ enum FrequencyUnit {
 }
 
 type Frequency<T extends FrequencyUnit> = {
-  type: FrequencyUnit;
+  type: T;
 };
 
 enum Weekday {

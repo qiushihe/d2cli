@@ -93,7 +93,7 @@ export class SessionService {
   private async reloadFile(
     sessionId: string
   ): Promise<[Error, null] | [null, StorageFile<SessionData>]> {
-    let filename = `session-${sessionId}.json`;
+    const filename = `session-${sessionId}.json`;
     let sessionFile: StorageFile<SessionData>;
 
     const [readErr, file] = await this.storageService.read<SessionData>(
