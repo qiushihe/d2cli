@@ -12,8 +12,6 @@ import { SessionDataName } from "~src/service/session/session.types";
 
 class OauthReturn {
   async run() {
-    require("dotenv").config({ path: ".env" });
-
     const oauthReturnUrl = new URL(process.argv[2]);
 
     const logger = AppModule.getDefaultInstance()

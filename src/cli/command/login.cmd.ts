@@ -7,6 +7,7 @@ import { base42EncodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
+import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
 
 import { CliCmdDefinition } from "../cli.types";
@@ -32,28 +33,35 @@ export const login: CliCmdDefinition = {
     const config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
 
     const oauthRoot = config.getBungieOauthRoot();
-    const clientId = config.getBungieOauthClientId();
+    const [clientIdErr, clientId] = config.getAppConfig(AppConfigName.BungieOauthClientId);
+    if (clientIdErr) {
+      return logger.loggedError(`Unable to get Bungie OAuth client ID: ${clientIdErr.message}`);
+    }
+    if (!clientId) {
+      return logger.loggedError(`Missing Bungie OAuth client ID`);
+    }
+
     const state: BungieOAuthState = { t: new Date().getTime(), s: context.sessionId };
     const encodedState = base42EncodeString(JSON.stringify(state));
-    logger.info("Done state encoding");
+    logger.debug("Done state encoding");
 
     const oauthUrl = new URL(oauthRoot);
     oauthUrl.searchParams.set("client_id", clientId);
     oauthUrl.searchParams.set("response_type", "code");
     oauthUrl.searchParams.set("state", encodedState);
-    logger.info("Done URL construction");
+    logger.debug("Done URL construction");
 
-    const tsNodeCmd = path.join(context.repoRootPath, "node_modules/.bin/ts-node");
-    const handlerPath = path.join(context.repoRootPath, "src/cli/oauth-return-raw.ts");
+    const handlerPath = path.join(context.repoRootPath, "dist/src/cli/oauth-return-raw.js");
+    logger.debug(`OAuth return raw handler path: ${handlerPath}`);
 
     await ProtocolRegistry.register({
       protocol: "dtwoqdb",
-      command: `${tsNodeCmd} ${handlerPath} ${context.repoRootPath} $_URL_`,
+      command: `node ${handlerPath} ${context.repoRootPath} $_URL_`,
       override: true,
       terminal: true,
       script: true
     });
-    logger.info("Done protocol registration");
+    logger.debug("Done protocol registration");
 
     const oauthUrlString = oauthUrl.toString();
 

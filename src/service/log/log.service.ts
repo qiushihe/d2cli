@@ -1,19 +1,52 @@
-import { bgRed } from "~src/helper/colour.helper";
-import { bgGreen } from "~src/helper/colour.helper";
-import { bgYellow } from "~src/helper/colour.helper";
-import { bgBlue } from "~src/helper/colour.helper";
-import { bgGray } from "~src/helper/colour.helper";
+import { bgBlue, bgGray, bgGreen, bgRed, bgYellow } from "~src/helper/colour.helper";
 import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 
 import { Logger } from "./log.types";
 
-const LOG_LEVEL = {
+export const LOG_LEVEL = {
   error: 100,
   warning: 200,
   info: 300,
   debug: 400
 };
+
+export const errorLogger =
+  (namespace: string, logLevel: number) =>
+  (...args: any[]) => {
+    if (logLevel >= LOG_LEVEL.error) {
+      console.error(`${bgRed(" ERR ")} [${namespace}]`, ...args);
+    }
+  };
+
+export const warningLogger =
+  (namespace: string, logLevel: number) =>
+  (...args: any[]) => {
+    if (logLevel >= LOG_LEVEL.warning) {
+      console.warn(`${bgYellow(" WRN ")} [${namespace}]`, ...args);
+    }
+  };
+export const infoLogger =
+  (namespace: string, logLevel: number) =>
+  (...args: any[]) => {
+    if (logLevel >= LOG_LEVEL.info) {
+      console.log(`${bgGreen(" INF ")} [${namespace}]`, ...args);
+    }
+  };
+
+export const debugLogger =
+  (namespace: string, logLevel: number) =>
+  (...args: any[]) => {
+    if (logLevel >= LOG_LEVEL.debug) {
+      console.log(`${bgBlue(" DBG ")} [${namespace}]`, ...args);
+    }
+  };
+
+export const messageLogger =
+  (namespace: string) =>
+  (...args: any[]) => {
+    console.log(`${bgGray(" MSG ")} [${namespace}]`, ...args);
+  };
 
 export class LogService {
   private readonly config: ConfigService;
@@ -23,41 +56,16 @@ export class LogService {
   }
 
   getLogger(namespace: string): Logger {
-    const logLevel = this.getLogLevel();
+    const logLevel = this.config.getLogLevel();
 
-    const logError = (...args: any[]) => {
-      if (logLevel >= LOG_LEVEL.error) {
-        console.error(`${bgRed(" ERR ")} [${namespace}]`, ...args);
-      }
-    };
-
-    const logWarning = (...args: any[]) => {
-      if (logLevel >= LOG_LEVEL.warning) {
-        console.warn(`${bgYellow(" WRN ")} [${namespace}]`, ...args);
-      }
-    };
-    const logInfo = (...args: any[]) => {
-      if (logLevel >= LOG_LEVEL.info) {
-        console.log(`${bgGreen(" INF ")} [${namespace}]`, ...args);
-      }
-    };
-
-    const logDebug = (...args: any[]) => {
-      if (logLevel >= LOG_LEVEL.debug) {
-        console.log(`${bgBlue(" DBG ")} [${namespace}]`, ...args);
-      }
-    };
-
-    const logMessage = (...args: any[]) => {
-      console.log(`${bgGray(" MSG ")} [${namespace}]`, ...args);
-    };
+    const logError = errorLogger(namespace, logLevel);
 
     return {
       error: logError,
-      warn: logWarning,
-      info: logInfo,
-      debug: logDebug,
-      log: logMessage,
+      warn: warningLogger(namespace, logLevel),
+      info: infoLogger(namespace, logLevel),
+      debug: debugLogger(namespace, logLevel),
+      log: messageLogger(namespace),
       loggedError: (message: string, attrs?: Record<string, any>): Error => {
         logError(message);
 
@@ -70,14 +78,5 @@ export class LogService {
         return err;
       }
     };
-  }
-
-  private getLogLevel(): number {
-    const logLevel = (LOG_LEVEL as Record<string, number>)[this.config.getLogLevel()];
-    if (logLevel !== null && logLevel !== undefined) {
-      return logLevel;
-    } else {
-      return LOG_LEVEL.error;
-    }
   }
 }

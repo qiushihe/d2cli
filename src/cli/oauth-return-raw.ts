@@ -1,10 +1,13 @@
-// IMPORTANT: This file is NOT run within the working directory of the project's repo!
+// ================================================================================================
+// IMPORTANT: This file is NOT run within the root directory of the project's repo!
 //            Therefore, this file MUST NOT import from any other files from the project!
+// ================================================================================================
 
-import { spawn } from "child_process";
+import { spawn } from "cross-spawn";
 import path from "path";
 import * as process from "process";
 
+// TODO: Port app config parsing code to here so this log level and match the app's log level.
 const LOG_LEVEL: string = "info"; // "debug" > "info" > "warning" > "error"
 
 const bgRed = (msg: string) => `\x1b[41m${msg}\x1b[0m`;
@@ -92,11 +95,9 @@ class OauthReturnRaw {
     logger.info(`OAuth return URL successfully parsed`);
     logger.debug(`OAuth return URL: ${oauthReturnUrl}`);
 
-    const tsNodeCli = `${path.join(__dirname, "../../node_modules/.bin/ts-node")}`;
-    const tsNodeCmd = `${tsNodeCli} -r tsconfig-paths/register`;
-    const handlerPath = path.join(__dirname, "./oauth-return.ts");
+    const handlerPath = path.join(workingDir, "dist/src/cli/oauth-return.js");
 
-    const cmd = spawn(`${tsNodeCmd} ${handlerPath} ${oauthReturnUrl}`, {
+    const cmd = spawn(`node ${handlerPath} ${oauthReturnUrl}`, {
       shell: true,
       cwd: workingDir
     });

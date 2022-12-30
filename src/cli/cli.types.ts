@@ -12,5 +12,5 @@ export type CliCmdDefinition = {
     server: repl.REPLServer,
     context: CliRuntimeContext,
     arg?: string
-  ) => void | Promise<void>;
+  ) => void | Promise<void> | Error | null | undefined | Promise<Error | null | undefined>;
 };

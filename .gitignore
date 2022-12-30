@@ -1,13 +1,9 @@
 /node_modules
 /coverage
-/build
+/dist
 
 .DS_Store
 .idea
 
 *.log*
 *.tsbuildinfo
-
-.env
-.env.test
-.fs-storage

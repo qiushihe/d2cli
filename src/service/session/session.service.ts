@@ -15,15 +15,10 @@ import { LoginStatus } from "./session.types";
 export const DEFAULT_SESSION_ID = "default";
 
 export class SessionService {
-  private readonly logger: Logger;
   private readonly config: ConfigService;
   private readonly storageService: IStorageInterface;
 
   constructor() {
-    this.logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("SessionService");
-
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
 
     this.storageService =
@@ -121,5 +116,11 @@ export class SessionService {
 
   private getNowTime(): number {
     return new Date().getTime();
+  }
+
+  private getLogger(): Logger {
+    return AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("SessionService");
   }
 }

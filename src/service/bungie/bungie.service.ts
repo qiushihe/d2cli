@@ -6,6 +6,7 @@ import { BungieApiDestiny2Response } from "~src/service/bungie-api/bungie-api.ty
 import { BungieApiDestiny2Membership } from "~src/service/bungie-api/bungie-api.types";
 import { BungieApiDestiny2Profile } from "~src/service/bungie-api/bungie-api.types";
 import { ConfigService } from "~src/service/config/config.service";
+import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 
@@ -13,32 +14,30 @@ import { Destiny2Membership } from "./bungie.types";
 import { Destiny2Character } from "./bungie.types";
 
 export class BungieService {
-  private readonly logger: Logger;
   private readonly config: ConfigService;
 
   constructor() {
-    this.logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("BungieService");
-
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
   }
 
   async test() {
-    this.logger.debug("!!! BungieService#test", "API Key", this.config.getBungieApiKey());
+    const logger = this.getLogger();
+
+    const [, bungieApiKey] = this.config.getAppConfig(AppConfigName.BungieApiKey);
+    logger.debug("!!! BungieService#test", "API Key", bungieApiKey!);
 
     const [membershipsErr, memberships] = await this.getDestiny2Memberships("28547862");
     if (membershipsErr) {
-      this.logger.debug("!!! membershipsErr", membershipsErr);
+      logger.debug("!!! membershipsErr", membershipsErr);
     } else {
       const membership = memberships[0];
-      this.logger.debug("!!! membership", membership);
+      logger.debug("!!! membership", membership);
 
       const [charactersErr, characters] = await this.getDestiny2Characters(membership);
       if (charactersErr) {
-        this.logger.debug("!!! charactersErr", charactersErr);
+        logger.debug("!!! charactersErr", charactersErr);
       } else {
-        this.logger.debug("!!! characters", characters);
+        logger.debug("!!! characters", characters);
       }
     }
   }
@@ -183,12 +182,17 @@ export class BungieService {
     path: string,
     body: Record<string, unknown> | null
   ): Promise<[Error, null] | [null, Response]> {
+    const [apiKeyErr, apiKey] = this.config.getAppConfig(AppConfigName.BungieApiKey);
+    if (apiKeyErr) {
+      return [apiKeyErr, null];
+    }
+
     try {
       const response = await this.sendRequest(`${this.config.getBungieApiRoot()}${path}`, {
         method,
         "Content-Type": "application/json",
         headers: {
-          "X-API-Key": this.config.getBungieApiKey()
+          "X-API-Key": apiKey
         },
         body: body ? JSON.stringify(body) : undefined
       });
@@ -220,5 +224,11 @@ export class BungieService {
 
   private async sendRequest(url: string, options: any): Promise<Response> {
     return await fetch(url, options);
+  }
+
+  private getLogger(): Logger {
+    return AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("BungieService");
   }
 }

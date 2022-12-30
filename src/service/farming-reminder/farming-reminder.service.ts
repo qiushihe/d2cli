@@ -7,14 +7,9 @@ import { SessionDataName } from "~src/service/session/session.types";
 import { FarmingReminder, FarmingReminderSessionData } from "./farming-reminder.types";
 
 export class FarmingReminderService {
-  private readonly logger: Logger;
   private readonly sessionService: SessionService;
 
   constructor() {
-    this.logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("FarmingReminderService");
-
     this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
   }
 
@@ -95,5 +90,11 @@ export class FarmingReminderService {
 
       return [null, removedReminder];
     }
+  }
+
+  private getLogger(): Logger {
+    return AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("FarmingReminderService");
   }
 }

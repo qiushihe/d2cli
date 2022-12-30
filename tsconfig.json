@@ -1,6 +1,6 @@
 {
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"],
+  "include": ["**/*.ts", "**/*.json"],
+  "exclude": ["build", "node_modules"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
@@ -13,13 +13,13 @@
     "incremental": true,
     "inlineSources": false,
     "isolatedModules": true,
-    "jsx": "preserve",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": ["esnext"],
     "module": "esnext",
     "moduleResolution": "node",
-    "noEmit": true,
+    "noEmit": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
+    "outDir": "dist",
     "paths": {
       "~src/*": ["src/*"],
       "~test/*": ["test/*"],
@@ -34,13 +34,10 @@
     "strictBindCallApply": true,
     "strictNullChecks": true,
     "target": "es5",
-    "typeRoots": [
-      "./type", "./node_modules/@types"],
+    "typeRoots": ["./type", "./node_modules/@types"],
     "types": ["node"]
   },
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs"
-    }
+  "tsc-alias": {
+    "resolveFullPaths": true
   }
 }
