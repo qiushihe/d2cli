@@ -29,7 +29,7 @@ export class FsStorageService implements IStorageInterface {
       return [storageRootErr, null];
     }
 
-    const rawFilename = await sha1Digest(filePath);
+    const rawFilename = sha1Digest(filePath);
     const rawFilePath = path.resolve(
       this.getStorageRootPath(),
       _ns(namespace, `${rawFilename}.json`)
@@ -60,7 +60,7 @@ export class FsStorageService implements IStorageInterface {
       return storageRootErr;
     }
 
-    const rawFilename = await sha1Digest(file.filename);
+    const rawFilename = sha1Digest(file.filename);
     const rawFilePath = path.resolve(
       this.getStorageRootPath(),
       _ns(namespace, `${rawFilename}.json`)
