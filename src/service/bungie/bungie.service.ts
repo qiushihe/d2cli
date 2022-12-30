@@ -6,32 +6,39 @@ import { BungieApiDestiny2Response } from "~src/service/bungie-api/bungie-api.ty
 import { BungieApiDestiny2Membership } from "~src/service/bungie-api/bungie-api.types";
 import { BungieApiDestiny2Profile } from "~src/service/bungie-api/bungie-api.types";
 import { ConfigService } from "~src/service/config/config.service";
+import { LogService } from "~src/service/log/log.service";
+import { Logger } from "~src/service/log/log.types";
 
 import { Destiny2Membership } from "./bungie.types";
 import { Destiny2Character } from "./bungie.types";
 
 export class BungieService {
+  private readonly logger: Logger;
   private readonly config: ConfigService;
 
   constructor() {
+    this.logger = AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("BungieService");
+
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
   }
 
   async test() {
-    console.log("!!! BungieService#test", "API Key", this.config.getBungieApiKey());
+    this.logger.debug("!!! BungieService#test", "API Key", this.config.getBungieApiKey());
 
     const [membershipsErr, memberships] = await this.getDestiny2Memberships("28547862");
     if (membershipsErr) {
-      console.log("!!! membershipsErr", membershipsErr);
+      this.logger.debug("!!! membershipsErr", membershipsErr);
     } else {
       const membership = memberships[0];
-      console.log("!!! membership", membership);
+      this.logger.debug("!!! membership", membership);
 
       const [charactersErr, characters] = await this.getDestiny2Characters(membership);
       if (charactersErr) {
-        console.log("!!! charactersErr", charactersErr);
+        this.logger.debug("!!! charactersErr", charactersErr);
       } else {
-        console.log("!!! characters", characters);
+        this.logger.debug("!!! characters", characters);
       }
     }
   }

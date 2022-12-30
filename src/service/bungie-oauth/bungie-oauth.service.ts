@@ -4,13 +4,20 @@ import fetch, { Response } from "node-fetch";
 import { AppModule } from "~src/module/app.module";
 import { BungieApiOAuthAccessToken } from "~src/service/bungie-api/bungie-api.types";
 import { ConfigService } from "~src/service/config/config.service";
+import { LogService } from "~src/service/log/log.service";
+import { Logger } from "~src/service/log/log.types";
 
 import { BungieOAuthAccessToken } from "./bungie-oauth.types";
 
 export class BungieOauthService {
+  private readonly logger: Logger;
   private readonly config: ConfigService;
 
   constructor() {
+    this.logger = AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("BungieOauthService");
+
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
   }
 

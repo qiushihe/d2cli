@@ -1,7 +1,10 @@
-import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
+export enum SessionDataName {
+  BungieAccessToken = "bungieAccessToken",
+  FarmingReminder = "farmingReminder"
+}
 
 export type SessionData = {
-  bungleAccessToken?: BungieOAuthAccessToken | null;
+  [key: string]: any;
 };
 
 export type LoginStatus = {

@@ -10,6 +10,8 @@ import { writeFile as fsWriteFile } from "~src/helper/fs.helper";
 import { makeDirectory as fsMakeDirectory } from "~src/helper/fs.helper";
 import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
+import { LogService } from "~src/service/log/log.service";
+import { Logger } from "~src/service/log/log.types";
 
 import { IStorageInterface } from "./storage.types";
 import { StorageFile } from "./storage.types";
@@ -18,9 +20,14 @@ import { StorageNamespace } from "./storage.types";
 const _ns = (namespace: string, filename: string) => `${namespace}-${filename}`;
 
 export class FsStorageService implements IStorageInterface {
+  private readonly logger: Logger;
   private readonly config: ConfigService;
 
   constructor() {
+    this.logger = AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("FsStorageService");
+
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
   }
 

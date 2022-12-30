@@ -6,7 +6,9 @@ import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
+import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
+import { SessionDataName } from "~src/service/session/session.types";
 
 class OauthReturn {
   async run() {
@@ -14,14 +16,19 @@ class OauthReturn {
 
     const oauthReturnUrl = new URL(process.argv[2]);
 
+    const logger = AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("cli:OauthReturn");
+
     const [authorizationCode, encodedState] = R.pipe(
       R.split("/"),
       R.filter(R.complement(R.isEmpty)),
       R.remove(0, 2)
     )(`${oauthReturnUrl.host}${oauthReturnUrl.pathname}`);
 
-    console.log(`[OauthReturn] Authorization Code: ${authorizationCode}`);
-    console.log(`[OauthReturn] Encoded State: ${encodedState}`);
+    logger.info("Extracted authorization code and encoded state");
+    logger.debug(`Authorization Code: ${authorizationCode}`);
+    logger.debug(`Encoded State: ${encodedState}`);
 
     const state = JSON.parse(base42DecodeString(encodedState)) as BungieOAuthState;
     const { t: timestamp, s: sessionId } = state;
@@ -34,22 +41,26 @@ class OauthReturn {
       timestamp
     );
     if (accessTokenErr) {
-      console.error(`[OauthReturn] Error getting access token: ${accessTokenErr.message}`);
+      logger.error(`Error getting access token: ${accessTokenErr.message}`);
     } else {
       const sessionService =
         AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
       const [reloadSessionErr] = await sessionService.reload(sessionId);
       if (reloadSessionErr) {
-        console.error(`[OauthReturn] Unable to reload session: ${reloadSessionErr.message}`);
+        logger.error(`Unable to reload session: ${reloadSessionErr.message}`);
       } else {
-        console.log(`[OauthReturn] Session reloaded`);
+        logger.info(`Session reloaded`);
 
-        const setTokenErr = await sessionService.setBungieAccessToken(sessionId, accessToken);
+        const setTokenErr = await sessionService.setData(
+          sessionId,
+          SessionDataName.BungieAccessToken,
+          accessToken
+        );
         if (setTokenErr) {
-          console.error(`[OauthReturn] Unable to store access token: ${setTokenErr.message}`);
+          logger.error(`Unable to store access token: ${setTokenErr.message}`);
         } else {
-          console.log(`[OauthReturn] Access token stored`);
+          logger.info(`Access token stored`);
         }
       }
     }

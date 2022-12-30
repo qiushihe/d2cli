@@ -3,6 +3,8 @@ import * as path from "path";
 import { BungieService } from "~src/service/bungie/bungie.service";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { ConfigService } from "~src/service/config/config.service";
+import { FarmingReminderService } from "~src/service/farming-reminder/farming-reminder.service";
+import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { FsStorageService } from "~src/service/storage/fs-storage.service";
 
@@ -16,7 +18,9 @@ const MODULE: Record<string, new () => any> = {
   BungieService,
   BungieOauthService,
   SessionService,
-  FsStorageService
+  FsStorageService,
+  FarmingReminderService,
+  LogService
 };
 
 const appModule = AppModule.getDefaultInstance();

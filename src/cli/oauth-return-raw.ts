@@ -5,6 +5,63 @@ import { spawn } from "child_process";
 import path from "path";
 import * as process from "process";
 
+const LOG_LEVEL: string = "info"; // "debug" > "info" > "warning" > "error"
+
+const bgRed = (msg: string) => `\x1b[41m${msg}\x1b[0m`;
+const bgGreen = (msg: string) => `\x1b[42m${msg}\x1b[0m`;
+const bgYellow = (msg: string) => `\x1b[43m${msg}\x1b[0m`;
+const bgBlue = (msg: string) => `\x1b[44m${msg}\x1b[0m`;
+const bgGray = (msg: string) => `\x1b[100m${msg}\x1b[0m`;
+
+const getLogger = (namespace: string) => {
+  let logLevel = 100;
+
+  if (LOG_LEVEL === "error") {
+    logLevel = 100;
+  } else if (LOG_LEVEL === "warning") {
+    logLevel = 200;
+  } else if (LOG_LEVEL === "info") {
+    logLevel = 300;
+  } else if (LOG_LEVEL === "debug") {
+    logLevel = 400;
+  }
+
+  const logError = (...args: any[]) => {
+    if (logLevel >= 100) {
+      console.error(`${bgRed(" ERR ")} [${namespace}]`, ...args);
+    }
+  };
+
+  const logWarning = (...args: any[]) => {
+    if (logLevel >= 200) {
+      console.warn(`${bgYellow(" WRN ")} [${namespace}]`, ...args);
+    }
+  };
+  const logInfo = (...args: any[]) => {
+    if (logLevel >= 300) {
+      console.log(`${bgGreen(" INF ")} [${namespace}]`, ...args);
+    }
+  };
+
+  const logDebug = (...args: any[]) => {
+    if (logLevel >= 400) {
+      console.log(`${bgBlue(" DBG ")} [${namespace}]`, ...args);
+    }
+  };
+
+  const logMessage = (...args: any[]) => {
+    console.log(`${bgGray(" MSG ")} [${namespace}]`, ...args);
+  };
+
+  return {
+    error: logError,
+    warn: logWarning,
+    info: logInfo,
+    debug: logDebug,
+    log: logMessage
+  };
+};
+
 const promiseWithResolve = <T>(): [Promise<T>, (value: T) => void] => {
   let resolvePromise: (value: T) => void;
   const promise = new Promise<T>((resolve) => {
@@ -15,11 +72,13 @@ const promiseWithResolve = <T>(): [Promise<T>, (value: T) => void] => {
 
 class OauthReturnRaw {
   async run(): Promise<number> {
+    const logger = getLogger("cli:OauthReturnRaw");
     const workingDir = process.argv[2];
     const oauthReturnRawUrl = new URL(process.argv[3]);
 
-    console.log(`[OauthReturnRaw] Working Directory: ${workingDir}`);
-    console.log(`[OauthReturnRaw] OAuth Return Raw URL: ${oauthReturnRawUrl}`);
+    logger.log(`Handling OAuth return ...`);
+    logger.debug(`Working directory: ${workingDir}`);
+    logger.debug(`OAuth return raw URL: ${oauthReturnRawUrl}`);
 
     const oauthReturnUrl = new URL(`${oauthReturnRawUrl.protocol}//test`);
     oauthReturnUrl.host = oauthReturnRawUrl.host;
@@ -30,7 +89,8 @@ class OauthReturnRaw {
       .map((part) => part.split("=", 2)[1])
       .join("/")}`;
 
-    console.log(`[OauthReturnRaw] OAuth Return URL: ${oauthReturnUrl}`);
+    logger.info(`OAuth return URL successfully parsed`);
+    logger.debug(`OAuth return URL: ${oauthReturnUrl}`);
 
     const tsNodeCli = `${path.join(__dirname, "../../node_modules/.bin/ts-node")}`;
     const tsNodeCmd = `${tsNodeCli} -r tsconfig-paths/register`;
@@ -42,8 +102,9 @@ class OauthReturnRaw {
     });
 
     cmd.stdout.on("data", process.stdout.write.bind(process.stdout));
-
     cmd.stderr.on("data", process.stderr.write.bind(process.stderr));
+
+    logger.info(`OAuth return handler spawned`);
 
     const [cmdPromise, resolveCmdPromise] = promiseWithResolve<number>();
 
@@ -53,13 +114,11 @@ class OauthReturnRaw {
 
     const cmdExitCode = await cmdPromise;
     if (cmdExitCode === 0) {
-      console.log("[OauthReturnRaw] OAuth Return Handler completed successfully");
-      console.log("[OauthReturnRaw] You may now close this window");
+      logger.log(`OAuth return handler completed successfully`);
+      logger.log(`You may now close this window`);
     } else {
-      console.log(
-        `[OauthReturnRaw] OAuth Return Handler did not complete successfully (code: ${cmdExitCode})`
-      );
-      console.log("[OauthReturnRaw] You can probably still close this window (question mark?)");
+      logger.warn(`OAuth return handler did not complete successfully (code: ${cmdExitCode})`);
+      logger.warn(`You can probably still close this window (question mark?)`);
     }
 
     return cmdExitCode;

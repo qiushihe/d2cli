@@ -1,35 +1,46 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
+import { LogService } from "~src/service/log/log.service";
+import { Logger } from "~src/service/log/log.types";
 import { FsStorageService } from "~src/service/storage/fs-storage.service";
 import { IStorageInterface } from "~src/service/storage/storage.types";
 import { StorageNamespace } from "~src/service/storage/storage.types";
 import { StorageFile } from "~src/service/storage/storage.types";
 
 import { SessionData } from "./session.types";
+import { SessionDataName } from "./session.types";
 import { LoginStatus } from "./session.types";
 
 export const DEFAULT_SESSION_ID = "default";
 
 export class SessionService {
+  private readonly logger: Logger;
   private readonly config: ConfigService;
   private readonly storageService: IStorageInterface;
 
   constructor() {
+    this.logger = AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("SessionService");
+
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+
     this.storageService =
       AppModule.getDefaultInstance().resolve<FsStorageService>("FsStorageService");
   }
 
   async getLoginStatus(sessionId: string): Promise<[Error, null] | [null, LoginStatus]> {
-    const [reloadErr, sessionData] = await this.reload(sessionId);
-    if (reloadErr) {
-      return [reloadErr, null];
-    }
-
     const status: LoginStatus = { isLoggedIn: false, isLoginExpired: false };
 
-    const accessToken = sessionData.bungleAccessToken;
+    const [accessTokenErr, accessToken] = await this.getData<BungieOAuthAccessToken>(
+      sessionId,
+      SessionDataName.BungieAccessToken
+    );
+    if (accessTokenErr) {
+      return [accessTokenErr, null];
+    }
+
     if (accessToken) {
       status.isLoggedIn = true;
 
@@ -47,16 +58,25 @@ export class SessionService {
     return [null, status];
   }
 
-  async setBungieAccessToken(
+  async getData<T>(
     sessionId: string,
-    accessToken: BungieOAuthAccessToken | null
-  ): Promise<Error | null> {
+    name: SessionDataName
+  ): Promise<[Error, null] | [null, T | null]> {
+    const [reloadErr, sessionFile] = await this.reloadFile(sessionId);
+    if (reloadErr) {
+      return [reloadErr, null];
+    }
+
+    return [null, sessionFile.content[name] as T | null];
+  }
+
+  async setData(sessionId: string, name: SessionDataName, data: any): Promise<Error | null> {
     const [reloadErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadErr) {
       return reloadErr;
     }
 
-    sessionFile.content.bungleAccessToken = accessToken;
+    sessionFile.content[name] = data;
 
     const writeErr = await this.storageService.write(StorageNamespace.SESSIONS, sessionFile);
     if (writeErr) {

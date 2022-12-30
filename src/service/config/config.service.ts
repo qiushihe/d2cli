@@ -38,7 +38,7 @@ export class ConfigService {
     return process.env.BUNGIE_OAUTH_CLIENT_SECRET || "";
   }
 
-  getHttpBasicAuthCredentials(): string {
-    return process.env.HTTP_BASIC_AUTH_CREDENTIALS || "";
+  getLogLevel(): string {
+    return process.env.LOG_LEVEL || "";
   }
 }
