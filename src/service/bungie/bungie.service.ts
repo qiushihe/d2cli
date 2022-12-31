@@ -6,7 +6,6 @@ import { BungieApiDestiny2ManifestComponent } from "~src/service/bungie-manifest
 import { BungieApiDestiny2GenderDefinition } from "~src/service/bungie-manifest/bungie-manifest.types";
 import { BungieApiDestiny2RaceDefinition } from "~src/service/bungie-manifest/bungie-manifest.types";
 import { BungieApiDestiny2ClassDefinition } from "~src/service/bungie-manifest/bungie-manifest.types";
-import { ConfigService } from "~src/service/config/config.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 
@@ -17,12 +16,10 @@ import { Destiny2Character } from "./bungie.types";
 import { Destiny2Membership } from "./bungie.types";
 
 export class BungieService {
-  private readonly config: ConfigService;
   private readonly bungieApiService: BungieApiService;
   private readonly bungieManifestService: BungieManifestService;
 
   constructor() {
-    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
     this.bungieApiService =
       AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
     this.bungieManifestService =

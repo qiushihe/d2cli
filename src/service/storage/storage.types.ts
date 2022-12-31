@@ -1,5 +1,6 @@
 export enum StorageNamespace {
-  SESSIONS = "SESSIONS"
+  SESSIONS = "SESSIONS",
+  CACHE = "CACHE"
 }
 
 export type StorageFile<T> = {

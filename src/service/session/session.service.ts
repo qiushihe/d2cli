@@ -1,6 +1,5 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
-import { ConfigService } from "~src/service/config/config.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { FsStorageService } from "~src/service/storage/fs-storage.service";
@@ -15,12 +14,9 @@ import { LoginStatus } from "./session.types";
 export const DEFAULT_SESSION_ID = "default";
 
 export class SessionService {
-  private readonly config: ConfigService;
   private readonly storageService: IStorageInterface;
 
   constructor() {
-    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
-
     this.storageService =
       AppModule.getDefaultInstance().resolve<FsStorageService>("FsStorageService");
   }
