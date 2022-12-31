@@ -1,7 +1,4 @@
-import "~src/module/register";
-
-import process from "process";
-
+import { CommandDefinition } from "~src/cli/d2qdb.types";
 import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
@@ -10,18 +7,22 @@ import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
 
-class OauthReturn {
-  async run() {
+const cmd: CommandDefinition = {
+  description: "Handler of Bungie.net OAuth return callback",
+  arguments: [
+    {
+      name: "url",
+      description: "Bungie.net OAuth return URL",
+      isRequired: true
+    }
+  ],
+  action: async (args) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("cli:OauthReturn");
+      .getLogger("cmd:auth:oauth-return");
 
-    const workingDir = process.argv[2];
-    process.chdir(workingDir);
-    logger.debug(`!!! Working directory changed to: ${workingDir}`);
-
-    const oauthReturnUrl = new URL(process.argv[3]);
-    logger.debug(`!!! OAuth return URL: ${oauthReturnUrl}`);
+    const oauthReturnUrl = new URL(args[0]);
+    logger.debug(`OAuth return URL: ${oauthReturnUrl}`);
 
     const authorizationCode = oauthReturnUrl.searchParams.get("code") || "";
     const encodedState = oauthReturnUrl.searchParams.get("state") || "";
@@ -60,12 +61,12 @@ class OauthReturn {
         if (setTokenErr) {
           logger.error(`Unable to store access token: ${setTokenErr.message}`);
         } else {
-          logger.log(`Access token stored`);
+          logger.log(`Successfully logged into Bungie.net`);
           logger.log(`You may now close this window`);
         }
       }
     }
   }
-}
+};
 
-new OauthReturn().run().then();
+export default cmd;

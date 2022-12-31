@@ -13,12 +13,13 @@
     "test:lint": "eslint --ext .js --ext .ts ./src ./test ./type",
     "test:lint:fix": "eslint --ext .js --ext .ts --fix ./src ./test ./type",
     "test:unit": "jest --config jest.config.json --runInBand --logHeapUsage",
-    "console": "node dist/src/cli/console.js"
+    "console": "npm-run-all build console:run",
+    "console:run": "node dist/src/cli/console.js"
   },
   "dependencies": {
     "base-x": "^4.0.0",
     "base64-js": "^1.5.1",
-    "minimist": "^1.2.7",
+    "commander": "^9.4.1",
     "node-fetch": "^2.6.7",
     "open-editor": "^4.0.0",
     "opener": "^1.5.2",

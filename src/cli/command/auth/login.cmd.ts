@@ -1,34 +1,37 @@
-import minimist from "minimist";
 import opener from "opener";
 import path from "path";
 import * as ProtocolRegistry from "protocol-registry";
 
+import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { getRepoRootPath } from "~src/helper/path.helper";
 import { base42EncodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
+import { DEFAULT_SESSION_ID } from "~src/service/session/session.service";
 
-import { CliCmdDefinition } from "../cli.types";
-
-type LoginCmdArgv = {
-  noOpen: boolean;
+type CmdOptions = {
+  session: string;
 };
 
-export const login: CliCmdDefinition = {
-  description: "Login with Bungie.net",
-  action: async (server, context, arg) => {
-    const { noOpen } = minimist<LoginCmdArgv>((arg || "").split(" "), {
-      string: [],
-      boolean: ["noOpen"],
-      default: { noOpen: false },
-      alias: { noOpen: ["no-open", "no"] }
-    });
-
+const cmd: CommandDefinition = {
+  description: "Log into Bungie.net",
+  options: [
+    {
+      flags: ["s", "session <id>"],
+      description: "D2QDB session ID",
+      defaultValue: DEFAULT_SESSION_ID
+    }
+  ],
+  action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("cmd:login");
+      .getLogger("cmd:auth:login");
+
+    const { session: sessionId } = opts as CmdOptions;
+    logger.debug(`Session ID: ${sessionId}`);
 
     const config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
 
@@ -41,7 +44,7 @@ export const login: CliCmdDefinition = {
       return logger.loggedError(`Missing Bungie OAuth client ID`);
     }
 
-    const state: BungieOAuthState = { t: new Date().getTime(), s: context.sessionId };
+    const state: BungieOAuthState = { t: new Date().getTime(), s: sessionId };
     const encodedState = base42EncodeString(JSON.stringify(state));
     logger.debug("Done state encoding");
 
@@ -51,12 +54,12 @@ export const login: CliCmdDefinition = {
     oauthUrl.searchParams.set("state", encodedState);
     logger.debug("Done URL construction");
 
-    const handlerPath = path.join(context.repoRootPath, "dist/src/cli/oauth-return.js");
+    const handlerPath = path.join(getRepoRootPath(), "dist/src/cli/d2qdb.js");
     logger.debug(`OAuth return handler path: ${handlerPath}`);
 
     await ProtocolRegistry.register({
       protocol: "dtwoqdb",
-      command: `node ${handlerPath} ${context.repoRootPath} $_URL_`,
+      command: `node ${handlerPath} auth oauth-return $_URL_`,
       override: true,
       terminal: true,
       script: true
@@ -64,12 +67,11 @@ export const login: CliCmdDefinition = {
     logger.debug("Done protocol registration");
 
     const oauthUrlString = oauthUrl.toString();
+    logger.info(`Bungie.net login URL: ${oauthUrlString}`);
 
-    if (noOpen) {
-      logger.log(`Bungie.net login URL: ${oauthUrlString}`);
-    } else {
-      logger.info(`Bungie.net login URL: ${oauthUrlString}`);
-      opener(oauthUrlString);
-    }
+    logger.log(`Opening a browser window to log into Bungie.net ...`);
+    opener(oauthUrlString);
   }
 };
+
+export default cmd;

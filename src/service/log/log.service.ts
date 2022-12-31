@@ -1,4 +1,4 @@
-import { bgBlue, bgGray, bgGreen, bgRed, bgYellow } from "~src/helper/colour.helper";
+import { bgBlue, bgGreen, bgRed, bgYellow } from "~src/helper/colour.helper";
 import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 
@@ -43,9 +43,9 @@ export const debugLogger =
   };
 
 export const messageLogger =
-  (namespace: string) =>
+  () =>
   (...args: any[]) => {
-    console.log(`${bgGray(" MSG ")} [${namespace}]`, ...args);
+    console.log(...args);
   };
 
 export class LogService {
@@ -65,7 +65,7 @@ export class LogService {
       warn: warningLogger(namespace, logLevel),
       info: infoLogger(namespace, logLevel),
       debug: debugLogger(namespace, logLevel),
-      log: messageLogger(namespace),
+      log: messageLogger(),
       loggedError: (message: string, attrs?: Record<string, any>): Error => {
         logError(message);
 
