@@ -48,5 +48,8 @@
     "tsc-alias": "^1.8.2",
     "tsconfig-paths": "^4.1.1",
     "typescript": "^4.9.4"
+  },
+  "bin": {
+    "d2qdb": "bin/d2qdb.js"
   }
 }
