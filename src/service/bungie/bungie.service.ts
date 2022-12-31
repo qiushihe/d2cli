@@ -1,11 +1,11 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
-import { BungieManifestService } from "~src/service/bungie-manifest/bungie-manifest.service";
-import { BungieApiDestiny2ManifestLanguage } from "~src/service/bungie-manifest/bungie-manifest.types";
-import { BungieApiDestiny2ManifestComponent } from "~src/service/bungie-manifest/bungie-manifest.types";
-import { BungieApiDestiny2GenderDefinition } from "~src/service/bungie-manifest/bungie-manifest.types";
-import { BungieApiDestiny2RaceDefinition } from "~src/service/bungie-manifest/bungie-manifest.types";
-import { BungieApiDestiny2ClassDefinition } from "~src/service/bungie-manifest/bungie-manifest.types";
+import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
+import { BungieApiDestiny2ManifestLanguage } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { BungieApiDestiny2ManifestComponent } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { BungieApiDestiny2GenderDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { BungieApiDestiny2RaceDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { BungieApiDestiny2ClassDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 
@@ -17,13 +17,13 @@ import { Destiny2Membership } from "./bungie.types";
 
 export class BungieService {
   private readonly bungieApiService: BungieApiService;
-  private readonly bungieManifestService: BungieManifestService;
+  private readonly destiny2ManifestService: Destiny2ManifestService;
 
   constructor() {
     this.bungieApiService =
       AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
-    this.bungieManifestService =
-      AppModule.getDefaultInstance().resolve<BungieManifestService>("BungieManifestService");
+    this.destiny2ManifestService =
+      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
   }
 
   async test() {
@@ -69,7 +69,7 @@ export class BungieService {
         }
 
         const [genderDefinitionErr, genderDefinition] =
-          await this.bungieManifestService.getDestiny2ManifestComponent<BungieApiDestiny2GenderDefinition>(
+          await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2GenderDefinition>(
             BungieApiDestiny2ManifestLanguage.English,
             BungieApiDestiny2ManifestComponent.GenderDefinition
           );
@@ -78,7 +78,7 @@ export class BungieService {
         }
 
         const [raceDefinitionErr, raceDefinition] =
-          await this.bungieManifestService.getDestiny2ManifestComponent<BungieApiDestiny2RaceDefinition>(
+          await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2RaceDefinition>(
             BungieApiDestiny2ManifestLanguage.English,
             BungieApiDestiny2ManifestComponent.RaceDefinition
           );
@@ -87,7 +87,7 @@ export class BungieService {
         }
 
         const [classDefinitionErr, classDefinition] =
-          await this.bungieManifestService.getDestiny2ManifestComponent<BungieApiDestiny2ClassDefinition>(
+          await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2ClassDefinition>(
             BungieApiDestiny2ManifestLanguage.English,
             BungieApiDestiny2ManifestComponent.ClassDefinition
           );

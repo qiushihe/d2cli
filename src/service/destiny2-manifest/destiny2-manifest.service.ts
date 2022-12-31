@@ -5,14 +5,14 @@ import { ConfigService } from "~src/service/config/config.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 
-import { BungieApiDestiny2Manifest } from "./bungie-manifest.types";
-import { BungieApiDestiny2ManifestLanguage } from "./bungie-manifest.types";
-import { BungieApiDestiny2ManifestComponent } from "./bungie-manifest.types";
+import { BungieApiDestiny2Manifest } from "./destiny2-manifest.types";
+import { BungieApiDestiny2ManifestLanguage } from "./destiny2-manifest.types";
+import { BungieApiDestiny2ManifestComponent } from "./destiny2-manifest.types";
 
 // Manifest/Components cache expires in 24 hours
 const CACHE_EXPIRY = 1000 * 60 * 60 * 24;
 
-export class BungieManifestService {
+export class Destiny2ManifestService {
   private readonly config: ConfigService;
   private readonly bungieApiService: BungieApiService;
   private readonly cacheService: CacheService;
@@ -188,6 +188,6 @@ export class BungieManifestService {
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("BungieManifestService");
+      .getLogger("Destiny2ManifestService");
   }
 }
