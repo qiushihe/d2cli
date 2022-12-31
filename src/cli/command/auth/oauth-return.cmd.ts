@@ -2,6 +2,7 @@ import { CommandDefinition } from "~src/cli/d2qdb.types";
 import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
+import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
@@ -53,7 +54,7 @@ const cmd: CommandDefinition = {
       } else {
         logger.info(`Session reloaded`);
 
-        const setTokenErr = await sessionService.setData(
+        const setTokenErr = await sessionService.setData<BungieOAuthAccessToken>(
           sessionId,
           SessionDataName.BungieAccessToken,
           accessToken

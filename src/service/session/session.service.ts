@@ -49,6 +49,22 @@ export class SessionService {
     return [null, status];
   }
 
+  async getBungieNetMembershipId(sessionId: string): Promise<[Error, null] | [null, string]> {
+    const [accessTokenErr, accessToken] = await this.getData<BungieOAuthAccessToken>(
+      sessionId,
+      SessionDataName.BungieAccessToken
+    );
+    if (accessTokenErr) {
+      return [accessTokenErr, null];
+    }
+
+    if (!accessToken) {
+      return [new Error(`Missing Bungie OAuth access token for session: ${sessionId}`), null];
+    }
+
+    return [null, accessToken.membershipId];
+  }
+
   async getData<T>(
     sessionId: string,
     name: SessionDataName
@@ -61,7 +77,7 @@ export class SessionService {
     return [null, sessionFile.content[name] as T | null];
   }
 
-  async setData(sessionId: string, name: SessionDataName, data: any): Promise<Error | null> {
+  async setData<T>(sessionId: string, name: SessionDataName, data: T): Promise<Error | null> {
     const [reloadErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadErr) {
       return reloadErr;

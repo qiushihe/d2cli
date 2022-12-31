@@ -1,56 +1,54 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
+import { BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { BungieApiDestiny2ManifestLanguage } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { BungieApiDestiny2ManifestComponent } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { BungieApiDestiny2GenderDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { BungieApiDestiny2RaceDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { BungieApiDestiny2ClassDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
+import { BungieApiDestiny2Profile } from "~src/service/destiny2-profile/destiny2-profile.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 
-import { BungieApiComponentType } from "./bungie.types";
-import { BungieApiDestiny2Membership } from "./bungie.types";
-import { BungieApiDestiny2Profile } from "./bungie.types";
-import { Destiny2Character } from "./bungie.types";
-import { Destiny2Membership } from "./bungie.types";
+import { Destiny2Character } from "./destiny2-character.types";
 
-export class BungieService {
+export class Destiny2CharacterService {
   private readonly bungieApiService: BungieApiService;
   private readonly destiny2ManifestService: Destiny2ManifestService;
+  private readonly destiny2MembershipService: Destiny2MembershipService;
 
   constructor() {
     this.bungieApiService =
       AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
     this.destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    this.destiny2MembershipService =
+      AppModule.getDefaultInstance().resolve<Destiny2MembershipService>(
+        "Destiny2MembershipService"
+      );
   }
 
-  async test() {
-    const logger = this.getLogger();
-
-    const [membershipsErr, memberships] = await this.getDestiny2Memberships("28547862");
-    if (membershipsErr) {
-      logger.debug("!!! membershipsErr", membershipsErr);
-    } else {
-      const membership = memberships[0];
-      logger.debug("!!! membership", membership);
-
-      const [charactersErr, characters] = await this.getDestiny2Characters(membership);
-      if (charactersErr) {
-        logger.debug("!!! charactersErr", charactersErr);
-      } else {
-        logger.debug("!!! characters", characters);
-      }
+  async getBungieNetDestiny2Characters(
+    bungieNetMembershipId: string
+  ): Promise<[Error, null] | [null, Destiny2Character[]]> {
+    const [membershipErr, membership] =
+      await this.destiny2MembershipService.getBungieNetDestiny2Membership(bungieNetMembershipId);
+    if (membershipErr) {
+      return [membershipErr, null];
     }
+
+    return await this.getDestiny2Characters(membership.type, membership.id);
   }
 
   async getDestiny2Characters(
-    membership: Destiny2Membership
+    membershipType: number,
+    membershipId: string
   ): Promise<[Error, null] | [null, Destiny2Character[]]> {
     const [profileErr, profileRes] = await this.bungieApiService.sendApiRequest(
       "GET",
-      `/Destiny2/${membership.type}/Profile/${membership.id}?components=${BungieApiComponentType.Characters}`,
+      `/Destiny2/${membershipType}/Profile/${membershipId}?components=${BungieApiComponentType.Characters}`,
       null
     );
     if (profileErr) {
@@ -117,75 +115,9 @@ export class BungieService {
     }
   }
 
-  async getDestiny2Memberships(
-    bungieNetMembershipId: string
-  ): Promise<[Error, null] | [null, Destiny2Membership[]]> {
-    const [bungieNetUserErr, bungieNetUserRes] = await this.bungieApiService.sendApiRequest(
-      "GET",
-      `/User/GetBungieNetUserById/${bungieNetMembershipId}`,
-      null
-    );
-    if (bungieNetUserErr) {
-      return [bungieNetUserErr, null];
-    }
-
-    const [bungieNetUserJsonErr, bungieNetUserJson] =
-      await this.bungieApiService.extractApiResponse(bungieNetUserRes);
-    if (bungieNetUserJsonErr) {
-      return [bungieNetUserJsonErr, null];
-    }
-
-    const uniqueName = bungieNetUserJson.Response.uniqueName.split("#", 2);
-
-    const [searchDestinyPlayersErr, searchDestinyPlayersRes] =
-      await this.bungieApiService.sendApiRequest(
-        "POST",
-        `/Destiny2/SearchDestinyPlayerByBungieName/All`,
-        { displayName: uniqueName[0], displayNameCode: uniqueName[1] }
-      );
-    if (searchDestinyPlayersErr) {
-      return [searchDestinyPlayersErr, null];
-    }
-
-    const [searchDestinyPlayersJsonErr, searchDestinyPlayersJson] =
-      await this.bungieApiService.extractApiResponse<BungieApiDestiny2Membership[]>(
-        searchDestinyPlayersRes
-      );
-    if (searchDestinyPlayersJsonErr) {
-      return [searchDestinyPlayersJsonErr, null];
-    }
-    if (!searchDestinyPlayersJson.Response) {
-      return [
-        new Error(
-          `Missing response in Destiny 2 players search result: ${JSON.stringify(
-            searchDestinyPlayersJson
-          )}`
-        ),
-        null
-      ];
-    }
-
-    const effectiveMemberships = searchDestinyPlayersJson.Response.filter((membership) => {
-      return membership.applicableMembershipTypes.includes(membership.crossSaveOverride);
-    });
-
-    const destiny2Memberships = effectiveMemberships.map<Destiny2Membership>((membership) => {
-      return {
-        type: membership.membershipType,
-        id: membership.membershipId,
-        displayName: [
-          membership.bungieGlobalDisplayName,
-          membership.bungieGlobalDisplayNameCode
-        ].join("#")
-      };
-    });
-
-    return [null, destiny2Memberships];
-  }
-
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("BungieService");
+      .getLogger("Destiny2CharacterService");
   }
 }

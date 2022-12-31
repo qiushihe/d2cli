@@ -1,5 +1,6 @@
 import { CommandDefinition } from "~src/cli/d2qdb.types";
 import { AppModule } from "~src/module/app.module";
+import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
@@ -22,7 +23,7 @@ const cmd: CommandDefinition = {
 
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-    const clearTokenErr = await sessionService.setData(
+    const clearTokenErr = await sessionService.setData<BungieOAuthAccessToken | null>(
       sessionId,
       SessionDataName.BungieAccessToken,
       null

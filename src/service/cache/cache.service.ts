@@ -34,10 +34,10 @@ export class CacheService {
     }
   }
 
-  async set(
+  async set<T>(
     namespace: string,
     key: string,
-    value: any,
+    value: T,
     expiresInMilliseconds: number | null
   ): Promise<Error | null> {
     const [reloadFileErr, cacheFile] = await this.reloadFile(namespace);
