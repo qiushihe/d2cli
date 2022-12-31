@@ -2,21 +2,15 @@ import { CommandDefinition } from "~src/cli/d2qdb.types";
 import { AppModule } from "~src/module/app.module";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
-import { DEFAULT_SESSION_ID } from "~src/service/session/session.service";
 
-type CmdOptions = {
-  session: string;
-};
+import { SessionCommandOptions } from "../command.types";
+import { sessionIdOption } from "../session-id.option";
+
+type CmdOptions = SessionCommandOptions & { _: never };
 
 const cmd: CommandDefinition = {
   description: "Display authentication status with Bungie.net",
-  options: [
-    {
-      flags: ["s", "session <id>"],
-      description: "D2QDB session ID",
-      defaultValue: DEFAULT_SESSION_ID
-    }
-  ],
+  options: [sessionIdOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")

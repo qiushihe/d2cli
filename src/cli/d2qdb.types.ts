@@ -1,4 +1,4 @@
-type CommandOptionDefinition = {
+export type CommandOptionDefinition = {
   flags: string[];
   stringPlaceholder?: string;
   description?: string;
