@@ -2,12 +2,12 @@ import * as Base64 from "base64-js";
 import fetch, { Response } from "node-fetch";
 
 import { AppModule } from "~src/module/app.module";
-import { BungieApiOAuthAccessToken } from "~src/service/bungie-api/bungie-api.types";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 
+import { BungieApiOAuthAccessToken } from "./bungie-oauth.types";
 import { BungieOAuthAccessToken } from "./bungie-oauth.types";
 
 export class BungieOauthService {
