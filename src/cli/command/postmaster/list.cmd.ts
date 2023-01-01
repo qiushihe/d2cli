@@ -1,6 +1,8 @@
 import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
+import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { LogService } from "~src/service/log/log.service";
 
 import { characterNumberArgument } from "../../command-argument/character-number.argument";
@@ -25,30 +27,86 @@ const cmd: CommandDefinition = {
     const destiny2CharacterService =
       AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
 
+    const destiny2InventoryService =
+      AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
+
     const [characterNumberString] = args;
     const characterNumber = parseInt(characterNumberString);
     if (isNaN(characterNumber)) {
-      logger.error(`Invalid character number: ${characterNumberString}`);
-    } else if (characterNumber < 1 || characterNumber > 3) {
-      logger.error(`Character number must be between 1 and 3`);
-    } else {
-      const [charactersErr, characters] = await destiny2CharacterService.getDestiny2Characters(
-        sessionId
+      return logger.loggedError(`Invalid character number: ${characterNumberString}`);
+    }
+
+    if (characterNumber < 1 || characterNumber > 3) {
+      return logger.loggedError(`Character number must be between 1 and 3`);
+    }
+
+    const [charactersErr, characters] = await destiny2CharacterService.getDestiny2Characters(
+      sessionId
+    );
+    if (charactersErr) {
+      return logger.loggedError(`Unable to list characters: ${charactersErr.message}`);
+    }
+
+    const character = characters[characterNumber - 1];
+    if (!character) {
+      return logger.loggedError(`Character not found at position ${characterNumber}`);
+    }
+
+    const [postmasterItemsErr, postmasterItems] = await destiny2InventoryService.getPostmasterItems(
+      character.membershipType,
+      character.membershipId,
+      character.id
+    );
+    if (postmasterItemsErr) {
+      return logger.loggedError(
+        `Unable to fetch items from postmaster: ${postmasterItemsErr.message}`
       );
-      if (charactersErr) {
-        logger.error(`Unable to list characters: ${charactersErr.message}`);
+    }
+
+    const tableData: string[][] = [];
+
+    const basicHeaders = ["#", "Description", "Quantity"];
+    if (verbose) {
+      tableData.push([...basicHeaders, "Hash", "Instance ID"]);
+    } else {
+      tableData.push(basicHeaders);
+    }
+
+    for (
+      let postmasterItemIndex = 0;
+      postmasterItemIndex < postmasterItems.length;
+      postmasterItemIndex++
+    ) {
+      const postmasterItem = postmasterItems[postmasterItemIndex];
+
+      const [itemDefinitionErr, itemDefinition] = await destiny2InventoryService.getItemDefinition(
+        postmasterItem.itemHash
+      );
+      if (itemDefinitionErr) {
+        tableData.push([
+          `${postmasterItemIndex + 1}`,
+          `Unable to get item definition for hash ${postmasterItem.itemHash}: ${itemDefinitionErr.message}`,
+          "x ???"
+        ]);
       } else {
-        const character = characters[characterNumber - 1];
-        if (!character) {
-          logger.error(`Character not found at position ${characterNumber}`);
+        const basicCells = [
+          `${postmasterItemIndex + 1}`,
+          `${itemDefinition.displayProperties.name} (${itemDefinition.itemTypeAndTierDisplayName})`,
+          `x ${postmasterItem.quantity}`
+        ];
+        if (verbose) {
+          tableData.push([
+            ...basicCells,
+            `${postmasterItem.itemHash}`,
+            postmasterItem.itemInstanceId
+          ]);
         } else {
-          logger.debug(`verbose: ${verbose}`);
-          logger.debug(`membershipType: ${character.membershipType}`);
-          logger.debug(`membershipId: ${character.membershipId}`);
-          logger.debug(`id: ${character.id}`);
+          tableData.push(basicCells);
         }
       }
     }
+
+    logger.log(stringifyTable(tableData));
   }
 };
 

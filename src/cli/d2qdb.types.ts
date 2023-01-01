@@ -11,11 +11,13 @@ export type CommandArgumentDefinition = {
   isRequired: boolean;
 };
 
+export type CommandAction = (args: string[], opts: Record<string, string | boolean>) => any;
+
 export type CommandDefinition = {
   description?: string;
   options?: CommandOptionDefinition[];
   arguments?: CommandArgumentDefinition[];
-  action?: (args: string[], opts: Record<string, string | boolean>) => any;
+  action?: CommandAction;
   commands?: CommandDefinitions;
 };
 

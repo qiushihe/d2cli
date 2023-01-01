@@ -29,10 +29,10 @@ const cmd: CommandDefinition = {
       null
     );
     if (clearTokenErr) {
-      logger.error(`Unable to logout: ${clearTokenErr.message}`);
-    } else {
-      logger.log("Logged out from Bungie.net");
+      return logger.loggedError(`Unable to logout: ${clearTokenErr.message}`);
     }
+
+    logger.log("Logged out from Bungie.net");
   }
 };
 

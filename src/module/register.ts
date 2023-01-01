@@ -3,6 +3,7 @@ import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.servi
 import { CacheService } from "~src/service/cache/cache.service";
 import { ConfigService } from "~src/service/config/config.service";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
+import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
 import { FarmingReminderService } from "~src/service/farming-reminder/farming-reminder.service";
@@ -18,6 +19,7 @@ const MODULE: Record<string, new () => any> = {
   CacheService,
   ConfigService,
   Destiny2CharacterService,
+  Destiny2InventoryService,
   Destiny2ManifestService,
   Destiny2MembershipService,
   FarmingReminderService,

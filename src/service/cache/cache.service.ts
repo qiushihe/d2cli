@@ -12,14 +12,30 @@ import { CacheData } from "./cache.types";
 //       extremely large manifest files.
 
 export class CacheService {
+  private readonly memCache: Record<string, StorageFile<CacheData>>;
   private readonly storageService: IStorageInterface;
 
   constructor() {
+    this.memCache = {};
     this.storageService =
       AppModule.getDefaultInstance().resolve<FsStorageService>("FsStorageService");
   }
 
   async get<T>(namespace: string, key: string): Promise<[Error, null] | [null, T | null]> {
+    const memCachedFile = this.memCache[namespace];
+    if (memCachedFile) {
+      const cacheExpiry = memCachedFile.content.expiredAtInMilliseconds;
+      const cacheValue = memCachedFile.content.data[key] as T | null;
+
+      if (cacheExpiry === null) {
+        return [null, cacheValue];
+      } else if (cacheExpiry > this.getNowTime()) {
+        return [null, cacheValue];
+      } else {
+        delete this.memCache[namespace];
+      }
+    }
+
     const [reloadFileErr, cacheFile] = await this.reloadFile(namespace);
     if (reloadFileErr) {
       return [reloadFileErr, null];
@@ -29,10 +45,15 @@ export class CacheService {
     const cacheValue = cacheFile.content.data[key] as T | null;
 
     if (cacheExpiry === null) {
+      delete this.memCache[namespace];
+      this.memCache[namespace] = cacheFile;
       return [null, cacheValue];
     } else if (cacheExpiry > this.getNowTime()) {
+      delete this.memCache[namespace];
+      this.memCache[namespace] = cacheFile;
       return [null, cacheValue];
     } else {
+      delete this.memCache[namespace];
       return [null, null];
     }
   }
@@ -59,6 +80,9 @@ export class CacheService {
     if (writeErr) {
       return writeErr;
     }
+
+    delete this.memCache[namespace];
+    this.memCache[namespace] = cacheFile;
 
     return null;
   }

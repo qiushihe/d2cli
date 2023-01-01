@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 
 import { CommandDefinition } from "~src/cli/d2qdb.types";
-import { TextGrid } from "~src/helper/text-grid";
+import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
 import { LogService } from "~src/service/log/log.service";
@@ -30,38 +30,38 @@ const cmd: CommandDefinition = {
       sessionId
     );
     if (charactersErr) {
-      logger.error(`Unable to list characters: ${charactersErr.message}`);
-    } else {
-      const grid = new TextGrid();
-
-      const basicHeaders = ["#", "Description", "Light Level"];
-      if (verbose) {
-        grid.addRow([...basicHeaders, "Last Played", "ID", "Membership Type:ID"]);
-      } else {
-        grid.addRow(basicHeaders);
-      }
-
-      characters.forEach((character, index) => {
-        const basicCells = [
-          `${index + 1}`,
-          `${character.class} (${character.gender} ${character.race})`,
-          `${character.lightLevel}`
-        ];
-
-        if (verbose) {
-          grid.addRow([
-            ...basicCells,
-            format(character.lastPlayedAt, "hh:mmaaa MMM. do yyyy"),
-            character.id,
-            `${character.membershipType}:${character.membershipId}`
-          ]);
-        } else {
-          grid.addRow(basicCells);
-        }
-      });
-
-      logger.log(grid.toString());
+      return logger.loggedError(`Unable to list characters: ${charactersErr.message}`);
     }
+
+    const tableData: string[][] = [];
+
+    const basicHeaders = ["#", "Description", "Light Level"];
+    if (verbose) {
+      tableData.push([...basicHeaders, "Last Played", "ID", "Membership Type:ID"]);
+    } else {
+      tableData.push(basicHeaders);
+    }
+
+    characters.forEach((character, index) => {
+      const basicCells = [
+        `${index + 1}`,
+        `${character.class} (${character.gender} ${character.race})`,
+        `${character.lightLevel}`
+      ];
+
+      if (verbose) {
+        tableData.push([
+          ...basicCells,
+          format(character.lastPlayedAt, "hh:mmaaa MMM. do yyyy"),
+          character.id,
+          `${character.membershipType}:${character.membershipId}`
+        ]);
+      } else {
+        tableData.push(basicCells);
+      }
+    });
+
+    logger.log(stringifyTable(tableData));
   }
 };
 

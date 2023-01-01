@@ -43,30 +43,29 @@ const cmd: CommandDefinition = {
       timestamp
     );
     if (accessTokenErr) {
-      logger.error(`Error getting access token: ${accessTokenErr.message}`);
-    } else {
-      const sessionService =
-        AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
-
-      const [reloadSessionErr] = await sessionService.reload(sessionId);
-      if (reloadSessionErr) {
-        logger.error(`Unable to reload session: ${reloadSessionErr.message}`);
-      } else {
-        logger.info(`Session reloaded`);
-
-        const setTokenErr = await sessionService.setData<BungieOAuthAccessToken>(
-          sessionId,
-          SessionDataName.BungieAccessToken,
-          accessToken
-        );
-        if (setTokenErr) {
-          logger.error(`Unable to store access token: ${setTokenErr.message}`);
-        } else {
-          logger.log(`Successfully logged into Bungie.net`);
-          logger.log(`You may now close this window`);
-        }
-      }
+      return logger.loggedError(`Error getting access token: ${accessTokenErr.message}`);
     }
+
+    const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
+
+    const [reloadSessionErr] = await sessionService.reload(sessionId);
+    if (reloadSessionErr) {
+      return logger.loggedError(`Unable to reload session: ${reloadSessionErr.message}`);
+    }
+
+    logger.info(`Session reloaded`);
+
+    const setTokenErr = await sessionService.setData<BungieOAuthAccessToken>(
+      sessionId,
+      SessionDataName.BungieAccessToken,
+      accessToken
+    );
+    if (setTokenErr) {
+      return logger.loggedError(`Unable to store access token: ${setTokenErr.message}`);
+    }
+
+    logger.log(`Successfully logged into Bungie.net`);
+    logger.log(`You may now close this window`);
   }
 };
 
