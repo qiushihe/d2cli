@@ -3,8 +3,8 @@ import { realTmpDir as fsRealTmpDir } from "~src/helper/fs.helper";
 import { AppModule } from "~src/module/app.module";
 import { LogService } from "~src/service/log/log.service";
 
+import { sessionIdOption } from "../../command-option/session-id.option";
 import { SessionCommandOptions } from "../command.types";
-import { sessionIdOption } from "../session-id.option";
 
 type CmdOptions = SessionCommandOptions & { _: never };
 

@@ -11,8 +11,8 @@ import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
 
+import { sessionIdOption } from "../../command-option/session-id.option";
 import { SessionCommandOptions } from "../command.types";
-import { sessionIdOption } from "../session-id.option";
 
 type CmdOptions = SessionCommandOptions & { _: never };
 

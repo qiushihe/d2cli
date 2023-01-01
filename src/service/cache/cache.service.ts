@@ -8,6 +8,9 @@ import { StorageFile } from "~src/service/storage/storage.types";
 
 import { CacheData } from "./cache.types";
 
+// TODO: Implement in-memory caching to bypass FS access to avoid spending too much time reading
+//       extremely large manifest files.
+
 export class CacheService {
   private readonly storageService: IStorageInterface;
 

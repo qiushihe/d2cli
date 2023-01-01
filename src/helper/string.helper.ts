@@ -1,13 +1,20 @@
 import baseX from "base-x";
 
 const BASE_42 = baseX("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdgl");
+const BASE_62 = baseX("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
 export const base42EncodeString = (plainText: string): string => {
-  const encoder = new TextEncoder();
-  return BASE_42.encode(encoder.encode(plainText));
+  return BASE_42.encode(new TextEncoder().encode(plainText));
 };
 
 export const base42DecodeString = (encodedText: string): string => {
-  const decoder = new TextDecoder();
-  return decoder.decode(BASE_42.decode(encodedText));
+  return new TextDecoder().decode(BASE_42.decode(encodedText));
+};
+
+export const base62EncodeString = (plainText: string): string => {
+  return BASE_62.encode(new TextEncoder().encode(plainText));
+};
+
+export const base62DecodeString = (encodedText: string): string => {
+  return new TextDecoder().decode(BASE_62.decode(encodedText));
 };

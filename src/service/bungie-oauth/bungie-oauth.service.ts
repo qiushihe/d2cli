@@ -21,6 +21,8 @@ export class BungieOauthService {
     authorizationCode: string,
     startTime: number
   ): Promise<[Error, null] | [null, BungieOAuthAccessToken]> {
+    const logger = this.getLogger();
+
     const [clientIdErr, clientId] = this.config.getAppConfig(AppConfigName.BungieOauthClientId);
     if (clientIdErr) {
       return [clientIdErr, null];
@@ -49,6 +51,7 @@ export class BungieOauthService {
 
     let res: Response;
     try {
+      logger.debug(`Fetching Bungie.net OAuth access token ...`);
       res = await fetch(this.config.getBungieOauthTokenRoot(), {
         method: "POST",
         headers: {

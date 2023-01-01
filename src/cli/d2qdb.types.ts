@@ -5,7 +5,7 @@ export type CommandOptionDefinition = {
   defaultValue?: string | boolean;
 };
 
-type CommandArgumentDefinition = {
+export type CommandArgumentDefinition = {
   name: string;
   description?: string;
   isRequired: boolean;

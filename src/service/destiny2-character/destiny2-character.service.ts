@@ -11,15 +11,18 @@ import { Destiny2MembershipService } from "~src/service/destiny2-membership/dest
 import { BungieApiDestiny2Profile } from "~src/service/destiny2-profile/destiny2-profile.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
+import { SessionService } from "~src/service/session/session.service";
 
 import { Destiny2Character } from "./destiny2-character.types";
 
 export class Destiny2CharacterService {
+  private readonly sessionService: SessionService;
   private readonly bungieApiService: BungieApiService;
   private readonly destiny2ManifestService: Destiny2ManifestService;
   private readonly destiny2MembershipService: Destiny2MembershipService;
 
   constructor() {
+    this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
     this.bungieApiService =
       AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
     this.destiny2ManifestService =
@@ -30,22 +33,31 @@ export class Destiny2CharacterService {
       );
   }
 
-  async getBungieNetDestiny2Characters(
-    bungieNetMembershipId: string
+  async getDestiny2Characters(
+    sessionId: string
   ): Promise<[Error, null] | [null, Destiny2Character[]]> {
+    const [bungieNetMembershipIdErr, bungieNetMembershipId] =
+      await this.sessionService.getBungieNetMembershipId(sessionId);
+    if (bungieNetMembershipIdErr) {
+      return [bungieNetMembershipIdErr, null];
+    }
+
     const [membershipErr, membership] =
       await this.destiny2MembershipService.getBungieNetDestiny2Membership(bungieNetMembershipId);
     if (membershipErr) {
       return [membershipErr, null];
     }
 
-    return await this.getDestiny2Characters(membership.type, membership.id);
+    return await this.getDestiny2CharactersByMembership(membership.type, membership.id);
   }
 
-  async getDestiny2Characters(
+  async getDestiny2CharactersByMembership(
     membershipType: number,
     membershipId: string
   ): Promise<[Error, null] | [null, Destiny2Character[]]> {
+    const logger = this.getLogger();
+
+    logger.debug(`Fetching characters ...`);
     const [profileErr, profileRes] = await this.bungieApiService.sendApiRequest(
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}?components=${BungieApiComponentType.Characters}`,
@@ -102,6 +114,8 @@ export class Destiny2CharacterService {
 
           characters.push({
             id: characterId,
+            membershipId: character.membershipId,
+            membershipType: character.membershipType,
             lightLevel: character.light,
             lastPlayedAt: new Date(character.dateLastPlayed),
             gender: genderDefinition[character.genderHash].displayProperties.name,

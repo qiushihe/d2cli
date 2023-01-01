@@ -5,8 +5,8 @@ import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
 
+import { sessionIdOption } from "../../command-option/session-id.option";
 import { SessionCommandOptions } from "../command.types";
-import { sessionIdOption } from "../session-id.option";
 
 type CmdOptions = SessionCommandOptions & { _: never };
 

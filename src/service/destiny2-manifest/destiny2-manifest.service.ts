@@ -123,8 +123,8 @@ export class Destiny2ManifestService {
     const logger = this.getLogger();
 
     const manifestComponentUrl = this.config.getBungieAssetRoot() + manifestComponentPath;
-    logger.debug(`Fetching manifest component URL: ${manifestComponentUrl}`);
 
+    logger.debug(`Fetching Destiny 2 manifest component from ${manifestComponentUrl} ...`);
     const [fetchManifestComponentErr, manifestComponentRes] =
       await this.bungieApiService.sendRequest(manifestComponentUrl, {
         method: "GET"
@@ -132,7 +132,7 @@ export class Destiny2ManifestService {
     if (fetchManifestComponentErr) {
       return [
         logger.loggedError(
-          `Unable to fetch manifest component: ${fetchManifestComponentErr.message}`
+          `Unable to fetch Destiny 2 manifest component: ${fetchManifestComponentErr.message}`
         ),
         null
       ];
@@ -143,7 +143,7 @@ export class Destiny2ManifestService {
     if (manifestComponentJsonErr) {
       return [
         logger.loggedError(
-          `Unable to extract manifest component: ${manifestComponentJsonErr.message}`
+          `Unable to extract Destiny 2 manifest component: ${manifestComponentJsonErr.message}`
         ),
         null
       ];
@@ -157,6 +157,7 @@ export class Destiny2ManifestService {
   > {
     const logger = this.getLogger();
 
+    logger.debug(`Fetching Destiny 2 manifest ...`);
     const [manifestErr, manifestRes] = await this.bungieApiService.sendApiRequest(
       "GET",
       "/Destiny2/Manifest",

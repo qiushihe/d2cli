@@ -92,6 +92,9 @@ export class Destiny2MembershipService {
   async getBungieNetDestiny2Memberships(
     bungieNetMembershipId: string
   ): Promise<[Error, null] | [null, Destiny2Membership[]]> {
+    const logger = this.getLogger();
+
+    logger.debug(`Fetching Destiny 2 memberships from Bungie.net membership ...`);
     const [bungieNetUserErr, bungieNetUserRes] = await this.bungieApiService.sendApiRequest(
       "GET",
       `/User/GetBungieNetUserById/${bungieNetMembershipId}`,
@@ -109,6 +112,7 @@ export class Destiny2MembershipService {
 
     const uniqueName = bungieNetUserJson.Response.uniqueName.split("#", 2);
 
+    logger.debug(`Searching for Destiny 2 players with (${uniqueName[0]} / ${uniqueName[1]}) ...`);
     const [searchDestinyPlayersErr, searchDestinyPlayersRes] =
       await this.bungieApiService.sendApiRequest(
         "POST",

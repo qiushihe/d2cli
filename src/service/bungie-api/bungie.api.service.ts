@@ -73,8 +73,13 @@ export class BungieApiService {
   }
 
   async sendRequest(url: string, options: any): Promise<[Error, null] | [null, Response]> {
+    const logger = this.getLogger();
+
     try {
+      const reqDescription = `${options.method} ${url}`;
+      logger.debug(`Req => ${reqDescription} ...`);
       const response = await this.fetch(url, options);
+      logger.debug(`Res => ${reqDescription} => ${response.status} (${response.statusText})`);
       return [null, response];
     } catch (err) {
       return [err as Error, null];
