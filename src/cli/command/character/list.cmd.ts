@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 
 import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
@@ -26,11 +27,11 @@ const cmd: CommandDefinition = {
     const destiny2CharacterService =
       AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
 
-    const [charactersErr, characters] = await destiny2CharacterService.getDestiny2Characters(
-      sessionId
+    const [charactersErr, characters] = await fnWithSpinner("Retrieving characters ...", () =>
+      destiny2CharacterService.getDestiny2Characters(sessionId)
     );
     if (charactersErr) {
-      return logger.loggedError(`Unable to list characters: ${charactersErr.message}`);
+      return logger.loggedError(`Unable to retrieve characters: ${charactersErr.message}`);
     }
 
     const tableData: string[][] = [];

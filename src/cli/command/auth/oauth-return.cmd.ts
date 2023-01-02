@@ -1,4 +1,5 @@
 import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
@@ -35,33 +36,41 @@ const cmd: CommandDefinition = {
     const state = JSON.parse(base42DecodeString(encodedState)) as BungieOAuthState;
     const { t: timestamp, s: sessionId } = state;
 
+    const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
+
     const bungieOauthService =
       AppModule.getDefaultInstance().resolve<BungieOauthService>("BungieOauthService");
 
-    const [accessTokenErr, accessToken] = await bungieOauthService.getAccessToken(
-      authorizationCode,
-      timestamp
+    const [accessTokenErr, accessToken] = await fnWithSpinner(
+      "Obtaining Bungie.net OAuth access token ...",
+      () => bungieOauthService.getAccessToken(authorizationCode, timestamp)
     );
     if (accessTokenErr) {
-      return logger.loggedError(`Error getting access token: ${accessTokenErr.message}`);
+      return logger.loggedError(
+        `Error obtain Bungie.net OAuth access token: ${accessTokenErr.message}`
+      );
     }
 
-    const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
-
-    const [reloadSessionErr] = await sessionService.reload(sessionId);
+    const [reloadSessionErr] = await fnWithSpinner("Reloading session ...", () =>
+      sessionService.reload(sessionId)
+    );
     if (reloadSessionErr) {
       return logger.loggedError(`Unable to reload session: ${reloadSessionErr.message}`);
     }
 
     logger.info(`Session reloaded`);
 
-    const setTokenErr = await sessionService.setData<BungieOAuthAccessToken>(
-      sessionId,
-      SessionDataName.BungieAccessToken,
-      accessToken
+    const setTokenErr = await fnWithSpinner("Storing Bungie.net OAuth access token ...", () =>
+      sessionService.setData<BungieOAuthAccessToken>(
+        sessionId,
+        SessionDataName.BungieAccessToken,
+        accessToken
+      )
     );
     if (setTokenErr) {
-      return logger.loggedError(`Unable to store access token: ${setTokenErr.message}`);
+      return logger.loggedError(
+        `Unable to store Bungie.net OAuth access token: ${setTokenErr.message}`
+      );
     }
 
     logger.log(`Successfully logged into Bungie.net`);

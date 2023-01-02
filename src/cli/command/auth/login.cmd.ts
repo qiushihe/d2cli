@@ -3,6 +3,7 @@ import path from "path";
 import * as ProtocolRegistry from "protocol-registry";
 
 import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getRepoRootPath } from "~src/helper/path.helper";
 import { base42EncodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
@@ -51,13 +52,15 @@ const cmd: CommandDefinition = {
     const handlerPath = path.join(getRepoRootPath(), "dist/src/cli/d2qdb.js");
     logger.debug(`OAuth return handler path: ${handlerPath}`);
 
-    await ProtocolRegistry.register({
-      protocol: "dtwoqdb",
-      command: `node ${handlerPath} auth oauth-return $_URL_`,
-      override: true,
-      terminal: true,
-      script: true
-    });
+    await fnWithSpinner("Registering OAuth return custom URL protocol ...", () =>
+      ProtocolRegistry.register({
+        protocol: "dtwoqdb",
+        command: `node ${handlerPath} auth oauth-return $_URL_`,
+        override: true,
+        terminal: true,
+        script: true
+      })
+    );
     logger.debug("Done protocol registration");
 
     const oauthUrlString = oauthUrl.toString();

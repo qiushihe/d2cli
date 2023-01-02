@@ -1,4 +1,5 @@
 import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
 import { LogService } from "~src/service/log/log.service";
@@ -27,9 +28,14 @@ const cmd: CommandDefinition = {
         "Destiny2MembershipService"
       );
 
-    const [loginStatusErr, loginStatus] = await sessionService.getLoginStatus(sessionId);
+    const [loginStatusErr, loginStatus] = await fnWithSpinner(
+      "Retrieving authorization status ...",
+      () => sessionService.getLoginStatus(sessionId)
+    );
     if (loginStatusErr) {
-      return logger.loggedError(`Unable to get login status: ${loginStatusErr.message}`);
+      return logger.loggedError(
+        `Unable to retrieve authorization status: ${loginStatusErr.message}`
+      );
     }
 
     if (loginStatus.isLoggedIn) {
@@ -39,21 +45,25 @@ const cmd: CommandDefinition = {
         logger.log("Currently logged in");
 
         if (verbose) {
-          const [bungieNetMembershipIdErr, bungieNetMembershipId] =
-            await sessionService.getBungieNetMembershipId(sessionId);
+          const [bungieNetMembershipIdErr, bungieNetMembershipId] = await fnWithSpinner(
+            "Retrieving Bungie.net membership ID ...",
+            () => sessionService.getBungieNetMembershipId(sessionId)
+          );
           if (bungieNetMembershipIdErr) {
             return logger.loggedError(
-              `Unable to get Bungie.net membership ID: ${bungieNetMembershipIdErr.message}`
+              `Unable to retrieve Bungie.net membership ID: ${bungieNetMembershipIdErr.message}`
             );
           }
 
           logger.log(`Bungie.net membership ID: ${bungieNetMembershipId}`);
 
-          const [membershipErr, membership] =
-            await destiny2MembershipService.getBungieNetDestiny2Membership(bungieNetMembershipId);
+          const [membershipErr, membership] = await fnWithSpinner(
+            "Retrieving Destiny 2 membership ...",
+            () => destiny2MembershipService.getBungieNetDestiny2Membership(bungieNetMembershipId)
+          );
           if (membershipErr) {
             return logger.loggedError(
-              `Unable to get Destiny 2 membership: ${membershipErr.message}`
+              `Unable to retrieve Destiny 2 membership: ${membershipErr.message}`
             );
           }
 

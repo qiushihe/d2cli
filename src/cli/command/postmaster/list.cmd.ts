@@ -1,7 +1,11 @@
 import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
+import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
+import { BungieApiDestiny2ManifestLanguage } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { BungieApiDestiny2ManifestComponent } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { BungieApiDestiny2InventoryItemDefinitions } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { LogService } from "~src/service/log/log.service";
 
 import { characterNumberArgument } from "../../command-argument/character-number.argument";
@@ -24,8 +28,8 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2InventoryService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
+    const destiny2ManifestService =
+      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
 
     const [characterNumberString] = args;
     const characterNumber = parseInt(characterNumberString);
@@ -37,12 +41,28 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Character number must be between 1 and 3`);
     }
 
-    const [postmasterItemsErr, postmasterItems] = await getPostmasterItems(
-      sessionId,
-      characterNumber
+    const [itemDefinitionErr, itemDefinitions] = await fnWithSpinner(
+      "Retrieving inventory item definitions ...",
+      () =>
+        destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2InventoryItemDefinitions>(
+          BungieApiDestiny2ManifestLanguage.English,
+          BungieApiDestiny2ManifestComponent.InventoryItemDefinition
+        )
+    );
+    if (itemDefinitionErr) {
+      return logger.loggedError(
+        `Unable to retrieve item definitions: ${itemDefinitionErr.message}`
+      );
+    }
+
+    const [postmasterItemsErr, postmasterItems] = await fnWithSpinner(
+      "Retrieving postmaster items ...",
+      () => getPostmasterItems(sessionId, characterNumber)
     );
     if (postmasterItemsErr) {
-      return logger.loggedError(`Unable to fetch postmaster items: ${postmasterItemsErr.message}`);
+      return logger.loggedError(
+        `Unable to retrieve postmaster items: ${postmasterItemsErr.message}`
+      );
     }
 
     const tableData: string[][] = [];
@@ -60,14 +80,12 @@ const cmd: CommandDefinition = {
       postmasterItemIndex++
     ) {
       const postmasterItem = postmasterItems[postmasterItemIndex];
+      const itemDefinition = itemDefinitions[postmasterItem.itemHash] || null;
 
-      const [itemDefinitionErr, itemDefinition] = await destiny2InventoryService.getItemDefinition(
-        postmasterItem.itemHash
-      );
-      if (itemDefinitionErr) {
+      if (!itemDefinition) {
         tableData.push([
           `${postmasterItemIndex + 1}`,
-          `Unable to get item definition for hash ${postmasterItem.itemHash}: ${itemDefinitionErr.message}`,
+          `Missing item definition for hash ${postmasterItem.itemHash}`,
           "x ???"
         ]);
       } else {
@@ -80,7 +98,7 @@ const cmd: CommandDefinition = {
           tableData.push([
             ...basicCells,
             `${postmasterItem.itemHash}`,
-            postmasterItem.itemInstanceId
+            postmasterItem.itemInstanceId || ""
           ]);
         } else {
           tableData.push(basicCells);

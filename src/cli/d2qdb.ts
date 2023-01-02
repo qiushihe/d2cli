@@ -2,7 +2,7 @@ import "~src/module/register";
 
 import { Command } from "commander";
 
-import { buildCommands } from "~src/helper/cli.helper";
+import { buildCommands } from "~src/helper/cli-command.helper";
 
 import { commands } from "./command";
 

@@ -1,4 +1,5 @@
 import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { LogService } from "~src/service/log/log.service";
@@ -23,13 +24,17 @@ const cmd: CommandDefinition = {
 
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-    const clearTokenErr = await sessionService.setData<BungieOAuthAccessToken | null>(
-      sessionId,
-      SessionDataName.BungieAccessToken,
-      null
+    const clearTokenErr = await fnWithSpinner("Clearing Bungie.net access token ...", () =>
+      sessionService.setData<BungieOAuthAccessToken | null>(
+        sessionId,
+        SessionDataName.BungieAccessToken,
+        null
+      )
     );
     if (clearTokenErr) {
-      return logger.loggedError(`Unable to logout: ${clearTokenErr.message}`);
+      return logger.loggedError(
+        `Unable to clear Bungie.net access token: ${clearTokenErr.message}`
+      );
     }
 
     logger.log("Logged out from Bungie.net");
