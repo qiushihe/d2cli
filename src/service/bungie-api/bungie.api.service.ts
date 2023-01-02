@@ -5,14 +5,17 @@ import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
+import { SessionService } from "~src/service/session/session.service";
 
 import { BungieApiResponse } from "./bungie-api.types";
 
 export class BungieApiService {
   private readonly config: ConfigService;
+  private readonly sessionService: SessionService;
 
   constructor() {
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+    this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
   }
 
   // ThrottleSeconds will now be populated with an integer value of how many seconds you should wait to clear your
@@ -30,16 +33,50 @@ export class BungieApiService {
   //   "MessageData": {}
   // }
 
-  async sendApiRequest(
+  async sendSessionApiRequest(
+    sessionId: string,
     method: string,
     path: string,
     body: Record<string, unknown> | null
   ): Promise<[Error, null] | [null, Response]> {
+    const logger = this.getLogger();
+
+    const [upToDateAccessTokenErr, upToDateAccessToken] =
+      await this.sessionService.getUpToDateAccessToken(sessionId);
+    if (upToDateAccessTokenErr) {
+      return [upToDateAccessTokenErr, null];
+    }
+
     const [apiKeyErr, apiKey] = this.config.getAppConfig(AppConfigName.BungieApiKey);
     if (apiKeyErr) {
       return [apiKeyErr, null];
     }
 
+    logger.debug(`Sending request for session: ${sessionId} ...`);
+    return await this.sendRequest(`${this.config.getBungieApiRoot()}${path}`, {
+      method,
+      "Content-Type": "application/json",
+      headers: {
+        Authorization: `Bearer ${upToDateAccessToken}`,
+        "X-API-Key": apiKey
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+  }
+
+  async sendApiRequest(
+    method: string,
+    path: string,
+    body: Record<string, unknown> | null
+  ): Promise<[Error, null] | [null, Response]> {
+    const logger = this.getLogger();
+
+    const [apiKeyErr, apiKey] = this.config.getAppConfig(AppConfigName.BungieApiKey);
+    if (apiKeyErr) {
+      return [apiKeyErr, null];
+    }
+
+    logger.debug(`Sending request without session ...`);
     return await this.sendRequest(`${this.config.getBungieApiRoot()}${path}`, {
       method,
       "Content-Type": "application/json",

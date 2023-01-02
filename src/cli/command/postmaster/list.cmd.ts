@@ -53,6 +53,7 @@ const cmd: CommandDefinition = {
     }
 
     const [postmasterItemsErr, postmasterItems] = await destiny2InventoryService.getPostmasterItems(
+      sessionId,
       character.membershipType,
       character.membershipId,
       character.id

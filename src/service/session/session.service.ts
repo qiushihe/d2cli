@@ -1,4 +1,5 @@
 import { AppModule } from "~src/module/app.module";
+import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
@@ -10,18 +11,96 @@ import { StorageFile } from "~src/service/storage/storage.types";
 import { SessionData } from "./session.types";
 import { SessionDataName } from "./session.types";
 import { LoginStatus } from "./session.types";
+import { TokenStatus } from "./session.types";
 
 export const DEFAULT_SESSION_ID = "default";
 
 export class SessionService {
   private readonly storageService: IStorageInterface;
+  private readonly bungieOauthService: BungieOauthService;
 
   constructor() {
     this.storageService =
       AppModule.getDefaultInstance().resolve<FsStorageService>("FsStorageService");
+    this.bungieOauthService =
+      AppModule.getDefaultInstance().resolve<BungieOauthService>("BungieOauthService");
+  }
+
+  async getUpToDateAccessToken(sessionId: string): Promise<[Error, null] | [null, string]> {
+    const logger = this.getLogger();
+
+    const [accessTokenErr, accessToken] = await this.getData<BungieOAuthAccessToken>(
+      sessionId,
+      SessionDataName.BungieAccessToken
+    );
+    if (accessTokenErr) {
+      return [accessTokenErr, null];
+    }
+    if (!accessToken) {
+      return [new Error(`Missing access token for session: ${sessionId}`), null];
+    }
+
+    const tokenStatus = this.getTokenStatus(accessToken);
+
+    if (tokenStatus.isAccessTokenExpired) {
+      logger.debug(`Access token expired`);
+
+      if (accessToken.refreshToken) {
+        logger.debug(`Refresh token present`);
+
+        if (tokenStatus.isRefreshTokenExpired) {
+          return [
+            new Error(
+              `Refresh token expired for session: ${sessionId}; Unable to refresh access token`
+            ),
+            null
+          ];
+        } else {
+          logger.debug(`Refresh token valid`);
+
+          const [refreshTokenErr, refreshedToken] =
+            await this.bungieOauthService.getRefreshedAccessToken(
+              accessToken.refreshToken,
+              this.getNowTime()
+            );
+          if (refreshTokenErr) {
+            return [refreshTokenErr, null];
+          }
+          if (!refreshedToken) {
+            return [new Error(`Refreshed token missing for session: ${sessionId}`), null];
+          }
+
+          logger.debug(`Storing refreshing access token ...`);
+          const setTokenErr = await this.setData<BungieOAuthAccessToken>(
+            sessionId,
+            SessionDataName.BungieAccessToken,
+            refreshedToken
+          );
+          if (setTokenErr) {
+            return [
+              logger.loggedError(`Unable to store refreshed access token: ${setTokenErr.message}`),
+              null
+            ];
+          }
+
+          return [null, refreshedToken.token];
+        }
+      } else {
+        return [
+          new Error(
+            `Missing refresh token for session: ${sessionId}; Unable to refresh access token`
+          ),
+          null
+        ];
+      }
+    } else {
+      return [null, accessToken.token];
+    }
   }
 
   async getLoginStatus(sessionId: string): Promise<[Error, null] | [null, LoginStatus]> {
+    const logger = this.getLogger();
+
     const status: LoginStatus = { isLoggedIn: false, isLoginExpired: false };
 
     const [accessTokenErr, accessToken] = await this.getData<BungieOAuthAccessToken>(
@@ -33,14 +112,18 @@ export class SessionService {
     }
 
     if (accessToken) {
-      status.isLoggedIn = true;
+      const tokenStatus = this.getTokenStatus(accessToken);
 
-      if (accessToken.expiredAt && accessToken.expiredAt <= this.getNowTime()) {
-        if (accessToken.refreshTokenExpiredAt) {
-          if (accessToken.refreshTokenExpiredAt <= this.getNowTime()) {
+      if (tokenStatus.isAccessTokenExpired) {
+        if (accessToken.refreshToken) {
+          if (tokenStatus.isRefreshTokenExpired) {
+            logger.debug(`Access token expired; Refresh token expired`);
             status.isLoginExpired = true;
+          } else {
+            logger.debug(`Access token expired; Refresh token still valid`);
           }
         } else {
+          logger.debug(`Access token expired; Refresh token missing`);
           status.isLoginExpired = true;
         }
       }
@@ -100,6 +183,29 @@ export class SessionService {
     }
 
     return [null, sessionFile.content as SessionData];
+  }
+
+  private getTokenStatus(token: BungieOAuthAccessToken): TokenStatus {
+    const status: TokenStatus = {
+      isAccessTokenExpired: false,
+      isRefreshTokenExpired: false
+    };
+
+    if (token.expiredAt && token.expiredAt <= this.getNowTime()) {
+      if (token.refreshTokenExpiredAt) {
+        if (token.refreshTokenExpiredAt <= this.getNowTime()) {
+          status.isAccessTokenExpired = true;
+          status.isRefreshTokenExpired = true;
+        } else {
+          status.isAccessTokenExpired = true;
+          status.isRefreshTokenExpired = false;
+        }
+      } else {
+        status.isAccessTokenExpired = true;
+      }
+    }
+
+    return status;
   }
 
   private async reloadFile(

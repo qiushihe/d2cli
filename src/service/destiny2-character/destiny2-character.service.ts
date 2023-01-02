@@ -48,17 +48,19 @@ export class Destiny2CharacterService {
       return [membershipErr, null];
     }
 
-    return await this.getDestiny2CharactersByMembership(membership.type, membership.id);
+    return await this.getDestiny2CharactersByMembership(sessionId, membership.type, membership.id);
   }
 
   async getDestiny2CharactersByMembership(
+    sessionId: string,
     membershipType: number,
     membershipId: string
   ): Promise<[Error, null] | [null, Destiny2Character[]]> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching characters ...`);
-    const [profileErr, profileRes] = await this.bungieApiService.sendApiRequest(
+    const [profileErr, profileRes] = await this.bungieApiService.sendSessionApiRequest(
+      sessionId,
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}?components=${BungieApiComponentType.Characters}`,
       null

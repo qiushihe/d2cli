@@ -48,6 +48,7 @@ export class Destiny2InventoryService {
   }
 
   async getPostmasterItems(
+    sessionId: string,
     membershipType: number,
     membershipId: string,
     characterId: string
@@ -65,7 +66,8 @@ export class Destiny2InventoryService {
       `Fetching postmaster items for ${membershipType}/${membershipId}/${characterId} ...`
     );
     const [characterInventoryErr, characterInventoryRes] =
-      await this.bungieApiService.sendApiRequest(
+      await this.bungieApiService.sendSessionApiRequest(
+        sessionId,
         "GET",
         `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${BungieApiComponentType.CharacterInventories}`,
         null
