@@ -2,10 +2,8 @@ import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
 import { BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
 import { BungieApiDestiny2Character } from "~src/service/destiny2-character/destiny2-character.types";
-import {
-  BungieApiDestiny2InventoryItemLocation,
-  BungieApiDestiny2ItemComponent
-} from "~src/service/destiny2-item/destiny2-item.types";
+import { BungieApiDestiny2ItemComponent } from "~src/service/destiny2-item/destiny2-item.types";
+import { BungieApiDestiny2InventoryItemLocation } from "~src/service/destiny2-item/destiny2-item.types";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { BungieApiDestiny2InventoryBucketDefinitions } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { BungieApiDestiny2InventoryItemDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
@@ -25,6 +23,51 @@ export class Destiny2InventoryService {
 
     this.destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+  }
+
+  async pullItemFromPostmaster(
+    sessionId: string,
+    membershipType: number,
+    characterId: string,
+    itemHash: number,
+    itemInstanceId: string | null
+  ): Promise<Error | null> {
+    const [pullItemErr, pullItemRes] = await this.bungieApiService.sendSessionApiRequest(
+      sessionId,
+      "POST",
+      "/Destiny2/Actions/Items/PullFromPostmaster",
+      {
+        itemReferenceHash: itemHash,
+        itemId: itemInstanceId,
+        characterId,
+        membershipType
+      }
+    );
+    if (pullItemErr) {
+      return pullItemErr;
+    }
+
+    if (pullItemRes.status < 200 || pullItemRes.status > 299) {
+      const genericMessage = `Unable to extract error message for response status: ${pullItemRes.status} ${pullItemRes.statusText}`;
+
+      const [extractJsonResErr, jsonRes] = await this.bungieApiService.extractResponseJson(
+        pullItemRes
+      );
+      if (extractJsonResErr) {
+        const [extractTextResErr, textRes] = await this.bungieApiService.extractResponseText(
+          pullItemRes
+        );
+        if (extractTextResErr) {
+          return new Error(genericMessage);
+        } else {
+          return new Error(textRes);
+        }
+      } else {
+        return new Error(jsonRes.Message || genericMessage);
+      }
+    } else {
+      return null;
+    }
   }
 
   async getItemDefinition(
