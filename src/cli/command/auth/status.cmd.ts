@@ -1,5 +1,6 @@
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
+import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
 import { LogService } from "~src/service/log/log.service";
@@ -45,6 +46,10 @@ const cmd: CommandDefinition = {
       } else {
         logger.log("Currently logged in");
 
+        const tableData: string[][] = [];
+
+        tableData.push(["Active", "Membership", "Type", "ID", "Display Name"]);
+
         if (verbose) {
           const [bungieNetMembershipIdErr, bungieNetMembershipId] = await fnWithSpinner(
             "Retrieving Bungie.net membership ID ...",
@@ -56,9 +61,9 @@ const cmd: CommandDefinition = {
             );
           }
 
-          logger.log(`Bungie.net membership ID: ${bungieNetMembershipId}`);
+          tableData.push(["✓", "Bungie.net", "", bungieNetMembershipId, ""]);
 
-          const [membershipErr, membership] = await fnWithSpinner(
+          const [membershipErr, membershipInfo] = await fnWithSpinner(
             "Retrieving Destiny 2 membership ...",
             () => destiny2MembershipService.getBungieNetDestiny2Membership(bungieNetMembershipId)
           );
@@ -68,9 +73,31 @@ const cmd: CommandDefinition = {
             );
           }
 
-          logger.log(
-            `Destiny 2 membership ID: ${membership.membershipId} (Type: ${membership.membershipType})`
-          );
+          tableData.push([
+            "✓",
+            "Destiny 2",
+            `${membershipInfo.membership.membershipType}`,
+            membershipInfo.membership.membershipId,
+            `${membershipInfo.membership.bungieGlobalDisplayName}#${membershipInfo.membership.bungieGlobalDisplayNameCode}`
+          ]);
+
+          membershipInfo.otherMemberships.forEach((otherMembership) => {
+            tableData.push([
+              "",
+              "Destiny 2",
+              `${otherMembership.membershipType}`,
+              otherMembership.membershipId,
+              `${otherMembership.bungieGlobalDisplayName}#${otherMembership.bungieGlobalDisplayNameCode}`
+            ]);
+          });
+
+          logger.log(stringifyTable(tableData));
+
+          if (membershipInfo.otherMemberships.length > 0) {
+            logger.warn(
+              `Also found ${membershipInfo.otherMemberships.length} other Destiny 2 membership(s)`
+            );
+          }
         }
       }
     } else {

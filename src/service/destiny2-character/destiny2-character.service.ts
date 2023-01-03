@@ -33,7 +33,7 @@ export class Destiny2CharacterService {
       return [bungieNetMembershipIdErr, null];
     }
 
-    const [membershipErr, membership] =
+    const [membershipErr, membershipInfo] =
       await this.destiny2MembershipService.getBungieNetDestiny2Membership(bungieNetMembershipId);
     if (membershipErr) {
       return [membershipErr, null];
@@ -41,8 +41,8 @@ export class Destiny2CharacterService {
 
     return await this.getDestiny2CharactersByMembership(
       sessionId,
-      membership.membershipType,
-      membership.membershipId
+      membershipInfo.membership.membershipType,
+      membershipInfo.membership.membershipId
     );
   }
 

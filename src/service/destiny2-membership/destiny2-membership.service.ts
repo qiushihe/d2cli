@@ -8,6 +8,11 @@ import { BungieApiDestiny2Membership } from "./destiny2-membership.types";
 
 type MembershipsMapping = Record<string, BungieApiDestiny2Membership[] | null>;
 
+type BungieNetDestiny2MembershipInfo = {
+  membership: BungieApiDestiny2Membership;
+  otherMemberships: BungieApiDestiny2Membership[];
+};
+
 // Membership cache expires in 90 days
 const CACHE_EXPIRY = 1000 * 60 * 60 * 24 * 90;
 
@@ -23,7 +28,7 @@ export class Destiny2MembershipService {
 
   async getBungieNetDestiny2Membership(
     bungieNetMembershipId: string
-  ): Promise<[Error, null] | [null, BungieApiDestiny2Membership]> {
+  ): Promise<[Error, null] | [null, BungieNetDestiny2MembershipInfo]> {
     const logger = this.getLogger();
     const cacheNamespace = `destiny2-membership`;
     const cacheKey = "bungie-net-destiny2-membership-mapping";
@@ -46,17 +51,14 @@ export class Destiny2MembershipService {
       membershipMapping = {};
     }
 
-    let membership: BungieApiDestiny2Membership;
-    const memberships: BungieApiDestiny2Membership[] | null =
+    let memberships: BungieApiDestiny2Membership[] | null =
       membershipMapping[bungieNetMembershipId];
-
     if (memberships) {
       logger.debug(`Cache hit for Destiny 2 membership in cached mapping`);
-      membership = memberships[0];
     } else {
       logger.debug(`Cache miss for Destiny 2 membership in cached mapping`);
 
-      const [membershipsErr, memberships] = await this.getBungieNetDestiny2Memberships(
+      const [membershipsErr, foundMemberships] = await this.getBungieNetDestiny2Memberships(
         bungieNetMembershipId
       );
       if (membershipsErr) {
@@ -64,31 +66,31 @@ export class Destiny2MembershipService {
       }
 
       logger.debug(
-        `Found ${
-          memberships.length
-        } Destiny 2 memberships for Bungie.net membership ID ${bungieNetMembershipId}: ${memberships
-          .map((membership) => `${membership.membershipType}/${membership.membershipId}`)
-          .join(", ")}`
+        [
+          `Found ${foundMemberships.length} Destiny 2 memberships`,
+          `for Bungie.net membership ID ${bungieNetMembershipId}:`,
+          foundMemberships
+            .map((membership) => `${membership.membershipType}/${membership.membershipId}`)
+            .join(", ")
+        ].join(" ")
       );
-      membershipMapping[bungieNetMembershipId] = memberships;
 
-      const writeCacheErr = await this.cacheService.set<MembershipsMapping>(
-        cacheNamespace,
-        cacheKey,
-        membershipMapping,
-        CACHE_EXPIRY
-      );
-      if (writeCacheErr) {
-        return [writeCacheErr, null];
-      }
-
-      membership = memberships[0];
+      memberships = foundMemberships;
     }
 
-    logger.info(
-      `Using Destiny 2 membership: ${membership.membershipType}/${membership.membershipId}`
+    membershipMapping[bungieNetMembershipId] = memberships;
+
+    const writeCacheErr = await this.cacheService.set<MembershipsMapping>(
+      cacheNamespace,
+      cacheKey,
+      membershipMapping,
+      CACHE_EXPIRY
     );
-    return [null, membership];
+    if (writeCacheErr) {
+      return [writeCacheErr, null];
+    }
+
+    return [null, { membership: memberships[0], otherMemberships: memberships.slice(1) }];
   }
 
   async getBungieNetDestiny2Memberships(

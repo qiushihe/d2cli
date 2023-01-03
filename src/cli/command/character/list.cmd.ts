@@ -49,7 +49,7 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["#", "Description", "Light Level"];
+    const basicHeaders = ["Selected", "#", "Description", "Light Level"];
     if (verbose) {
       tableData.push([...basicHeaders, "Last Played", "ID", "Membership Type:ID"]);
     } else {
@@ -64,20 +64,16 @@ const cmd: CommandDefinition = {
         characterInfo?.membershipId === character.membershipId &&
         characterInfo?.characterId === character.characterId;
 
-      const basicCells = [
-        isSelected ? `>${characterIndex + 1}<` : ` ${characterIndex + 1} `,
-        "",
-        `${character.light}`
-      ];
+      const basicCells = [isSelected ? "✓" : "", `${characterIndex + 1}`, "", `${character.light}`];
 
       const [characterDescriptionErr, characterDescription] = await fnWithSpinner(
         "Retrieving character description ...",
         () => characterDescriptionService.getDescription(character)
       );
       if (characterDescriptionErr) {
-        basicCells[1] = `Error: ${characterDescriptionErr.message}`;
+        basicCells[2] = `Error: ${characterDescriptionErr.message}`;
       } else {
-        basicCells[1] = `${characterDescription.class} (${characterDescription.gender} ${characterDescription.race})`;
+        basicCells[2] = `${characterDescription.class} (${characterDescription.gender} ${characterDescription.race})`;
       }
 
       if (verbose) {

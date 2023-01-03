@@ -118,14 +118,22 @@ export class SessionService {
         if (accessToken.refreshToken) {
           if (tokenStatus.isRefreshTokenExpired) {
             logger.debug(`Access token expired; Refresh token expired`);
+            status.isLoggedIn = true;
             status.isLoginExpired = true;
           } else {
             logger.debug(`Access token expired; Refresh token still valid`);
+            status.isLoggedIn = true;
+            status.isLoginExpired = false;
           }
         } else {
           logger.debug(`Access token expired; Refresh token missing`);
+          status.isLoggedIn = true;
           status.isLoginExpired = true;
         }
+      } else {
+        logger.debug(`Access token still valid`);
+        status.isLoggedIn = true;
+        status.isLoginExpired = false;
       }
     }
 

@@ -15,7 +15,11 @@ export const errorLogger =
   (namespace: string, logLevel: number) =>
   (...args: any[]) => {
     if (logLevel >= LOG_LEVEL.error) {
-      console.error(`${bgRed(" ERR ")} [${namespace}]`, ...args);
+      if (logLevel >= LOG_LEVEL.debug) {
+        console.error(`${bgRed(" ERR ")} [${namespace}]`, ...args);
+      } else {
+        console.error(`${bgRed(" ERR ")}`, ...args);
+      }
     }
   };
 
@@ -23,14 +27,22 @@ export const warningLogger =
   (namespace: string, logLevel: number) =>
   (...args: any[]) => {
     if (logLevel >= LOG_LEVEL.warning) {
-      console.warn(`${bgYellow(" WRN ")} [${namespace}]`, ...args);
+      if (logLevel >= LOG_LEVEL.debug) {
+        console.warn(`${bgYellow(" WRN ")} [${namespace}]`, ...args);
+      } else {
+        console.warn(`${bgYellow(" WRN ")}`, ...args);
+      }
     }
   };
 export const infoLogger =
   (namespace: string, logLevel: number) =>
   (...args: any[]) => {
     if (logLevel >= LOG_LEVEL.info) {
-      console.log(`${bgGreen(" INF ")} [${namespace}]`, ...args);
+      if (logLevel >= LOG_LEVEL.debug) {
+        console.log(`${bgGreen(" INF ")} [${namespace}]`, ...args);
+      } else {
+        console.log(`${bgGreen(" INF ")}`, ...args);
+      }
     }
   };
 
