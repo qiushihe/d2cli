@@ -8,8 +8,16 @@ const propOf =
   (prop: string): V =>
     obj[prop] as V;
 
-const statProp = <T extends [string, number]>(def: any, statProp: string): ((obj: T) => R.Ord) =>
-  R.pipe(R.prop<string>(0), propOf(def), R.propOr(Infinity, statProp) as (src: unknown) => string);
+const statPropOr = <T extends [string, number]>(
+  def: any,
+  defaultValue: any,
+  statProp: string
+): ((obj: T) => R.Ord) =>
+  R.pipe(
+    R.prop<string>(0),
+    propOf(def),
+    R.propOr(defaultValue, statProp) as (src: unknown) => string
+  );
 
 export const sortedStats =
   (statDefinitions: BungieApiDestiny2StatDefinitions) =>
@@ -18,8 +26,8 @@ export const sortedStats =
       R.prop("stats"),
       R.toPairs,
       R.sortWith([
-        R.descend(statProp(statDefinitions, "statCategory")),
-        R.ascend(statProp(statDefinitions, "index"))
+        R.descend(statPropOr(statDefinitions, Infinity, "statCategory")),
+        R.ascend(statPropOr(statDefinitions, Infinity, "index"))
       ]),
       R.map<[string, number], [string, number, string, string]>(([key, value]) => [
         key,
