@@ -158,7 +158,9 @@ const cmd: CommandDefinition = {
     if (failedToPullCount > 0) {
       logger.log(`Failed to pull ${failedToPullCount} item(s)`);
       if (!verbose) {
-        logger.log(`Re-run this command with "--verbose" option to view error message(s)`);
+        logger.log(
+          `Re-run this command with the "--verbose" (or "-v") option to view the error message(s)`
+        );
       }
     }
   }
