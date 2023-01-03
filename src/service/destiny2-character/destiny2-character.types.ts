@@ -46,3 +46,9 @@ export type BungieApiDestiny2CharacterComponent = {
   percentToNextLevel: number;
   titleRecordHash: number;
 };
+
+export type CharacterReference = {
+  membershipType: number;
+  membershipId: string;
+  characterId: string;
+};

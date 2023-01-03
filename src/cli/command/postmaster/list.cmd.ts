@@ -8,7 +8,7 @@ import { BungieApiDestiny2ManifestComponent } from "~src/service/destiny2-manife
 import { BungieApiDestiny2InventoryItemDefinitions } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { LogService } from "~src/service/log/log.service";
 
-import { characterNumberArgument } from "../../command-argument/character-number.argument";
+import { getSelectedCharacterInfo } from "../../command-helper/current-character.helper";
 import { sessionIdOption } from "../../command-option/session-id.option";
 import { verboseOption } from "../../command-option/verbose.option";
 import { SessionCommandOptions } from "../command.types";
@@ -19,8 +19,7 @@ type CmdOptions = SessionCommandOptions & { verbose: boolean };
 const cmd: CommandDefinition = {
   description: "List items in Vanguard mailbox",
   options: [sessionIdOption, verboseOption],
-  arguments: [characterNumberArgument],
-  action: async (args, opts) => {
+  action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
       .getLogger("cmd:postmaster:list");
@@ -31,14 +30,9 @@ const cmd: CommandDefinition = {
     const destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
 
-    const [characterNumberString] = args;
-    const characterNumber = parseInt(characterNumberString);
-    if (isNaN(characterNumber)) {
-      return logger.loggedError(`Invalid character number: ${characterNumberString}`);
-    }
-
-    if (characterNumber < 1 || characterNumber > 3) {
-      return logger.loggedError(`Character number must be between 1 and 3`);
+    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+    if (characterInfoErr) {
+      return characterInfoErr;
     }
 
     const [itemDefinitionErr, itemDefinitions] = await fnWithSpinner(
@@ -57,7 +51,13 @@ const cmd: CommandDefinition = {
 
     const [postmasterItemsErr, postmasterItems] = await fnWithSpinner(
       "Retrieving postmaster items ...",
-      () => getPostmasterItems(sessionId, characterNumber)
+      () =>
+        getPostmasterItems(
+          sessionId,
+          characterInfo.membershipType,
+          characterInfo.membershipId,
+          characterInfo.characterId
+        )
     );
     if (postmasterItemsErr) {
       return logger.loggedError(

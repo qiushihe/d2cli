@@ -8,6 +8,7 @@ import { CharacterDescriptionService } from "~src/service/character-description/
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
 import { LogService } from "~src/service/log/log.service";
 
+import { getCharacterSelectionInfo } from "../../command-helper/current-character.helper";
 import { sessionIdOption } from "../../command-option/session-id.option";
 import { verboseOption } from "../../command-option/verbose.option";
 import { SessionCommandOptions } from "../command.types";
@@ -33,6 +34,11 @@ const cmd: CommandDefinition = {
         "CharacterDescriptionService"
       );
 
+    const [characterInfoErr, characterInfo] = await getCharacterSelectionInfo(logger, sessionId);
+    if (characterInfoErr) {
+      return characterInfoErr;
+    }
+
     const [charactersErr, characters] = await fnWithSpinner("Retrieving characters ...", () =>
       destiny2CharacterService.getDestiny2Characters(sessionId)
     );
@@ -52,7 +58,16 @@ const cmd: CommandDefinition = {
     for (let characterIndex = 0; characterIndex < characters.length; characterIndex++) {
       const character = characters[characterIndex];
 
-      const basicCells = [`${characterIndex + 1}`, "", `${character.light}`];
+      const isSelected =
+        characterInfo?.membershipType === character.membershipType &&
+        characterInfo?.membershipId === character.membershipId &&
+        characterInfo?.characterId === character.characterId;
+
+      const basicCells = [
+        isSelected ? `>${characterIndex + 1}<` : ` ${characterIndex + 1} `,
+        "",
+        `${character.light}`
+      ];
 
       const [characterDescriptionErr, characterDescription] = await fnWithSpinner(
         "Retrieving character description ...",
@@ -65,9 +80,15 @@ const cmd: CommandDefinition = {
       }
 
       if (verbose) {
+        const lastPlayed = new Date(character.dateLastPlayed);
+        const lastPlayedMonth = format(lastPlayed, "MMM.");
+        const lastPlayedDay = format(lastPlayed, "do").padStart(4, " ");
+        const lastPlayedYear = format(lastPlayed, "yyyy");
+        const lastPlayedTime = format(lastPlayed, "hh:mmaaa");
+
         tableData.push([
           ...basicCells,
-          format(new Date(character.dateLastPlayed), "hh:mmaaa MMM. do yyyy"),
+          `${lastPlayedMonth} ${lastPlayedDay} ${lastPlayedYear} - ${lastPlayedTime}`,
           character.characterId,
           `${character.membershipType}:${character.membershipId}`
         ]);
