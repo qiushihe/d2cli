@@ -1,4 +1,4 @@
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 
 import list from "./character/list.cmd";
 import select from "./character/select.cmd";

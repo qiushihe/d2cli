@@ -8,7 +8,7 @@ import { commands } from "./command";
 
 const program = new Command();
 
-program.name("d2qdb");
+program.name("d2cli");
 
 // By default, the help string for `commander.js` is spelled with a lower-cased "help" instead of
 // the title-cased "Help". So these calls just correct those spellings.

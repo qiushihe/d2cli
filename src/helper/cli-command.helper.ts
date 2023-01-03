@@ -1,6 +1,6 @@
 import { Command } from "commander";
 
-import { CommandDefinitions } from "~src/cli/d2qdb.types";
+import { CommandDefinitions } from "~src/cli/d2cli.types";
 
 const required = (name: string) => `<${name}>`;
 

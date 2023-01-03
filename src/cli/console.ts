@@ -24,7 +24,7 @@ class InteractiveJSConsole {
       }
     });
 
-    server.context.D2QDB = {
+    server.context.D2CLI = {
       sandbox: new ConsoleSandbox(),
       service: getServices(AppModule.getDefaultInstance())
     };

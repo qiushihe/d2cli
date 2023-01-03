@@ -1,4 +1,4 @@
-import { CommandOptionDefinition } from "../d2qdb.types";
+import { CommandOptionDefinition } from "../d2cli.types";
 
 export const verboseOption: CommandOptionDefinition = {
   flags: ["v", "verbose"],

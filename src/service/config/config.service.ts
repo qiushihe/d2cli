@@ -110,6 +110,6 @@ export class ConfigService {
   }
 
   private getAppConfigPath(): string {
-    return path.resolve(homedir(), ".d2qdb-app-config.json");
+    return path.resolve(homedir(), ".d2cli-app-config.json");
   }
 }

@@ -1,4 +1,4 @@
-import { CommandDefinitions } from "~src/cli/d2qdb.types";
+import { CommandDefinitions } from "~src/cli/d2cli.types";
 
 import auth from "./auth.cmd";
 import character from "./character.cmd";

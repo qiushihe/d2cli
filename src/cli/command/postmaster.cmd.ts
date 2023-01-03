@@ -1,4 +1,4 @@
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 
 import list from "./postmaster/list.cmd";
 import pull from "./postmaster/pull.cmd";

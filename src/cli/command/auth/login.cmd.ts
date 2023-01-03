@@ -2,7 +2,7 @@ import opener from "opener";
 import path from "path";
 import * as ProtocolRegistry from "protocol-registry";
 
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getRepoRootPath } from "~src/helper/path.helper";
 import { base42EncodeString } from "~src/helper/string.helper";
@@ -49,7 +49,7 @@ const cmd: CommandDefinition = {
     oauthUrl.searchParams.set("state", encodedState);
     logger.debug("Done URL construction");
 
-    const handlerPath = path.join(getRepoRootPath(), "dist/src/cli/d2qdb.js");
+    const handlerPath = path.join(getRepoRootPath(), "dist/src/cli/d2cli.js");
     logger.debug(`OAuth return handler path: ${handlerPath}`);
 
     await fnWithSpinner("Registering OAuth return custom URL protocol ...", () =>

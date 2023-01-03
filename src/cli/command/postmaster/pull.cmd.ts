@@ -1,4 +1,4 @@
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { bgGreen, bgRed } from "~src/helper/colour.helper";
 import { stringifyTable } from "~src/helper/table.helper";

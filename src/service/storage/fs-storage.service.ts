@@ -105,7 +105,7 @@ export class FsStorageService implements IStorageInterface {
   }
 
   private getStorageRootPath(): string {
-    return path.resolve(homedir(), ".d2qdb");
+    return path.resolve(homedir(), ".d2cli");
   }
 
   private getLogger(): Logger {

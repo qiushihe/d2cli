@@ -1,4 +1,4 @@
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
@@ -17,7 +17,7 @@ const getAppConfigName = (value: string): [Error, null] | [null, AppConfigName] 
 };
 
 const cmd: CommandDefinition = {
-  description: "Configuration of D2QDB",
+  description: "Configuration of Destiny 2 CLI",
   arguments: [
     {
       name: "action",

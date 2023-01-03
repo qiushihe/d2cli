@@ -1,4 +1,4 @@
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 
 import login from "./auth/login.cmd";
 import logout from "./auth/logout.cmd";

@@ -1,9 +1,9 @@
 import { DEFAULT_SESSION_ID } from "~src/service/session/session.service";
 
-import { CommandOptionDefinition } from "../d2qdb.types";
+import { CommandOptionDefinition } from "../d2cli.types";
 
 export const sessionIdOption: CommandOptionDefinition = {
   flags: ["s", "session <id>"],
-  description: "D2QDB session ID",
+  description: "Destiny 2 CLI session ID",
   defaultValue: DEFAULT_SESSION_ID
 };

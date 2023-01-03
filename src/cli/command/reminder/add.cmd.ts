@@ -1,4 +1,4 @@
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 import { realTmpDir as fsRealTmpDir } from "~src/helper/fs.helper";
 import { AppModule } from "~src/module/app.module";
 import { LogService } from "~src/service/log/log.service";

@@ -1,4 +1,4 @@
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";

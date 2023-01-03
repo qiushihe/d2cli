@@ -1,3 +1,3 @@
-# D2QDB
+# Destiny 2 CLI
 
 mhmm

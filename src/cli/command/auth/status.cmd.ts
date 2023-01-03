@@ -1,4 +1,4 @@
-import { CommandDefinition } from "~src/cli/d2qdb.types";
+import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
