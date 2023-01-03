@@ -1,6 +1,7 @@
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { CacheService } from "~src/service/cache/cache.service";
+import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { ConfigService } from "~src/service/config/config.service";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
@@ -17,6 +18,7 @@ const MODULE: Record<string, new () => any> = {
   BungieApiService,
   BungieOauthService,
   CacheService,
+  CharacterDescriptionService,
   ConfigService,
   Destiny2CharacterService,
   Destiny2InventoryService,

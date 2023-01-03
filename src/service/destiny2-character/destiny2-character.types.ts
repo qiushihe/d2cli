@@ -1,6 +1,7 @@
 import { BungieApiDestiny2InventoryComponent } from "~src/service/destiny2-inventory/destiny2-inventory.types";
 
-export type BungieApiDestiny2Character = {
+export type BungieApiDestiny2CharacterResponse = {
+  character?: BungieApiDestiny2CharacterComponent;
   inventory?: BungieApiDestiny2InventoryComponent;
 };
 
@@ -44,16 +45,4 @@ export type BungieApiDestiny2CharacterComponent = {
   baseCharacterLevel: number;
   percentToNextLevel: number;
   titleRecordHash: number;
-};
-
-// TODO: Replace with raw API types
-export type Destiny2Character = {
-  id: string;
-  membershipType: number;
-  membershipId: string;
-  lightLevel: number;
-  lastPlayedAt: Date;
-  gender: string;
-  race: string;
-  class: string;
 };

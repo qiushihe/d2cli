@@ -13,7 +13,7 @@ export enum BungieApiDestiny2ManifestComponent {
   InventoryItemDefinition = "DestinyInventoryItemDefinition"
 }
 
-export type BungieApiDestiny2Manifest = {
+export type BungieApiDestiny2ManifestResponse = {
   [key: string]: any;
   version: string;
   jsonWorldComponentContentPaths: Record<BungieApiDestiny2ManifestLanguage, Record<string, string>>;

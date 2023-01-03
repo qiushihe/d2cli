@@ -1,7 +1,7 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
 import { BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
-import { BungieApiDestiny2Character } from "~src/service/destiny2-character/destiny2-character.types";
+import { BungieApiDestiny2CharacterResponse } from "~src/service/destiny2-character/destiny2-character.types";
 import { BungieApiDestiny2ItemComponent } from "~src/service/destiny2-item/destiny2-item.types";
 import { BungieApiDestiny2InventoryItemLocation } from "~src/service/destiny2-item/destiny2-item.types";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
@@ -53,7 +53,7 @@ export class Destiny2InventoryService {
     }
 
     const [characterInventoryJsonErr, characterInventoryJson] =
-      await this.bungieApiService.extractApiResponse<BungieApiDestiny2Character>(
+      await this.bungieApiService.extractApiResponse<BungieApiDestiny2CharacterResponse>(
         characterInventoryRes
       );
     if (characterInventoryJsonErr) {

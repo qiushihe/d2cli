@@ -1,32 +1,23 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
 import { BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
-import { BungieApiDestiny2ManifestLanguage } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2ManifestComponent } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2GenderDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2RaceDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2ClassDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
-import { BungieApiDestiny2Profile } from "~src/service/destiny2-profile/destiny2-profile.types";
+import { BungieApiDestiny2ProfileResponse } from "~src/service/destiny2-profile/destiny2-profile.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { SessionService } from "~src/service/session/session.service";
 
-import { Destiny2Character } from "./destiny2-character.types";
+import { BungieApiDestiny2CharacterComponent } from "./destiny2-character.types";
 
 export class Destiny2CharacterService {
   private readonly sessionService: SessionService;
   private readonly bungieApiService: BungieApiService;
-  private readonly destiny2ManifestService: Destiny2ManifestService;
   private readonly destiny2MembershipService: Destiny2MembershipService;
 
   constructor() {
     this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
     this.bungieApiService =
       AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
-    this.destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
     this.destiny2MembershipService =
       AppModule.getDefaultInstance().resolve<Destiny2MembershipService>(
         "Destiny2MembershipService"
@@ -35,7 +26,7 @@ export class Destiny2CharacterService {
 
   async getDestiny2Characters(
     sessionId: string
-  ): Promise<[Error, null] | [null, Destiny2Character[]]> {
+  ): Promise<[Error, null] | [null, BungieApiDestiny2CharacterComponent[]]> {
     const [bungieNetMembershipIdErr, bungieNetMembershipId] =
       await this.sessionService.getBungieNetMembershipId(sessionId);
     if (bungieNetMembershipIdErr) {
@@ -48,14 +39,18 @@ export class Destiny2CharacterService {
       return [membershipErr, null];
     }
 
-    return await this.getDestiny2CharactersByMembership(sessionId, membership.type, membership.id);
+    return await this.getDestiny2CharactersByMembership(
+      sessionId,
+      membership.membershipType,
+      membership.membershipId
+    );
   }
 
   async getDestiny2CharactersByMembership(
     sessionId: string,
     membershipType: number,
     membershipId: string
-  ): Promise<[Error, null] | [null, Destiny2Character[]]> {
+  ): Promise<[Error, null] | [null, BungieApiDestiny2CharacterComponent[]]> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching characters ...`);
@@ -69,7 +64,9 @@ export class Destiny2CharacterService {
       return [profileErr, null];
     } else {
       const [profileJsonErr, profileJson] =
-        await this.bungieApiService.extractApiResponse<BungieApiDestiny2Profile>(profileRes);
+        await this.bungieApiService.extractApiResponse<BungieApiDestiny2ProfileResponse>(
+          profileRes
+        );
       if (profileJsonErr) {
         return [profileJsonErr, null];
       } else {
@@ -80,53 +77,7 @@ export class Destiny2CharacterService {
           return [new Error("Profile missing characters data"), null];
         }
 
-        const [genderDefinitionErr, genderDefinition] =
-          await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2GenderDefinition>(
-            BungieApiDestiny2ManifestLanguage.English,
-            BungieApiDestiny2ManifestComponent.GenderDefinition
-          );
-        if (genderDefinitionErr) {
-          return [genderDefinitionErr, null];
-        }
-
-        const [raceDefinitionErr, raceDefinition] =
-          await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2RaceDefinition>(
-            BungieApiDestiny2ManifestLanguage.English,
-            BungieApiDestiny2ManifestComponent.RaceDefinition
-          );
-        if (raceDefinitionErr) {
-          return [raceDefinitionErr, null];
-        }
-
-        const [classDefinitionErr, classDefinition] =
-          await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2ClassDefinition>(
-            BungieApiDestiny2ManifestLanguage.English,
-            BungieApiDestiny2ManifestComponent.ClassDefinition
-          );
-        if (classDefinitionErr) {
-          return [classDefinitionErr, null];
-        }
-
-        const charactersData = profileJson.Response.characters.data;
-        const characterEntries = Object.entries(charactersData);
-
-        const characters: Destiny2Character[] = [];
-        for (let characterIndex = 0; characterIndex < characterEntries.length; characterIndex++) {
-          const [characterId, character] = characterEntries[characterIndex];
-
-          characters.push({
-            id: characterId,
-            membershipId: character.membershipId,
-            membershipType: character.membershipType,
-            lightLevel: character.light,
-            lastPlayedAt: new Date(character.dateLastPlayed),
-            gender: genderDefinition[character.genderHash].displayProperties.name,
-            race: raceDefinition[character.raceHash].displayProperties.name,
-            class: classDefinition[character.classHash].displayProperties.name
-          });
-        }
-
-        return [null, characters];
+        return [null, Object.values(profileJson.Response.characters.data)];
       }
     }
   }

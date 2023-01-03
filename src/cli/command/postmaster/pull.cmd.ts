@@ -115,7 +115,7 @@ const cmd: CommandDefinition = {
           destiny2InventoryService.pullItemFromPostmaster(
             sessionId,
             character.membershipType,
-            character.id,
+            character.characterId,
             postmasterItem.itemHash,
             postmasterItem.itemInstanceId || null
           )

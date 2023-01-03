@@ -67,7 +67,9 @@ const cmd: CommandDefinition = {
             );
           }
 
-          logger.log(`Destiny 2 membership ID: ${membership.id} (Type: ${membership.type})`);
+          logger.log(
+            `Destiny 2 membership ID: ${membership.membershipId} (Type: ${membership.membershipType})`
+          );
         }
       }
     } else {

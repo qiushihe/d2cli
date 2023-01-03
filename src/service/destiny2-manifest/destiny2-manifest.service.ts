@@ -5,7 +5,7 @@ import { ConfigService } from "~src/service/config/config.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 
-import { BungieApiDestiny2Manifest } from "./destiny2-manifest.types";
+import { BungieApiDestiny2ManifestResponse } from "./destiny2-manifest.types";
 import { BungieApiDestiny2ManifestLanguage } from "./destiny2-manifest.types";
 import { BungieApiDestiny2ManifestComponent } from "./destiny2-manifest.types";
 
@@ -79,15 +79,13 @@ export class Destiny2ManifestService {
     }
   }
 
-  async getDestiny2Manifest(): Promise<[Error, null] | [null, BungieApiDestiny2Manifest]> {
+  async getDestiny2Manifest(): Promise<[Error, null] | [null, BungieApiDestiny2ManifestResponse]> {
     const logger = this.getLogger();
     const cacheNamespace = "destiny2-manifest";
     const cacheKey = "manifest-content";
 
-    const [readCacheErr, cachedManifest] = await this.cacheService.get<BungieApiDestiny2Manifest>(
-      cacheNamespace,
-      cacheKey
-    );
+    const [readCacheErr, cachedManifest] =
+      await this.cacheService.get<BungieApiDestiny2ManifestResponse>(cacheNamespace, cacheKey);
     if (readCacheErr) {
       return [readCacheErr, null];
     }
@@ -153,7 +151,7 @@ export class Destiny2ManifestService {
   }
 
   private async fetchDestiny2Manifest(): Promise<
-    [Error, null] | [null, BungieApiDestiny2Manifest]
+    [Error, null] | [null, BungieApiDestiny2ManifestResponse]
   > {
     const logger = this.getLogger();
 
@@ -170,7 +168,9 @@ export class Destiny2ManifestService {
       ];
     } else {
       const [manifestJsonErr, manifestJson] =
-        await this.bungieApiService.extractApiResponse<BungieApiDestiny2Manifest>(manifestRes);
+        await this.bungieApiService.extractApiResponse<BungieApiDestiny2ManifestResponse>(
+          manifestRes
+        );
       if (manifestJsonErr) {
         return [
           logger.loggedError(

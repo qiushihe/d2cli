@@ -9,10 +9,3 @@ export type BungieApiDestiny2Membership = {
   bungieGlobalDisplayName: string;
   bungieGlobalDisplayNameCode: number;
 };
-
-// TODO: Replace with raw API types
-export type Destiny2Membership = {
-  type: number;
-  id: string;
-  displayName: string;
-};

@@ -31,7 +31,7 @@ export const getPostmasterItems = async (
     sessionId,
     character.membershipType,
     character.membershipId,
-    character.id
+    character.characterId
   );
   if (postmasterItemsErr) {
     return [

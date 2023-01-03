@@ -19,7 +19,6 @@ export type BungieOAuthState = {
   s: string;
 };
 
-// TODO: Replace with raw API types
 export type BungieOAuthAccessToken = {
   type: string;
   token: string;
