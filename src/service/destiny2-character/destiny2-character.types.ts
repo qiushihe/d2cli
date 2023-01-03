@@ -1,8 +1,8 @@
 import { BungieApiDestiny2InventoryComponent } from "~src/service/destiny2-inventory/destiny2-inventory.types";
 
 export type BungieApiDestiny2CharacterResponse = {
-  character?: BungieApiDestiny2CharacterComponent;
-  inventory?: BungieApiDestiny2InventoryComponent;
+  character?: { data: BungieApiDestiny2CharacterComponent };
+  inventory?: { data: BungieApiDestiny2InventoryComponent; privacy: number };
 };
 
 export type BungieApiDestiny2CharactersComponent = {
@@ -18,7 +18,7 @@ export type BungieApiDestiny2CharacterComponent = {
   minutesPlayedThisSession: string;
   minutesPlayedTotal: string;
   light: number;
-  stats: { [statHash: string]: number };
+  stats: { [statHash: number]: number };
   raceHash: number;
   genderHash: number;
   classHash: number;

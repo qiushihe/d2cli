@@ -10,7 +10,8 @@ export enum BungieApiDestiny2ManifestComponent {
   GenderDefinition = "DestinyGenderDefinition",
   ClassDefinition = "DestinyClassDefinition",
   InventoryBucketDefinition = "DestinyInventoryBucketDefinition",
-  InventoryItemDefinition = "DestinyInventoryItemDefinition"
+  InventoryItemDefinition = "DestinyInventoryItemDefinition",
+  StatDefinition = "DestinyStatDefinition"
 }
 
 export type BungieApiDestiny2ManifestResponse = {
@@ -148,3 +149,20 @@ export type BungieApiDestiny2InventoryItemDefinitions = Record<
   number,
   BungieApiDestiny2InventoryItemDefinition
 >;
+
+export type BungieApiDestiny2StatDefinition = {
+  displayProperties: {
+    name: string;
+    description: string;
+  };
+  aggregationType: number;
+  hasComputedBlock: boolean;
+  statCategory: number;
+  interpolate: boolean;
+  hash: number;
+  index: number;
+  redacted: boolean;
+  blacklisted: boolean;
+};
+
+export type BungieApiDestiny2StatDefinitions = Record<number, BungieApiDestiny2StatDefinition>;
