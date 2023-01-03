@@ -10,10 +10,11 @@ import { LogService } from "~src/service/log/log.service";
 
 import { getCharacterSelectionInfo } from "../../command-helper/current-character.helper";
 import { sessionIdOption } from "../../command-option/session-id.option";
+import { SessionIdCommandOptions } from "../../command-option/session-id.option";
 import { verboseOption } from "../../command-option/verbose.option";
-import { SessionCommandOptions } from "../command.types";
+import { VerboseCommandOptions } from "../../command-option/verbose.option";
 
-type CmdOptions = SessionCommandOptions & { verbose: boolean };
+type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
 const cmd: CommandDefinition = {
   description: "List Destiny 2 characters",

@@ -13,9 +13,9 @@ import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
 
 import { sessionIdOption } from "../../command-option/session-id.option";
-import { SessionCommandOptions } from "../command.types";
+import { SessionIdCommandOptions } from "../../command-option/session-id.option";
 
-type CmdOptions = SessionCommandOptions & { _: never };
+type CmdOptions = SessionIdCommandOptions & { _: never };
 
 const cmd: CommandDefinition = {
   description: "Log into Bungie.net",

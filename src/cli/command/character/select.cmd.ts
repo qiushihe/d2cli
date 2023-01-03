@@ -9,9 +9,9 @@ import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
 
 import { sessionIdOption } from "../../command-option/session-id.option";
-import { SessionCommandOptions } from "../command.types";
+import { SessionIdCommandOptions } from "../../command-option/session-id.option";
 
-type CmdOptions = SessionCommandOptions & { verbose: boolean };
+type CmdOptions = SessionIdCommandOptions & { verbose: boolean };
 
 const cmd: CommandDefinition = {
   description: "Select the current Destiny 2 character",
