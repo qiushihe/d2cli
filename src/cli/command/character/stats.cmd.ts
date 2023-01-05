@@ -46,7 +46,7 @@ const cmd: CommandDefinition = {
     const [statDefinitionErr, statDefinitions] = await fnWithSpinner(
       "Retrieving stat definitions ...",
       () =>
-        destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2StatDefinitions>(
+        destiny2ManifestService.getManifestComponent<BungieApiDestiny2StatDefinitions>(
           BungieApiDestiny2ManifestLanguage.English,
           BungieApiDestiny2ManifestComponent.StatDefinition
         )
@@ -63,7 +63,7 @@ const cmd: CommandDefinition = {
     }
 
     const [characterErr, character] = await fnWithSpinner("Retrieving character ...", () =>
-      destiny2CharacterService.getDestiny2Character(
+      destiny2CharacterService.getCharacter(
         sessionId,
         characterInfo.membershipType,
         characterInfo.membershipId,

@@ -6,4 +6,10 @@ import config from "./config.cmd";
 import postmaster from "./postmaster.cmd";
 import reminder from "./reminder.cmd";
 
-export const commands: CommandDefinitions = { auth, character, config, postmaster, reminder };
+export const commands: CommandDefinitions = {
+  auth,
+  character,
+  config,
+  postmaster,
+  reminder
+};

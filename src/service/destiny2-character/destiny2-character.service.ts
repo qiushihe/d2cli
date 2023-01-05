@@ -7,10 +7,9 @@ import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { SessionService } from "~src/service/session/session.service";
 
-import {
-  BungieApiDestiny2CharacterComponent,
-  BungieApiDestiny2CharacterResponse
-} from "./destiny2-character.types";
+import { BungieApiDestiny2CharacterResponse } from "./destiny2-character.types";
+import { BungieApiDestiny2CharacterComponent } from "./destiny2-character.types";
+import { BungieApiDestiny2CharacterProgressionComponent } from "./destiny2-character.types";
 
 export class Destiny2CharacterService {
   private readonly sessionService: SessionService;
@@ -27,7 +26,43 @@ export class Destiny2CharacterService {
       );
   }
 
-  async getDestiny2Character(
+  async getCharacterProgressions(
+    sessionId: string,
+    membershipType: number,
+    membershipId: string,
+    characterId: string
+  ): Promise<[Error, null] | [null, BungieApiDestiny2CharacterProgressionComponent]> {
+    const logger = this.getLogger();
+
+    logger.debug(`Fetching character progressions ...`);
+    const [characterErr, characterRes] = await this.bungieApiService.sendSessionApiRequest(
+      sessionId,
+      "GET",
+      `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${BungieApiComponentType.CharacterProgressions}`,
+      null
+    );
+    if (characterErr) {
+      return [characterErr, null];
+    }
+
+    const [characterJsonErr, characterJson] =
+      await this.bungieApiService.extractApiResponse<BungieApiDestiny2CharacterResponse>(
+        characterRes
+      );
+    if (characterJsonErr) {
+      return [characterJsonErr, null];
+    }
+    if (!characterJson.Response) {
+      return [new Error("Response missing data"), null];
+    }
+    if (!characterJson.Response.progressions) {
+      return [new Error("Response missing character progressions data"), null];
+    }
+
+    return [null, characterJson.Response.progressions.data];
+  }
+
+  async getCharacter(
     sessionId: string,
     membershipType: number,
     membershipId: string,
@@ -63,7 +98,7 @@ export class Destiny2CharacterService {
     return [null, characterJson.Response.character.data];
   }
 
-  async getDestiny2Characters(
+  async getCharacters(
     sessionId: string
   ): Promise<[Error, null] | [null, BungieApiDestiny2CharacterComponent[]]> {
     const [bungieNetMembershipIdErr, bungieNetMembershipId] =
@@ -78,14 +113,14 @@ export class Destiny2CharacterService {
       return [membershipErr, null];
     }
 
-    return await this.getDestiny2CharactersByMembership(
+    return await this.getCharactersByMembership(
       sessionId,
       membershipInfo.membership.membershipType,
       membershipInfo.membership.membershipId
     );
   }
 
-  async getDestiny2CharactersByMembership(
+  async getCharactersByMembership(
     sessionId: string,
     membershipType: number,
     membershipId: string

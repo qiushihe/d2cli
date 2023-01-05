@@ -41,7 +41,7 @@ const cmd: CommandDefinition = {
     }
 
     const [charactersErr, characters] = await fnWithSpinner("Retrieving characters ...", () =>
-      destiny2CharacterService.getDestiny2Characters(sessionId)
+      destiny2CharacterService.getCharacters(sessionId)
     );
     if (charactersErr) {
       return logger.loggedError(`Unable to retrieve characters: ${charactersErr.message}`);

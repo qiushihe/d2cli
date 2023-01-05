@@ -116,7 +116,7 @@ export class Destiny2InventoryService {
     location: BungieApiDestiny2InventoryItemLocation
   ): Promise<[Error, null] | [null, number[]]> {
     const [bucketDefinitionErr, bucketDefinitions] =
-      await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2InventoryBucketDefinitions>(
+      await this.destiny2ManifestService.getManifestComponent<BungieApiDestiny2InventoryBucketDefinitions>(
         BungieApiDestiny2ManifestLanguage.English,
         BungieApiDestiny2ManifestComponent.InventoryBucketDefinition
       );

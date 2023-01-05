@@ -24,7 +24,7 @@ export class Destiny2ManifestService {
     this.cacheService = AppModule.getDefaultInstance().resolve<CacheService>("CacheService");
   }
 
-  async getDestiny2ManifestComponent<T>(
+  async getManifestComponent<T>(
     language: BungieApiDestiny2ManifestLanguage,
     component: BungieApiDestiny2ManifestComponent
   ): Promise<[Error, null] | [null, T]> {
@@ -46,7 +46,7 @@ export class Destiny2ManifestService {
     } else {
       logger.debug(`Cache miss for Destiny 2 manifest component ${language}/${component}`);
 
-      const [manifestErr, manifestJson] = await this.getDestiny2Manifest();
+      const [manifestErr, manifestJson] = await this.getManifest();
       if (manifestErr) {
         return [manifestErr, null];
       } else {
@@ -58,8 +58,9 @@ export class Destiny2ManifestService {
           ];
         }
 
-        const [fetchManifestComponentErr, manifestComponent] =
-          await this.fetchDestiny2ManifestComponent<T>(localizedManifest[component]);
+        const [fetchManifestComponentErr, manifestComponent] = await this.fetchManifestComponent<T>(
+          localizedManifest[component]
+        );
         if (fetchManifestComponentErr) {
           return [fetchManifestComponentErr, null];
         }
@@ -79,7 +80,7 @@ export class Destiny2ManifestService {
     }
   }
 
-  async getDestiny2Manifest(): Promise<[Error, null] | [null, BungieApiDestiny2ManifestResponse]> {
+  async getManifest(): Promise<[Error, null] | [null, BungieApiDestiny2ManifestResponse]> {
     const logger = this.getLogger();
     const cacheNamespace = "destiny2-manifest";
     const cacheKey = "manifest-content";
@@ -96,7 +97,7 @@ export class Destiny2ManifestService {
     } else {
       logger.debug(`Cache miss for Destiny 2 manifest`);
 
-      const [fetchManifestErr, manifest] = await this.fetchDestiny2Manifest();
+      const [fetchManifestErr, manifest] = await this.fetchManifest();
       if (fetchManifestErr) {
         return [fetchManifestErr, null];
       }
@@ -115,7 +116,7 @@ export class Destiny2ManifestService {
     }
   }
 
-  private async fetchDestiny2ManifestComponent<T>(
+  private async fetchManifestComponent<T>(
     manifestComponentPath: string
   ): Promise<[Error, null] | [null, T]> {
     const logger = this.getLogger();
@@ -150,7 +151,7 @@ export class Destiny2ManifestService {
     return [null, manifestComponentJson as T];
   }
 
-  private async fetchDestiny2Manifest(): Promise<
+  private async fetchManifest(): Promise<
     [Error, null] | [null, BungieApiDestiny2ManifestResponse]
   > {
     const logger = this.getLogger();

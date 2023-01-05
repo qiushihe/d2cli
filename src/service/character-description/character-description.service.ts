@@ -26,7 +26,7 @@ export class CharacterDescriptionService {
     character: CharacterDescribableAttributes
   ): Promise<[Error, null] | [null, CharacterDescription]> {
     const [genderDefinitionErr, genderDefinition] =
-      await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2GenderDefinition>(
+      await this.destiny2ManifestService.getManifestComponent<BungieApiDestiny2GenderDefinition>(
         BungieApiDestiny2ManifestLanguage.English,
         BungieApiDestiny2ManifestComponent.GenderDefinition
       );
@@ -35,7 +35,7 @@ export class CharacterDescriptionService {
     }
 
     const [raceDefinitionErr, raceDefinition] =
-      await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2RaceDefinition>(
+      await this.destiny2ManifestService.getManifestComponent<BungieApiDestiny2RaceDefinition>(
         BungieApiDestiny2ManifestLanguage.English,
         BungieApiDestiny2ManifestComponent.RaceDefinition
       );
@@ -44,7 +44,7 @@ export class CharacterDescriptionService {
     }
 
     const [classDefinitionErr, classDefinition] =
-      await this.destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2ClassDefinition>(
+      await this.destiny2ManifestService.getManifestComponent<BungieApiDestiny2ClassDefinition>(
         BungieApiDestiny2ManifestLanguage.English,
         BungieApiDestiny2ManifestComponent.ClassDefinition
       );

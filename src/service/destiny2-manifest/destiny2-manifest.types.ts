@@ -11,7 +11,8 @@ export enum BungieApiDestiny2ManifestComponent {
   ClassDefinition = "DestinyClassDefinition",
   InventoryBucketDefinition = "DestinyInventoryBucketDefinition",
   InventoryItemDefinition = "DestinyInventoryItemDefinition",
-  StatDefinition = "DestinyStatDefinition"
+  StatDefinition = "DestinyStatDefinition",
+  ProgressionDefinition = "DestinyProgressionDefinition"
 }
 
 export type BungieApiDestiny2ManifestResponse = {
@@ -166,3 +167,27 @@ export type BungieApiDestiny2StatDefinition = {
 };
 
 export type BungieApiDestiny2StatDefinitions = Record<number, BungieApiDestiny2StatDefinition>;
+
+export type BungieApiDestiny2ProgressionDefinition = {
+  displayProperties: {
+    name: string;
+    description: string;
+    displayUnitsName: string;
+  };
+  scope: number;
+  repeatLastStep: boolean;
+  source: number;
+  steps: any[];
+  visible: boolean;
+  factionHash?: number;
+  rewardItems: any[];
+  hash: number;
+  index: number;
+  redacted: boolean;
+  blacklisted: boolean;
+};
+
+export type BungieApiDestiny2ProgressionDefinitions = Record<
+  number,
+  BungieApiDestiny2ProgressionDefinition
+>;

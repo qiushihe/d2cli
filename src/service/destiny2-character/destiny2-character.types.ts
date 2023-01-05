@@ -1,8 +1,9 @@
 import { BungieApiDestiny2InventoryComponent } from "~src/service/destiny2-inventory/destiny2-inventory.types";
 
 export type BungieApiDestiny2CharacterResponse = {
-  character?: { data: BungieApiDestiny2CharacterComponent };
+  character?: { data: BungieApiDestiny2CharacterComponent; privacy: number };
   inventory?: { data: BungieApiDestiny2InventoryComponent; privacy: number };
+  progressions?: { data: BungieApiDestiny2CharacterProgressionComponent; privacy: number };
 };
 
 export type BungieApiDestiny2CharactersComponent = {
@@ -45,6 +46,34 @@ export type BungieApiDestiny2CharacterComponent = {
   baseCharacterLevel: number;
   percentToNextLevel: number;
   titleRecordHash: number;
+};
+
+export type BungieApiDestiny2CharacterProgressionComponent = {
+  progressions: {
+    [key: number]: {
+      progressionHash: number;
+      dailyProgress: number;
+      dailyLimit: number;
+      weeklyProgress: number;
+      weeklyLimit: number;
+      currentProgress: number;
+      level: number;
+      levelCap: number;
+      stepIndex: number;
+      progressToNextLevel: number;
+      nextLevelAt: number;
+      currentResetCount?: number;
+      seasonResets?: any[];
+      rewardItemStates?: any[];
+    };
+  };
+  factions: any;
+  milestones: any;
+  quests: any;
+  uninstancedItemObjectives: any;
+  uninstancedItemPerks: any;
+  checklists: any;
+  seasonalArtifact: any;
 };
 
 export type CharacterReference = {

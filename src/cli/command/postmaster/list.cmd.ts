@@ -39,14 +39,14 @@ const cmd: CommandDefinition = {
     const [itemDefinitionErr, itemDefinitions] = await fnWithSpinner(
       "Retrieving inventory item definitions ...",
       () =>
-        destiny2ManifestService.getDestiny2ManifestComponent<BungieApiDestiny2InventoryItemDefinitions>(
+        destiny2ManifestService.getManifestComponent<BungieApiDestiny2InventoryItemDefinitions>(
           BungieApiDestiny2ManifestLanguage.English,
           BungieApiDestiny2ManifestComponent.InventoryItemDefinition
         )
     );
     if (itemDefinitionErr) {
       return logger.loggedError(
-        `Unable to retrieve item definitions: ${itemDefinitionErr.message}`
+        `Unable to retrieve inventory item definitions: ${itemDefinitionErr.message}`
       );
     }
 
