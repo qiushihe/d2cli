@@ -1,15 +1,14 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
-import { BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
-import { BungieApiDestiny2ProfileResponse } from "~src/service/destiny2-profile/destiny2-profile.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { SessionService } from "~src/service/session/session.service";
-
-import { BungieApiDestiny2CharacterResponse } from "./destiny2-character.types";
-import { BungieApiDestiny2CharacterComponent } from "./destiny2-character.types";
-import { BungieApiDestiny2CharacterProgressionComponent } from "./destiny2-character.types";
+import { DestinyComponentType } from "~type/bungie-api/destiny.types";
+import { DestinyCharacterComponent } from "~type/bungie-api/destiny/entities/characters.types";
+import { DestinyCharacterProgressionComponent } from "~type/bungie-api/destiny/entities/characters.types";
+import { DestinyProfileResponse } from "~type/bungie-api/destiny/responses";
+import { DestinyCharacterResponse } from "~type/bungie-api/destiny/responses";
 
 export class Destiny2CharacterService {
   private readonly sessionService: SessionService;
@@ -31,14 +30,14 @@ export class Destiny2CharacterService {
     membershipType: number,
     membershipId: string,
     characterId: string
-  ): Promise<[Error, null] | [null, BungieApiDestiny2CharacterProgressionComponent]> {
+  ): Promise<[Error, null] | [null, DestinyCharacterProgressionComponent]> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching character progressions ...`);
     const [characterErr, characterRes] = await this.bungieApiService.sendSessionApiRequest(
       sessionId,
       "GET",
-      `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${BungieApiComponentType.CharacterProgressions}`,
+      `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${DestinyComponentType.CharacterProgressions}`,
       null
     );
     if (characterErr) {
@@ -46,9 +45,7 @@ export class Destiny2CharacterService {
     }
 
     const [characterJsonErr, characterJson] =
-      await this.bungieApiService.extractApiResponse<BungieApiDestiny2CharacterResponse>(
-        characterRes
-      );
+      await this.bungieApiService.extractApiResponse<DestinyCharacterResponse>(characterRes);
     if (characterJsonErr) {
       return [characterJsonErr, null];
     }
@@ -67,14 +64,14 @@ export class Destiny2CharacterService {
     membershipType: number,
     membershipId: string,
     characterId: string
-  ): Promise<[Error, null] | [null, BungieApiDestiny2CharacterComponent]> {
+  ): Promise<[Error, null] | [null, DestinyCharacterComponent]> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching character ...`);
     const [characterErr, characterRes] = await this.bungieApiService.sendSessionApiRequest(
       sessionId,
       "GET",
-      `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${BungieApiComponentType.Characters}`,
+      `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${DestinyComponentType.Characters}`,
       null
     );
     if (characterErr) {
@@ -82,9 +79,7 @@ export class Destiny2CharacterService {
     }
 
     const [characterJsonErr, characterJson] =
-      await this.bungieApiService.extractApiResponse<BungieApiDestiny2CharacterResponse>(
-        characterRes
-      );
+      await this.bungieApiService.extractApiResponse<DestinyCharacterResponse>(characterRes);
     if (characterJsonErr) {
       return [characterJsonErr, null];
     }
@@ -100,7 +95,7 @@ export class Destiny2CharacterService {
 
   async getCharacters(
     sessionId: string
-  ): Promise<[Error, null] | [null, BungieApiDestiny2CharacterComponent[]]> {
+  ): Promise<[Error, null] | [null, DestinyCharacterComponent[]]> {
     const [bungieNetMembershipIdErr, bungieNetMembershipId] =
       await this.sessionService.getBungieNetMembershipId(sessionId);
     if (bungieNetMembershipIdErr) {
@@ -124,14 +119,14 @@ export class Destiny2CharacterService {
     sessionId: string,
     membershipType: number,
     membershipId: string
-  ): Promise<[Error, null] | [null, BungieApiDestiny2CharacterComponent[]]> {
+  ): Promise<[Error, null] | [null, DestinyCharacterComponent[]]> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching characters ...`);
     const [profileErr, profileRes] = await this.bungieApiService.sendSessionApiRequest(
       sessionId,
       "GET",
-      `/Destiny2/${membershipType}/Profile/${membershipId}?components=${BungieApiComponentType.Characters}`,
+      `/Destiny2/${membershipType}/Profile/${membershipId}?components=${DestinyComponentType.Characters}`,
       null
     );
     if (profileErr) {
@@ -139,7 +134,7 @@ export class Destiny2CharacterService {
     }
 
     const [profileJsonErr, profileJson] =
-      await this.bungieApiService.extractApiResponse<BungieApiDestiny2ProfileResponse>(profileRes);
+      await this.bungieApiService.extractApiResponse<DestinyProfileResponse>(profileRes);
     if (profileJsonErr) {
       return [profileJsonErr, null];
     }

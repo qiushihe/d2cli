@@ -1,9 +1,9 @@
-import { BungieApiDestiny2CharacterComponent } from "~src/service/destiny2-character/destiny2-character.types";
-import { BungieApiDestiny2StatDefinitions } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { DestinyCharacterComponent } from "~type/bungie-api/destiny/entities/characters.types";
+import { Destiny2ManifestStatDefinitions } from "~type/bungie-asset/destiny2.types";
 
 export const sortedStats = (
-  character: BungieApiDestiny2CharacterComponent,
-  statDefinitions: BungieApiDestiny2StatDefinitions
+  character: DestinyCharacterComponent,
+  statDefinitions: Destiny2ManifestStatDefinitions
 ): [string, number, string, string][] => {
   return Object.entries(character.stats)
     .sort(([a], [b]) => {

@@ -6,9 +6,9 @@ import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
+import { BungieOAuthAccessToken } from "~type/bungie-oauth.types";
 
-import { BungieApiOAuthAccessToken } from "./bungie-oauth.types";
-import { BungieOAuthAccessToken } from "./bungie-oauth.types";
+import { OAuthAccessToken } from "./bungie-oauth.types";
 
 type GetOAuthTokenOptions = {
   type: "get-access-token" | "get-refreshed-token";
@@ -27,7 +27,7 @@ export class BungieOauthService {
   async getRefreshedAccessToken(
     refreshToken: string,
     startTime: number
-  ): Promise<[Error, null] | [null, BungieOAuthAccessToken]> {
+  ): Promise<[Error, null] | [null, OAuthAccessToken]> {
     return await this.getOAuthToken({
       type: "get-refreshed-token",
       startTime,
@@ -38,7 +38,7 @@ export class BungieOauthService {
   async getAccessToken(
     authorizationCode: string,
     startTime: number
-  ): Promise<[Error, null] | [null, BungieOAuthAccessToken]> {
+  ): Promise<[Error, null] | [null, OAuthAccessToken]> {
     return await this.getOAuthToken({
       type: "get-access-token",
       startTime,
@@ -48,7 +48,7 @@ export class BungieOauthService {
 
   async getOAuthToken(
     options: GetOAuthTokenOptions
-  ): Promise<[Error, null] | [null, BungieOAuthAccessToken]> {
+  ): Promise<[Error, null] | [null, OAuthAccessToken]> {
     const logger = this.getLogger();
 
     let isGetAccessToken: boolean;
@@ -131,9 +131,9 @@ export class BungieOauthService {
       ];
     }
 
-    const tokenResponse = (await res.json()) as BungieApiOAuthAccessToken;
+    const tokenResponse = (await res.json()) as BungieOAuthAccessToken;
 
-    const token: BungieOAuthAccessToken = {
+    const token: OAuthAccessToken = {
       type: tokenResponse.token_type,
       token: tokenResponse.access_token,
       expiredAt: options.startTime + tokenResponse.expires_in * 1000,

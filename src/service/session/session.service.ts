@@ -1,6 +1,6 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
-import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
+import { OAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { FsStorageService } from "~src/service/storage/fs-storage.service";
@@ -29,7 +29,7 @@ export class SessionService {
   async getUpToDateAccessToken(sessionId: string): Promise<[Error, null] | [null, string]> {
     const logger = this.getLogger();
 
-    const [accessTokenErr, accessToken] = await this.getData<BungieOAuthAccessToken>(
+    const [accessTokenErr, accessToken] = await this.getData<OAuthAccessToken>(
       sessionId,
       SessionDataName.BungieAccessToken
     );
@@ -71,7 +71,7 @@ export class SessionService {
           }
 
           logger.debug(`Storing refreshing access token ...`);
-          const setTokenErr = await this.setData<BungieOAuthAccessToken>(
+          const setTokenErr = await this.setData<OAuthAccessToken>(
             sessionId,
             SessionDataName.BungieAccessToken,
             refreshedToken
@@ -103,7 +103,7 @@ export class SessionService {
 
     const status: LoginStatus = { isLoggedIn: false, isLoginExpired: false };
 
-    const [accessTokenErr, accessToken] = await this.getData<BungieOAuthAccessToken>(
+    const [accessTokenErr, accessToken] = await this.getData<OAuthAccessToken>(
       sessionId,
       SessionDataName.BungieAccessToken
     );
@@ -141,7 +141,7 @@ export class SessionService {
   }
 
   async getBungieNetMembershipId(sessionId: string): Promise<[Error, null] | [null, string]> {
-    const [accessTokenErr, accessToken] = await this.getData<BungieOAuthAccessToken>(
+    const [accessTokenErr, accessToken] = await this.getData<OAuthAccessToken>(
       sessionId,
       SessionDataName.BungieAccessToken
     );
@@ -193,7 +193,7 @@ export class SessionService {
     return [null, sessionFile.content as SessionData];
   }
 
-  private getTokenStatus(token: BungieOAuthAccessToken): TokenStatus {
+  private getTokenStatus(token: OAuthAccessToken): TokenStatus {
     const status: TokenStatus = {
       isAccessTokenExpired: false,
       isRefreshTokenExpired: false

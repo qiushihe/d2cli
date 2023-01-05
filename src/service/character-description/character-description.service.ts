@@ -1,10 +1,10 @@
 import { AppModule } from "~src/module/app.module";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
-import { BungieApiDestiny2ClassDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2GenderDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2ManifestComponent } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2ManifestLanguage } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2RaceDefinition } from "~src/service/destiny2-manifest/destiny2-manifest.types";
+import { Destiny2ManifestClassDefinition } from "~type/bungie-asset/destiny2.types";
+import { Destiny2ManifestGenderDefinition } from "~type/bungie-asset/destiny2.types";
+import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
+import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
+import { Destiny2ManifestRaceDefinition } from "~type/bungie-asset/destiny2.types";
 
 import { CharacterDescription } from "./character-description.types";
 
@@ -26,27 +26,27 @@ export class CharacterDescriptionService {
     character: CharacterDescribableAttributes
   ): Promise<[Error, null] | [null, CharacterDescription]> {
     const [genderDefinitionErr, genderDefinition] =
-      await this.destiny2ManifestService.getManifestComponent<BungieApiDestiny2GenderDefinition>(
-        BungieApiDestiny2ManifestLanguage.English,
-        BungieApiDestiny2ManifestComponent.GenderDefinition
+      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestGenderDefinition>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.GenderDefinition
       );
     if (genderDefinitionErr) {
       return [genderDefinitionErr, null];
     }
 
     const [raceDefinitionErr, raceDefinition] =
-      await this.destiny2ManifestService.getManifestComponent<BungieApiDestiny2RaceDefinition>(
-        BungieApiDestiny2ManifestLanguage.English,
-        BungieApiDestiny2ManifestComponent.RaceDefinition
+      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestRaceDefinition>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.RaceDefinition
       );
     if (raceDefinitionErr) {
       return [raceDefinitionErr, null];
     }
 
     const [classDefinitionErr, classDefinition] =
-      await this.destiny2ManifestService.getManifestComponent<BungieApiDestiny2ClassDefinition>(
-        BungieApiDestiny2ManifestLanguage.English,
-        BungieApiDestiny2ManifestComponent.ClassDefinition
+      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestClassDefinition>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.ClassDefinition
       );
     if (classDefinitionErr) {
       return [classDefinitionErr, null];

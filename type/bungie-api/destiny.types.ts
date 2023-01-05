@@ -1,4 +1,4 @@
-export enum BungieApiComponentType {
+export enum DestinyComponentType {
   None = 0,
   Profiles = 100,
   VendorReceipts = 101,
@@ -37,12 +37,45 @@ export enum BungieApiComponentType {
   Craftables = 1300
 }
 
-export type BungieApiResponse<TResponse = any> = {
-  [key: string]: any;
-  Response?: TResponse;
-  ErrorCode: number;
-  ThrottleSeconds: number;
-  ErrorStatus: string;
-  Message: string;
-  MessageData: any;
+export enum ItemLocation {
+  Unknown = 0,
+  Inventory = 1,
+  Vault = 2,
+  Vendor = 3,
+  Postmaster = 4
+}
+
+export type DestinyProgressionResetEntry = {
+  season: number;
+  resets: number;
 };
+
+export type DestinyProgression = {
+  progressionHash: number;
+  dailyProgress: number;
+  dailyLimit: number;
+  weeklyProgress: number;
+  weeklyLimit: number;
+  currentProgress: number;
+  level: number;
+  levelCap: number;
+  stepIndex: number;
+  progressToNextLevel: number;
+  nextLevelAt: number;
+  currentResetCount?: number;
+  seasonResets?: DestinyProgressionResetEntry[];
+  rewardItemStates?: number[];
+};
+
+export enum BucketScope {
+  Character = 0,
+  Account = 1
+}
+
+export enum BucketCategory {
+  Invisible = 0,
+  Item = 1,
+  Currency = 2,
+  Equippable = 3,
+  Ignored = 4
+}

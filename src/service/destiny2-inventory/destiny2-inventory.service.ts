@@ -1,15 +1,15 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
-import { BungieApiComponentType } from "~src/service/bungie-api/bungie-api.types";
-import { BungieApiDestiny2CharacterResponse } from "~src/service/destiny2-character/destiny2-character.types";
-import { BungieApiDestiny2ItemComponent } from "~src/service/destiny2-item/destiny2-item.types";
-import { BungieApiDestiny2InventoryItemLocation } from "~src/service/destiny2-item/destiny2-item.types";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
-import { BungieApiDestiny2InventoryBucketDefinitions } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2ManifestLanguage } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2ManifestComponent } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
+import { DestinyComponentType } from "~type/bungie-api/destiny.types";
+import { ItemLocation } from "~type/bungie-api/destiny.types";
+import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
+import { DestinyCharacterResponse } from "~type/bungie-api/destiny/responses";
+import { Destiny2ManifestInventoryBucketDefinitions } from "~type/bungie-asset/destiny2.types";
+import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
+import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 
 export class Destiny2InventoryService {
   private readonly bungieApiService: BungieApiService;
@@ -28,11 +28,11 @@ export class Destiny2InventoryService {
     membershipType: number,
     membershipId: string,
     characterId: string
-  ): Promise<[Error, null] | [null, BungieApiDestiny2ItemComponent[]]> {
+  ): Promise<[Error, null] | [null, DestinyItemComponent[]]> {
     const logger = this.getLogger();
 
     const [postmasterBucketHashesErr, postmasterBucketHashes] = await this.getLocationBucketHashes(
-      BungieApiDestiny2InventoryItemLocation.Postmaster
+      ItemLocation.Postmaster
     );
     if (postmasterBucketHashesErr) {
       return [postmasterBucketHashesErr, null];
@@ -45,7 +45,7 @@ export class Destiny2InventoryService {
       await this.bungieApiService.sendSessionApiRequest(
         sessionId,
         "GET",
-        `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${BungieApiComponentType.CharacterInventories}`,
+        `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${DestinyComponentType.CharacterInventories}`,
         null
       );
     if (characterInventoryErr) {
@@ -53,7 +53,7 @@ export class Destiny2InventoryService {
     }
 
     const [characterInventoryJsonErr, characterInventoryJson] =
-      await this.bungieApiService.extractApiResponse<BungieApiDestiny2CharacterResponse>(
+      await this.bungieApiService.extractApiResponse<DestinyCharacterResponse>(
         characterInventoryRes
       );
     if (characterInventoryJsonErr) {
@@ -112,13 +112,11 @@ export class Destiny2InventoryService {
     }
   }
 
-  async getLocationBucketHashes(
-    location: BungieApiDestiny2InventoryItemLocation
-  ): Promise<[Error, null] | [null, number[]]> {
+  async getLocationBucketHashes(location: ItemLocation): Promise<[Error, null] | [null, number[]]> {
     const [bucketDefinitionErr, bucketDefinitions] =
-      await this.destiny2ManifestService.getManifestComponent<BungieApiDestiny2InventoryBucketDefinitions>(
-        BungieApiDestiny2ManifestLanguage.English,
-        BungieApiDestiny2ManifestComponent.InventoryBucketDefinition
+      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryBucketDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.InventoryBucketDefinition
       );
     if (bucketDefinitionErr) {
       return [bucketDefinitionErr, null];

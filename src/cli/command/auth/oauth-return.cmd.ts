@@ -3,8 +3,8 @@ import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
-import { BungieOAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
-import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
+import { OAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
+import { OAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
@@ -33,7 +33,7 @@ const cmd: CommandDefinition = {
     logger.debug(`Authorization Code: ${authorizationCode}`);
     logger.debug(`Encoded State: ${encodedState}`);
 
-    const state = JSON.parse(base42DecodeString(encodedState)) as BungieOAuthState;
+    const state = JSON.parse(base42DecodeString(encodedState)) as OAuthState;
     const { t: timestamp, s: sessionId } = state;
 
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
@@ -61,7 +61,7 @@ const cmd: CommandDefinition = {
     logger.info(`Session reloaded`);
 
     const setTokenErr = await fnWithSpinner("Storing Bungie.net OAuth access token ...", () =>
-      sessionService.setData<BungieOAuthAccessToken>(
+      sessionService.setData<OAuthAccessToken>(
         sessionId,
         SessionDataName.BungieAccessToken,
         accessToken

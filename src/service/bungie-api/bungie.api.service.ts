@@ -6,8 +6,7 @@ import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { SessionService } from "~src/service/session/session.service";
-
-import { BungieApiResponse } from "./bungie-api.types";
+import { ApiResponse } from "~type/bungie-api.types";
 
 export class BungieApiService {
   private readonly config: ConfigService;
@@ -89,7 +88,7 @@ export class BungieApiService {
 
   async extractApiResponse<TResponse = any>(
     res: Response
-  ): Promise<[Error, null] | [null, BungieApiResponse<TResponse>]> {
+  ): Promise<[Error, null] | [null, ApiResponse<TResponse>]> {
     const [resJsonErr, resJson] = await this.extractResponseJson(res);
     if (resJsonErr) {
       return [resJsonErr, null];
@@ -104,7 +103,7 @@ export class BungieApiService {
       ) {
         return [new Error(`Invalid Bungie API response: ${JSON.stringify(resJson)}`), null];
       } else {
-        return [null, resJson as BungieApiResponse<TResponse>];
+        return [null, resJson as ApiResponse<TResponse>];
       }
     }
   }

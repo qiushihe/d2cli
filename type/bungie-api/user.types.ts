@@ -1,4 +1,11 @@
-export type BungieApiDestiny2Membership = {
+export type GeneralUser = {
+  membershipId: string;
+  uniqueName: string;
+  normalizedName: string;
+  displayName: string;
+};
+
+export type UserInfoCard = {
   iconPath: string;
   crossSaveOverride: number;
   applicableMembershipTypes: number[];

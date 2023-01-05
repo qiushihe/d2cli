@@ -1,13 +1,13 @@
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
-import { BungieApiDestiny2ItemComponent } from "~src/service/destiny2-item/destiny2-item.types";
+import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 export const getPostmasterItems = async (
   sessionId: string,
   membershipType: number,
   membershipId: string,
   characterId: string
-): Promise<[Error, null] | [null, BungieApiDestiny2ItemComponent[]]> => {
+): Promise<[Error, null] | [null, DestinyItemComponent[]]> => {
   const destiny2InventoryService = AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
     "Destiny2InventoryService"
   );

@@ -4,10 +4,10 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
-import { BungieApiDestiny2ManifestLanguage } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2ManifestComponent } from "~src/service/destiny2-manifest/destiny2-manifest.types";
-import { BungieApiDestiny2ProgressionDefinitions } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 import { LogService } from "~src/service/log/log.service";
+import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
+import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
+import { Destiny2ManifestProgressionDefinitions } from "~type/bungie-asset/destiny2.types";
 
 import { getSelectedCharacterInfo } from "../../command-helper/current-character.helper";
 import { sessionIdOption } from "../../command-option/session-id.option";
@@ -53,9 +53,9 @@ const cmd: CommandDefinition = {
     const [progressionDefinitionErr, progressionDefinitions] = await fnWithSpinner(
       "Retrieving progression definitions ...",
       () =>
-        destiny2ManifestService.getManifestComponent<BungieApiDestiny2ProgressionDefinitions>(
-          BungieApiDestiny2ManifestLanguage.English,
-          BungieApiDestiny2ManifestComponent.ProgressionDefinition
+        destiny2ManifestService.getManifestComponent<Destiny2ManifestProgressionDefinitions>(
+          Destiny2ManifestLanguage.English,
+          Destiny2ManifestComponent.ProgressionDefinition
         )
     );
     if (progressionDefinitionErr) {

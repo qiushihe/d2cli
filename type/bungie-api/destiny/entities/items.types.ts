@@ -1,17 +1,11 @@
-export enum BungieApiDestiny2InventoryItemLocation {
-  Unknown = 0,
-  Inventory = 1,
-  Vault = 2,
-  Vendor = 3,
-  Postmaster = 4
-}
+import { ItemLocation } from "~type/bungie-api/destiny.types";
 
-export type BungieApiDestiny2ItemComponent = {
+export type DestinyItemComponent = {
   itemHash: number;
   itemInstanceId: string;
   quantity: number;
   bindStatus: number;
-  location: BungieApiDestiny2InventoryItemLocation;
+  location: ItemLocation;
   bucketHash: number;
   transferStatus: number;
   lockable: boolean;

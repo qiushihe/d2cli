@@ -7,7 +7,7 @@ import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getRepoRootPath } from "~src/helper/path.helper";
 import { base42EncodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
-import { BungieOAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
+import { OAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
@@ -39,7 +39,7 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Missing Bungie OAuth client ID`);
     }
 
-    const state: BungieOAuthState = { t: new Date().getTime(), s: sessionId };
+    const state: OAuthState = { t: new Date().getTime(), s: sessionId };
     const encodedState = base42EncodeString(JSON.stringify(state));
     logger.debug("Done state encoding");
 
