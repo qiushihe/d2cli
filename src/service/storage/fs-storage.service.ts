@@ -1,6 +1,5 @@
 import { homedir } from "os";
 import * as path from "path";
-import * as R from "ramda";
 
 import { sha1Digest } from "~src/helper/crypto.helper";
 import { exists as fsExists } from "~src/helper/fs.helper";
@@ -47,7 +46,12 @@ export class FsStorageService implements IStorageInterface {
       return [err as Error, null];
     }
 
-    if (R.isNil(file.filename) || R.isNil(file.content)) {
+    if (
+      file.filename === null ||
+      file.filename === undefined ||
+      file.content === null ||
+      file.content === undefined
+    ) {
       return [new Error(`Invalid file content for ${filePath}`), null];
     }
 

@@ -1,48 +1,37 @@
-import * as R from "ramda";
-
 import { BungieApiDestiny2CharacterComponent } from "~src/service/destiny2-character/destiny2-character.types";
 import { BungieApiDestiny2StatDefinitions } from "~src/service/destiny2-manifest/destiny2-manifest.types";
 
-const propOf =
-  <V>(obj: Record<string | number, V>) =>
-  (prop: string): V =>
-    obj[prop] as V;
+export const sortedStats = (
+  character: BungieApiDestiny2CharacterComponent,
+  statDefinitions: BungieApiDestiny2StatDefinitions
+): [string, number, string, string][] => {
+  return Object.entries(character.stats)
+    .sort(([a], [b]) => {
+      const aHash = parseInt(a);
+      const bHash = parseInt(b);
 
-const statPropOr = <T extends [string, number]>(
-  def: any,
-  defaultValue: any,
-  statProp: string
-): ((obj: T) => R.Ord) =>
-  R.pipe(
-    R.prop<string>(0),
-    propOf(def),
-    R.propOr(defaultValue, statProp) as (src: unknown) => string
-  );
+      const aCategory = statDefinitions[aHash].statCategory;
+      const bCategory = statDefinitions[bHash].statCategory;
 
-export const sortedStats =
-  (statDefinitions: BungieApiDestiny2StatDefinitions) =>
-  (character: BungieApiDestiny2CharacterComponent): [string, number, string, string][] => {
-    return R.pipe(
-      R.prop("stats"),
-      R.toPairs,
-      R.sortWith([
-        R.descend(statPropOr(statDefinitions, Infinity, "statCategory")),
-        R.ascend(statPropOr(statDefinitions, Infinity, "index"))
-      ]),
-      R.map<[string, number], [string, number, string, string]>(([key, value]) => [
-        key,
-        value,
-        statDefinitions[parseInt(key)]?.displayProperties?.name || `Unknown (${key})`,
-        R.pipe(
-          R.split("\n"),
-          R.filter(
-            R.cond([
-              [R.pipe(R.trim, R.equals("")), R.F],
-              [R.T, R.T]
-            ])
-          ),
-          R.join("\n")
-        )(statDefinitions[parseInt(key)]?.displayProperties?.description || "")
-      ])
-    )(character);
-  };
+      if (aCategory === bCategory) {
+        const aIndex = statDefinitions[aHash].index;
+        const bIndex = statDefinitions[bHash].index;
+
+        return aIndex - bIndex;
+      } else {
+        return bCategory - aCategory;
+      }
+    })
+    .map(([key, value]) => {
+      const name = statDefinitions[parseInt(key)]?.displayProperties?.name || `Unknown (${key})`;
+
+      const description = (statDefinitions[parseInt(key)]?.displayProperties?.description || "")
+        .split("\n")
+        .filter((line) => {
+          return (line || "").trim().length > 0;
+        })
+        .join("\n");
+
+      return [key, value, name, description];
+    });
+};

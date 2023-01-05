@@ -12,8 +12,10 @@ import { LogService } from "~src/service/log/log.service";
 import { getSelectedCharacterInfo } from "../../command-helper/current-character.helper";
 import { sessionIdOption } from "../../command-option/session-id.option";
 import { SessionIdCommandOptions } from "../../command-option/session-id.option";
+import { verboseOption } from "../../command-option/verbose.option";
+import { VerboseCommandOptions } from "../../command-option/verbose.option";
 
-type CmdOptions = SessionIdCommandOptions & { _: never };
+type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
 const DISPLAY_HASHES = [
   2083746873, // Crucible
@@ -28,13 +30,13 @@ const DISPLAY_HASHES = [
 
 const cmd: CommandDefinition = {
   description: "List character ranks",
-  options: [sessionIdOption],
+  options: [sessionIdOption, verboseOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
       .getLogger("cmd:character:ranks");
 
-    const { session: sessionId } = opts as CmdOptions;
+    const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
     const destiny2ManifestService =
@@ -91,7 +93,13 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    tableData.push(["Rank", "Level", "Cap", "Current", "Next", "%", "Total", "Resets"]);
+    const basicHeaders = ["Rank", "Level", "%"];
+
+    if (verbose) {
+      tableData.push([...basicHeaders, "Cap", "Current", "Next", "Total", "Resets"]);
+    } else {
+      tableData.push(basicHeaders);
+    }
 
     for (
       let progressionIndex = 0;
@@ -101,16 +109,24 @@ const cmd: CommandDefinition = {
       const progression = displayProgressions[progressionIndex];
       const definition = progressionDefinitions[progression.progressionHash];
 
-      tableData.push([
+      const basicCells = [
         definition.displayProperties.name,
         `${progression.level + 1}`,
-        `${progression.levelCap + 1}`,
-        `${progression.progressToNextLevel}`,
-        `${progression.nextLevelAt}`,
-        `${Math.round((progression.progressToNextLevel / progression.nextLevelAt) * 100)}%`,
-        `${progression.currentProgress}`,
-        `${progression.currentResetCount || 0}`
-      ]);
+        `${Math.round((progression.progressToNextLevel / progression.nextLevelAt) * 100)}%`
+      ];
+
+      if (verbose) {
+        tableData.push([
+          ...basicCells,
+          `${progression.levelCap + 1}`,
+          `${progression.progressToNextLevel}`,
+          `${progression.nextLevelAt}`,
+          `${progression.currentProgress}`,
+          `${progression.currentResetCount || 0}`
+        ]);
+      } else {
+        tableData.push(basicCells);
+      }
     }
 
     logger.log(stringifyTable(tableData));

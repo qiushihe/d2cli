@@ -1,5 +1,3 @@
-import * as R from "ramda";
-
 import { getSelectedCharacterInfo } from "~src/cli/command-helper/current-character.helper";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { sortedStats } from "~src/helper/character.helper";
@@ -92,12 +90,9 @@ const cmd: CommandDefinition = {
     tableData.push(["Physique", characterDescription.gender, ...(verbose ? [""] : [])]);
     tableData.push(["Race", characterDescription.race, ...(verbose ? [""] : [])]);
 
-    R.pipe(
-      sortedStats(statDefinitions),
-      R.forEach(([, value, name, description]) =>
-        tableData.push([name, `${value}`, ...(verbose ? [description] : [])])
-      )
-    )(character);
+    sortedStats(character, statDefinitions).forEach(([, value, name, description]) => {
+      tableData.push([name, `${value}`, ...(verbose ? [description] : [])]);
+    });
 
     logger.log(stringifyTable(tableData));
   }
