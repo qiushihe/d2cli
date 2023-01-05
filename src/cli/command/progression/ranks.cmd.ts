@@ -29,12 +29,12 @@ const DISPLAY_HASHES = [
 ];
 
 const cmd: CommandDefinition = {
-  description: "List character ranks",
+  description: "List character rank progressions",
   options: [sessionIdOption, verboseOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("cmd:character:ranks");
+      .getLogger("cmd:progression:ranks");
 
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
