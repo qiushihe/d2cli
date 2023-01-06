@@ -20,16 +20,34 @@ import { VerboseCommandOptions } from "../../command-option/verbose.option";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
-const VENDOR_HASH_BY_KEY: Record<string, number> = {
-  xur: 2190858386,
-  zavala: 69482069,
-  shaxx: 3603221665,
-  drifter: 248695599,
-  saint: 765357505,
-  saladin: 895295461,
-  banshee: 672118013,
-  ada: 350061650
+const ADDITIONAL_VENDOR_HASHES = [
+  2190858386 // Weekly Xur
+];
+
+const VENDOR_KEY_BY_HASH: Record<number, string> = {
+  2190858386: "xur",
+  350061650: "ada",
+  672118013: "banshee",
+  895295461: "saladin",
+  765357505: "saint"
 };
+
+const EXCLUDE_SUBTITLE_VENDOR_HASHES = [
+  518338309, // Star Chart
+  3411552308, // Lectern of Enchantment
+  4230408743, // Monument to Lost Lights
+  4287814313, // War Table
+  1423393512 // Gift of the Thunder Gods
+];
+
+const EXCLUDE_PLACE_DESTINATION_HASHES = [
+  3929841832, // H.E.L.M.
+  677774031, // The Moon
+  1416096592, // The Dreaming City
+  2244580325, // Savathûn's Throne World
+  1729879943, // Europa
+  1925528349 // Mars
+];
 
 const cmd: CommandDefinition = {
   description: "List vendors in Destiny 2",
@@ -107,50 +125,62 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to retrieve vendors: ${vendorsErr.message}`);
     }
 
-    const tableData: string[][] = [];
-
-    tableData.push([
-      "Key",
-      "Name",
-      ...(verbose ? ["Title"] : []),
+    const tableHeaders: string[] = [
+      "Vendor",
       "Location",
-      ...(verbose ? ["Refresh"] : [])
-    ]);
+      ...(verbose ? ["Key / ID", "Refresh"] : [])
+    ];
 
-    Object.entries(VENDOR_HASH_BY_KEY).forEach(([key, vendorHash]) => {
-      const vendorDefinition = vendorDefinitions[vendorHash];
-      const vendor = vendors.find((_vendor) => _vendor.vendorHash === vendorHash);
+    const tableRows: string[][] = [];
 
-      let vendorRefresh = "???";
-      let vendorLocation = "???";
+    [...ADDITIONAL_VENDOR_HASHES, ...vendors.map((vendor) => vendor.vendorHash)]
+      .filter((value, index, items) => items.indexOf(value) === index)
+      .map((vendorHash) => {
+        const vendorDefinition = vendorDefinitions[vendorHash];
+        const vendor = vendors.find((_vendor) => _vendor.vendorHash === vendorHash);
 
-      if (vendor) {
-        vendorRefresh = formatAlignedDateString(vendor.nextRefreshDate);
+        if (vendorDefinition.groups.length <= 0) {
+          return;
+        }
 
-        const location = vendorDefinition.locations[vendor.vendorLocationIndex];
-        if (location) {
-          const destinationDefinition = destinationDefinitions[location.destinationHash];
-          if (destinationDefinition) {
-            const place = placeDefinitions[destinationDefinition.placeHash];
-            if (place) {
-              vendorLocation = `${destinationDefinition.displayProperties.name}, ${place.displayProperties.name}`;
-            } else {
-              vendorLocation = `${destinationDefinition.displayProperties.name}`;
+        let vendorRefresh = "???";
+        let vendorLocation = "???";
+
+        if (vendor) {
+          vendorRefresh = formatAlignedDateString(vendor.nextRefreshDate);
+
+          const location = vendorDefinition.locations[vendor.vendorLocationIndex];
+          if (location) {
+            const destinationDefinition = destinationDefinitions[location.destinationHash];
+            if (destinationDefinition) {
+              const place = placeDefinitions[destinationDefinition.placeHash];
+              if (place) {
+                if (EXCLUDE_PLACE_DESTINATION_HASHES.includes(location.destinationHash)) {
+                  vendorLocation = `${destinationDefinition.displayProperties.name}`;
+                } else {
+                  vendorLocation = `${destinationDefinition.displayProperties.name}, ${place.displayProperties.name}`;
+                }
+              } else {
+                vendorLocation = `${destinationDefinition.displayProperties.name}`;
+              }
             }
           }
         }
-      }
 
-      tableData.push([
-        `${key}`,
-        `${vendorDefinition.displayProperties.name}`,
-        ...(verbose ? [`${vendorDefinition.displayProperties.subtitle}`] : []),
-        `${vendorLocation}`,
-        ...(verbose ? [`${vendorRefresh}`] : [])
-      ]);
-    });
+        tableRows.push([
+          EXCLUDE_SUBTITLE_VENDOR_HASHES.includes(vendorHash)
+            ? `${vendorDefinition.displayProperties.name}`
+            : `${vendorDefinition.displayProperties.name}, ${vendorDefinition.displayProperties.subtitle}`,
+          `${vendorLocation}`,
+          ...(verbose
+            ? [`${VENDOR_KEY_BY_HASH[vendorHash] || vendorHash}`, `${vendorRefresh}`]
+            : [])
+        ]);
+      });
 
-    logger.log(stringifyTable(tableData));
+    logger.log(
+      stringifyTable([tableHeaders, ...tableRows.sort((a, b) => a[0].localeCompare(b[0]))])
+    );
   }
 };
 
