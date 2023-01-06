@@ -1,14 +1,13 @@
-import { format } from "date-fns";
-
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
+import { formatAlignedDateString } from "~src/helper/date.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
 import { LogService } from "~src/service/log/log.service";
 
-import { getCharacterSelectionInfo } from "../../command-helper/current-character.helper";
+import { getSelectedCharacterInfo } from "../../command-helper/current-character.helper";
 import { sessionIdOption } from "../../command-option/session-id.option";
 import { SessionIdCommandOptions } from "../../command-option/session-id.option";
 import { verboseOption } from "../../command-option/verbose.option";
@@ -35,9 +34,9 @@ const cmd: CommandDefinition = {
         "CharacterDescriptionService"
       );
 
-    const [characterInfoErr, characterInfo] = await getCharacterSelectionInfo(logger, sessionId);
+    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
-      return characterInfoErr;
+      return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
     }
 
     const [charactersErr, characters] = await fnWithSpinner("Retrieving characters ...", () =>
@@ -51,7 +50,7 @@ const cmd: CommandDefinition = {
 
     const basicHeaders = ["Selected", "#", "Description", "Light Level"];
     if (verbose) {
-      tableData.push([...basicHeaders, "Last Played", "ID", "Membership Type:ID"]);
+      tableData.push([...basicHeaders, "Last Played", "ID", "Membership ID / Type"]);
     } else {
       tableData.push(basicHeaders);
     }
@@ -77,17 +76,11 @@ const cmd: CommandDefinition = {
       }
 
       if (verbose) {
-        const lastPlayed = new Date(character.dateLastPlayed);
-        const lastPlayedMonth = format(lastPlayed, "MMM.");
-        const lastPlayedDay = format(lastPlayed, "do").padStart(4, " ");
-        const lastPlayedYear = format(lastPlayed, "yyyy");
-        const lastPlayedTime = format(lastPlayed, "hh:mmaaa");
-
         tableData.push([
           ...basicCells,
-          `${lastPlayedMonth} ${lastPlayedDay} ${lastPlayedYear} - ${lastPlayedTime}`,
+          formatAlignedDateString(character.dateLastPlayed),
           character.characterId,
-          `${character.membershipType}:${character.membershipId}`
+          `${character.membershipId} / ${character.membershipType}`
         ]);
       } else {
         tableData.push(basicCells);

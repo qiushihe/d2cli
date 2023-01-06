@@ -53,10 +53,10 @@ const cmd: CommandDefinition = {
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
-      return characterInfoErr;
+      return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
     }
 
-    const [itemDefinitionErr, itemDefinitions] = await fnWithSpinner(
+    const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
       "Retrieving inventory item definitions ...",
       () =>
         destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
@@ -64,9 +64,9 @@ const cmd: CommandDefinition = {
           Destiny2ManifestComponent.InventoryItemDefinition
         )
     );
-    if (itemDefinitionErr) {
+    if (itemDefinitionsErr) {
       return logger.loggedError(
-        `Unable to retrieve inventory item definitions: ${itemDefinitionErr.message}`
+        `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
       );
     }
 

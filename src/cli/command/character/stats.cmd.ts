@@ -41,7 +41,7 @@ const cmd: CommandDefinition = {
         "CharacterDescriptionService"
       );
 
-    const [statDefinitionErr, statDefinitions] = await fnWithSpinner(
+    const [statDefinitionsErr, statDefinitions] = await fnWithSpinner(
       "Retrieving stat definitions ...",
       () =>
         destiny2ManifestService.getManifestComponent<Destiny2ManifestStatDefinitions>(
@@ -49,15 +49,15 @@ const cmd: CommandDefinition = {
           Destiny2ManifestComponent.StatDefinition
         )
     );
-    if (statDefinitionErr) {
+    if (statDefinitionsErr) {
       return logger.loggedError(
-        `Unable to retrieve stat definitions: ${statDefinitionErr.message}`
+        `Unable to retrieve stat definitions: ${statDefinitionsErr.message}`
       );
     }
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
-      return characterInfoErr;
+      return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
     }
 
     const [characterErr, character] = await fnWithSpinner("Retrieving character ...", () =>

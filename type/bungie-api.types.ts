@@ -1,6 +1,8 @@
+import { DestinyVendorGroupComponent } from "~type/bungie-api/destiny/components/vendors.types";
 import { DestinyCharacterComponent } from "~type/bungie-api/destiny/entities/characters.types";
 import { DestinyCharacterProgressionComponent } from "~type/bungie-api/destiny/entities/characters.types";
 import { DestinyInventoryComponent } from "~type/bungie-api/destiny/entities/inventory.types";
+import { DestinyVendorComponent } from "~type/bungie-api/destiny/entities/vendors.types";
 
 export type ApiResponse<TResponse = any> = {
   [key: string]: any;
@@ -33,6 +35,18 @@ export type SingleComponentResponseOfDestinyCharacterProgressionComponent = {
 
 export type DictionaryComponentResponseOfint64AndDestinyCharacterComponent = {
   data: { [key: number]: DestinyCharacterComponent };
+  privacy: number;
+  disabled?: boolean;
+};
+
+export type SingleComponentResponseOfDestinyVendorGroupComponent = {
+  data: DestinyVendorGroupComponent;
+  privacy: number;
+  disabled?: boolean;
+};
+
+export type DictionaryComponentResponseOfuint32AndDestinyVendorComponent = {
+  data: { [key: number]: DestinyVendorComponent };
   privacy: number;
   disabled?: boolean;
 };

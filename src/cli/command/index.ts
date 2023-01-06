@@ -6,6 +6,7 @@ import config from "./config.cmd";
 import postmaster from "./postmaster.cmd";
 import progression from "./progression.cmd";
 import reminder from "./reminder.cmd";
+import vendor from "./vendor.cmd";
 
 export const commands: CommandDefinitions = {
   auth,
@@ -13,5 +14,6 @@ export const commands: CommandDefinitions = {
   config,
   postmaster,
   progression,
-  reminder
+  reminder,
+  vendor
 };

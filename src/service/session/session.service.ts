@@ -94,6 +94,7 @@ export class SessionService {
         ];
       }
     } else {
+      logger.debug(`Access token still valid`);
       return [null, accessToken.token];
     }
   }

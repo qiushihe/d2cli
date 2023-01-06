@@ -47,10 +47,10 @@ const cmd: CommandDefinition = {
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
-      return characterInfoErr;
+      return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
     }
 
-    const [progressionDefinitionErr, progressionDefinitions] = await fnWithSpinner(
+    const [progressionDefinitionsErr, progressionDefinitions] = await fnWithSpinner(
       "Retrieving progression definitions ...",
       () =>
         destiny2ManifestService.getManifestComponent<Destiny2ManifestProgressionDefinitions>(
@@ -58,9 +58,9 @@ const cmd: CommandDefinition = {
           Destiny2ManifestComponent.ProgressionDefinition
         )
     );
-    if (progressionDefinitionErr) {
+    if (progressionDefinitionsErr) {
       return logger.loggedError(
-        `Unable to retrieve progression definitions: ${progressionDefinitionErr.message}`
+        `Unable to retrieve progression definitions: ${progressionDefinitionsErr.message}`
       );
     }
 
