@@ -32,12 +32,17 @@ const VENDOR_KEY_BY_HASH: Record<number, string> = {
   765357505: "saint"
 };
 
+const EXCLUDE_REFRESH_VENDOR_HASHES = [
+  3642056527 // Relic Conduit
+];
+
 const EXCLUDE_SUBTITLE_VENDOR_HASHES = [
   518338309, // Star Chart
   3411552308, // Lectern of Enchantment
   4230408743, // Monument to Lost Lights
   4287814313, // War Table
-  1423393512 // Gift of the Thunder Gods
+  1423393512, // Gift of the Thunder Gods
+  3642056527 // Relic Conduit
 ];
 
 const EXCLUDE_PLACE_DESTINATION_HASHES = [
@@ -147,7 +152,11 @@ const cmd: CommandDefinition = {
         let vendorLocation = "???";
 
         if (vendor) {
-          vendorRefresh = formatAlignedDateString(vendor.nextRefreshDate);
+          if (!EXCLUDE_REFRESH_VENDOR_HASHES.includes(vendorHash)) {
+            vendorRefresh = formatAlignedDateString(vendor.nextRefreshDate);
+          } else {
+            vendorRefresh = "N/A";
+          }
 
           const location = vendorDefinition.locations[vendor.vendorLocationIndex];
           if (location) {
