@@ -128,7 +128,7 @@ const cmd: CommandDefinition = {
     const tableHeaders: string[] = [
       "Vendor",
       "Location",
-      ...(verbose ? ["Key / ID", "Refresh"] : [])
+      ...(verbose ? ["ID (Key)", "Refresh"] : [])
     ];
 
     const tableRows: string[][] = [];
@@ -173,7 +173,14 @@ const cmd: CommandDefinition = {
             : `${vendorDefinition.displayProperties.name}, ${vendorDefinition.displayProperties.subtitle}`,
           `${vendorLocation}`,
           ...(verbose
-            ? [`${VENDOR_KEY_BY_HASH[vendorHash] || vendorHash}`, `${vendorRefresh}`]
+            ? [
+                `${
+                  VENDOR_KEY_BY_HASH[vendorHash]
+                    ? `${vendorHash} (${VENDOR_KEY_BY_HASH[vendorHash]})`
+                    : vendorHash
+                }`,
+                `${vendorRefresh}`
+              ]
             : [])
         ]);
       });
