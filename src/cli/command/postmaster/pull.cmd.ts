@@ -1,6 +1,7 @@
+import chalk from "chalk";
+
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
-import { bgGreen, bgRed } from "~src/helper/colour.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
@@ -140,15 +141,15 @@ const cmd: CommandDefinition = {
       if (pullItemErr) {
         failedToPullCount = failedToPullCount + 1;
         if (verbose) {
-          tableData.push([...itemCells, bgRed("No"), pullItemErr.message]);
+          tableData.push([...itemCells, chalk.bgRed("No"), pullItemErr.message]);
         } else {
-          tableData.push([...itemCells, bgRed("No")]);
+          tableData.push([...itemCells, chalk.bgRed("No")]);
         }
       } else {
         if (verbose) {
-          tableData.push([...itemCells, bgGreen("Yes"), ""]);
+          tableData.push([...itemCells, chalk.bgGreen("Yes"), ""]);
         } else {
-          tableData.push([...itemCells, bgGreen("Yes")]);
+          tableData.push([...itemCells, chalk.bgGreen("Yes")]);
         }
       }
     }

@@ -1,7 +1,7 @@
 export enum SessionDataName {
   BungieAccessToken = "bungieAccessToken",
   CurrentCharacterInfo = "currentCharacterInfo",
-  FarmingReminder = "farmingReminder"
+  CalendarEvents = "calendarEvents"
 }
 
 export type SessionData = {

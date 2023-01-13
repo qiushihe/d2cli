@@ -1,4 +1,5 @@
-import { bgBlue, bgGreen, bgRed, bgYellow } from "~src/helper/colour.helper";
+import chalk from "chalk";
+
 import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 
@@ -16,9 +17,9 @@ export const errorLogger =
   (...args: any[]) => {
     if (logLevel >= LOG_LEVEL.error) {
       if (logLevel >= LOG_LEVEL.debug) {
-        console.error(`${bgRed(" ERR ")} [${namespace}]`, ...args);
+        console.error(`${chalk.bgRed(" ERR ")} [${namespace}]`, ...args);
       } else {
-        console.error(`${bgRed(" ERR ")}`, ...args);
+        console.error(`${chalk.bgRed(" ERR ")}`, ...args);
       }
     }
   };
@@ -28,9 +29,9 @@ export const warningLogger =
   (...args: any[]) => {
     if (logLevel >= LOG_LEVEL.warning) {
       if (logLevel >= LOG_LEVEL.debug) {
-        console.warn(`${bgYellow(" WRN ")} [${namespace}]`, ...args);
+        console.warn(`${chalk.bgYellow(" WRN ")} [${namespace}]`, ...args);
       } else {
-        console.warn(`${bgYellow(" WRN ")}`, ...args);
+        console.warn(`${chalk.bgYellow(" WRN ")}`, ...args);
       }
     }
   };
@@ -39,9 +40,9 @@ export const infoLogger =
   (...args: any[]) => {
     if (logLevel >= LOG_LEVEL.info) {
       if (logLevel >= LOG_LEVEL.debug) {
-        console.log(`${bgGreen(" INF ")} [${namespace}]`, ...args);
+        console.log(`${chalk.bgGreen(" INF ")} [${namespace}]`, ...args);
       } else {
-        console.log(`${bgGreen(" INF ")}`, ...args);
+        console.log(`${chalk.bgGreen(" INF ")}`, ...args);
       }
     }
   };
@@ -50,7 +51,7 @@ export const debugLogger =
   (namespace: string, logLevel: number) =>
   (...args: any[]) => {
     if (logLevel >= LOG_LEVEL.debug) {
-      console.log(`${bgBlue(" DBG ")} [${namespace}]`, ...args);
+      console.log(`${chalk.bgBlue(" DBG ")} [${namespace}]`, ...args);
     }
   };
 

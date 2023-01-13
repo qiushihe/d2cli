@@ -1,6 +1,7 @@
 {
   "include": [
     "**/*.ts",
+    "**/*.tsx",
 
     // Including this file makes the root of `dist` no longer "only contains other directories",
     // and that would prevent `tsc` from flattening the `dist` directory down to the `src`
@@ -25,6 +26,7 @@
     "incremental": true,
     "inlineSources": false,
     "isolatedModules": true,
+    "jsx": "react",
     "lib": ["esnext"],
     "module": "esnext",
     "moduleResolution": "node",
