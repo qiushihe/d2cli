@@ -1,5 +1,5 @@
 import opener from "opener";
-import path from "path";
+import * as path from "path";
 import * as ProtocolRegistry from "protocol-registry";
 
 import { CommandDefinition } from "~src/cli/d2cli.types";

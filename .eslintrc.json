@@ -2,14 +2,21 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
     "plugin:prettier/recommended"
   ],
   "plugins": [
     "@typescript-eslint",
+    "react",
+    "react-hooks",
     "prettier",
     "simple-import-sort"
   ],
   "rules": {
+    "react-hooks/exhaustive-deps": "error",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-explicit-any": "off"
   },
   "overrides": [
@@ -37,5 +44,10 @@
         ]
       }
     }
-  ]
+  ],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
 }

@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import os from "os";
 
 export const exists = async (path: string): Promise<[Error, null] | [null, boolean]> => {
   return new Promise<[Error, null] | [null, boolean]>((resolve) => {
@@ -68,17 +67,5 @@ export const readFile = async (path: string): Promise<[Error, null] | [null, str
 export const makeDirectory = async (path: string): Promise<Error | null> => {
   return new Promise<Error | null>((resolve) => {
     fs.mkdir(path, { recursive: true }, resolve);
-  });
-};
-
-export const realTmpDir = async (): Promise<[Error, null] | [null, string]> => {
-  return new Promise<[Error, null] | [null, string]>((resolve) => {
-    fs.realpath(os.tmpdir(), (err, tmpDirPath) => {
-      if (err) {
-        resolve([err, null]);
-      } else {
-        resolve([null, tmpDirPath]);
-      }
-    });
   });
 };

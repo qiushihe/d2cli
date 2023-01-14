@@ -18,3 +18,11 @@ export const base62EncodeString = (plainText: string): string => {
 export const base62DecodeString = (encodedText: string): string => {
   return new TextDecoder().decode(BASE_62.decode(encodedText));
 };
+
+export const removeCharacterAtIndex = (str: string, index: number) => {
+  return str.slice(0, index) + str.slice(index + 1);
+};
+
+export const replaceRange = (str: string, start: number, end: number, replacement: string) => {
+  return str.substring(0, start) + replacement + str.substring(end);
+};

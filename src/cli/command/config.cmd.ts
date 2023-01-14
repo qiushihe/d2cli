@@ -61,6 +61,12 @@ const cmd: CommandDefinition = {
 
       logger.log(`${configName}: ${JSON.stringify(configValue)}`);
     } else {
+      if (appConfigName === AppConfigName.LogLevel) {
+        if (!["error", "warning", "info", "debug"].includes(configValue)) {
+          return logger.loggedError(`Invalid log level: ${configValue}`);
+        }
+      }
+
       let newConfigValue: string | null = configValue;
       if (newConfigValue === "null") {
         newConfigValue = null;
