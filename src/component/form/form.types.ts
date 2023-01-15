@@ -6,7 +6,7 @@ export type FormInputProps = {
 
 export type FormField = {
   name: string;
-  type: "text" | "textarea" | "date" | "select";
+  type: "text" | "textarea" | "date" | "select" | "choice";
   label: string;
   placeholder?: string;
   options?: { label: string; value: string }[];

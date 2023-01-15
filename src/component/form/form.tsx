@@ -4,6 +4,7 @@ import { Box, Key, Spacer, Text, useInput } from "ink";
 import { DateInput } from "~src/component/date-input";
 import { SelectInput } from "~src/component/select-input";
 import { TextInput } from "~src/component/text-input";
+import { ChoiceInput } from "~src/component/choice-input";
 
 import { FormProps } from "./form.types";
 import { FormInputProps } from "./form.types";
@@ -63,42 +64,47 @@ export const Form: React.FC<FormProps> = ({ focus, fields, onSubmit, onCancel })
             <Box alignItems="flex-start" flexGrow={1} key={`field:${index}-${field.name}`}>
               <Text>{field.label.padStart(maxLabelLength, " ")}</Text>
               <Text>{focusedFieldName === field.name ? " 》" : " 〉"}</Text>
-              {(() => {
-                const formInputProps: FormInputProps = {
-                  focus: field.name === focusedFieldName,
-                  value: fieldValues[field.name] || "",
-                  onChange: (newValue: string) => {
-                    setFieldValues({
-                      ...fieldValues,
-                      [field.name]: newValue
-                    });
-                  }
-                };
+              <Box flexDirection="column" alignItems="flex-start">
+                {(() => {
+                  const formInputProps: FormInputProps = {
+                    focus: field.name === focusedFieldName,
+                    value: fieldValues[field.name] || "",
+                    onChange: (newValue: string) => {
+                      setFieldValues({
+                        ...fieldValues,
+                        [field.name]: newValue
+                      });
+                    }
+                  };
 
-                if (field.type === "text") {
-                  return (
-                    <TextInput
-                      {...formInputProps}
-                      multiline={false}
-                      placeholder={field.placeholder}
-                    />
-                  );
-                } else if (field.type === "textarea") {
-                  return (
-                    <TextInput
-                      {...formInputProps}
-                      multiline={true}
-                      placeholder={field.placeholder}
-                    />
-                  );
-                } else if (field.type === "date") {
-                  return <DateInput {...formInputProps} />;
-                } else if (field.type === "select") {
-                  return <SelectInput {...formInputProps} options={field.options || []} />;
-                } else {
-                  return <Text>Unknown field type: {field.type}</Text>;
-                }
-              })()}
+                  if (field.type === "text") {
+                    return (
+                      <TextInput
+                        {...formInputProps}
+                        multiline={false}
+                        placeholder={field.placeholder}
+                      />
+                    );
+                  } else if (field.type === "textarea") {
+                    return (
+                      <TextInput
+                        {...formInputProps}
+                        multiline={true}
+                        placeholder={field.placeholder}
+                      />
+                    );
+                  } else if (field.type === "date") {
+                    return <DateInput {...formInputProps} />;
+                  } else if (field.type === "select") {
+                    return <SelectInput {...formInputProps} options={field.options || []} />;
+                  } else if (field.type === "choice") {
+                    return <ChoiceInput {...formInputProps} options={field.options || []} />;
+                  } else {
+                    return <Text>Unknown field type: {field.type}</Text>;
+                  }
+                })()}
+                {/* <Text>Error: LOL</Text> */}
+              </Box>
             </Box>
           );
         })}

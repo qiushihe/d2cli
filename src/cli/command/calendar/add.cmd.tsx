@@ -40,6 +40,20 @@ const cmd: CommandDefinition = {
               { label: "Annual", value: "annual" }
             ]
           },
+          {
+            name: "weekdays",
+            type: "choice",
+            label: "Weekdays",
+            options: [
+              { label: "Su", value: "sunday" },
+              { label: "Mo", value: "monday" },
+              { label: "Tu", value: "tuesday" },
+              { label: "We", value: "wednesday" },
+              { label: "Th", value: "thursday" },
+              { label: "Fr", value: "friend" },
+              { label: "Sa", value: "saturday" }
+            ]
+          },
           { name: "endDate", type: "date", label: "Repeat ends" },
           { name: "notes", type: "textarea", label: "Notes", placeholder: "Enter some notes ..." }
         ]}
