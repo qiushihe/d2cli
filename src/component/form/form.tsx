@@ -22,7 +22,7 @@ export const Form: React.FC<FormProps> = ({ focus, fields, onSubmit, onCancel })
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [focusedFieldName, setFocusedFieldName] = useState<string>(formControlNames[0]);
 
-  const handleUserInput = useCallback(
+  const handleInput = useCallback(
     (input: string, key: Key): void => {
       if (key.return) {
         if (focusedFieldName === "btn-submit") {
@@ -53,7 +53,7 @@ export const Form: React.FC<FormProps> = ({ focus, fields, onSubmit, onCancel })
     [fieldValues, onSubmit, onCancel, formControlNames, focusedFieldName]
   );
 
-  useInput(handleUserInput, { isActive: focus });
+  useInput(handleInput, { isActive: focus });
 
   return (
     <Box flexDirection="column">

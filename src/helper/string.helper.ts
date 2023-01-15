@@ -26,3 +26,31 @@ export const removeCharacterAtIndex = (str: string, index: number) => {
 export const replaceRange = (str: string, start: number, end: number, replacement: string) => {
   return str.substring(0, start) + replacement + str.substring(end);
 };
+
+export const replaceCharacter = (str: string, index: number, replacement: string) => {
+  return replaceRange(str, index, index + 1, replacement);
+};
+
+export const getUpDownIcons = (isActive: boolean, hasUp: boolean, hasDown: boolean) => {
+  if (isActive) {
+    if (hasUp && hasDown) {
+      return "▲▼";
+    } else if (hasUp && !hasDown) {
+      return "▲-";
+    } else if (!hasUp && hasDown) {
+      return "-▼";
+    } else {
+      return "--";
+    }
+  } else {
+    if (hasUp && hasDown) {
+      return "△▽";
+    } else if (hasUp && !hasDown) {
+      return "△-";
+    } else if (!hasUp && hasDown) {
+      return "-▽";
+    } else {
+      return "--";
+    }
+  }
+};

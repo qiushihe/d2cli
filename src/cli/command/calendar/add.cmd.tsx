@@ -44,12 +44,12 @@ const cmd: CommandDefinition = {
           { name: "notes", type: "textarea", label: "Notes", placeholder: "Enter some notes ..." }
         ]}
         onCancel={() => {
-          clear();
+          // clear();
           unmount();
           logger.log("!!! onCancel", clear);
         }}
         onSubmit={(value) => {
-          clear();
+          // clear();
           unmount();
           logger.log("!!! onSubmit", clear, JSON.stringify(value));
         }}

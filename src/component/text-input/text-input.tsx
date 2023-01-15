@@ -45,7 +45,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     });
   }, [value, focus, setCursorOffset]);
 
-  const handleUserInput = useCallback(
+  const handleInput = useCallback(
     (_input: string, key: Key): void => {
       let input = _input;
 
@@ -119,7 +119,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     [cursorOffset, multiline, onChange, value, setCursorOffset, maxLength]
   );
 
-  useInput(handleUserInput, { isActive: focus });
+  useInput(handleInput, { isActive: focus });
 
   let renderedValue = value;
   let renderedPlaceholder = placeholder ? chalk.grey(placeholder) : undefined;

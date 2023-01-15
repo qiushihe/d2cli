@@ -1,152 +1,134 @@
-import React, { useCallback, useState } from "react";
-import { Key, useInput } from "ink";
+import React, { useCallback, useEffect, useState } from "react";
+import chalk from "chalk";
+import { Key, Text, useInput } from "ink";
 
-import { TextInput } from "~src/component/text-input";
+import { usePrevious } from "~src/helper/hook.helper";
 import { clamp } from "~src/helper/number.helper";
-import { replaceRange } from "~src/helper/string.helper";
 
 import { DateInputProps } from "./date-input.types";
 
+const clampCursorOffset = (value: number) => clamp(value, 0, 10);
+
 export const DateInput: React.FC<DateInputProps> = ({ focus, value, onChange }) => {
-  const [cursorOffset, setCursorOffset] = useState<number>((value || "").length);
+  const valueParts = (value || "").split("/", 3) as [string?, string?, string?];
+  const [yearString, setYearString] = useState<string>(valueParts[0] || "");
+  const [monthString, setMonthString] = useState<string>(valueParts[1] || "");
+  const [dayString, setDayString] = useState<string>(valueParts[2] || "");
 
-  const handleChange = useCallback(
-    (newValue: string) => {
-      // We need the `value` passed into `TextInput` to actually "change" in order to trigger
-      // the cursor offset re-calculation effect.
-      // So that's why we first call `onChange` with the original `newValue` ...
+  const [cursorOffset, setCursorOffset] = useState<number>(0);
+  const previousCursorOffset = usePrevious(cursorOffset);
+  const [focusedComponent, setFocusedComponent] = useState<"year" | "month" | "day" | null>(null);
+
+  useEffect(() => {
+    if (cursorOffset <= 3) {
+      setFocusedComponent("year");
+    } else if (cursorOffset === 5 || cursorOffset === 6) {
+      setFocusedComponent("month");
+    } else if (cursorOffset === 8 || cursorOffset === 9) {
+      setFocusedComponent("day");
+    } else {
+      setFocusedComponent(null);
+    }
+  }, [cursorOffset]);
+
+  useEffect(() => {
+    if (previousCursorOffset === 3 && cursorOffset === 4) {
+      setCursorOffset(5);
+    } else if (previousCursorOffset === 5 && cursorOffset === 4) {
+      setCursorOffset(3);
+    } else if (previousCursorOffset === 6 && cursorOffset === 7) {
+      setCursorOffset(8);
+    } else if (previousCursorOffset === 8 && cursorOffset === 7) {
+      setCursorOffset(6);
+    }
+  }, [previousCursorOffset, cursorOffset]);
+
+  useEffect(() => {
+    const newValue = [yearString, monthString, dayString].filter((item) => !!item).join("/");
+    if (newValue !== value) {
       onChange(newValue);
+    }
+  }, [yearString, monthString, dayString, value, onChange]);
 
-      // ... then call `onChange` again with the sanitized value.
-      // This way the `value` passed into `TextInput` would have actually "changed" (twice, in
-      // this case), and the cursor offset re-calculation effect would run to update the
-      // `TextInput`'s cursor position.
-      setTimeout(() => {
-        if (!newValue || newValue.length <= 0) {
-          return;
-        }
-
-        const digits = (newValue || "").trim().replace(/[^0-9]/gi, "");
-
-        const sanitizedValues = [digits.slice(0, 4)];
-        if (digits.length > 4) {
-          sanitizedValues.push(digits.slice(4, 6));
-        }
-        if (digits.length > 6) {
-          sanitizedValues.push(digits.slice(6, 8));
-        }
-
-        const sanitizedValue = sanitizedValues.join("/");
-        if (
-          sanitizedValue.length == 4 ||
-          sanitizedValue.length == 7 ||
-          sanitizedValue.length === 10
-        ) {
-          const clampedValue = sanitizedValue
-            .split("/")
-            .map((part, index) => {
-              if (index === 0) {
-                return `${clamp(parseInt(part), 1, 9999) || 0}`.padStart(4, "0");
-              } else if (index === 1) {
-                return `${clamp(parseInt(part), 1, 12) || 0}`.padStart(2, "0");
-              } else if (index === 2) {
-                return `${clamp(parseInt(part), 1, 31) || 0}`.padStart(2, "0");
-              } else {
-                return part;
-              }
-            })
-            .join("/");
-
-          if (sanitizedValue.length < 10) {
-            onChange(`${clampedValue}/`);
-            setCursorOffset(clampedValue.length + 1);
-          } else {
-            onChange(clampedValue);
-          }
-        } else {
-          onChange(sanitizedValue);
-        }
-      }, 1);
-    },
-    [onChange]
-  );
-
-  const handleUserInput = useCallback(
+  const handleInput = useCallback(
     (input: string, key: Key): void => {
-      let adjustment: {
-        range: [number, number];
-        bound: [number, number];
-        length: number;
-      } | null = null;
-
-      if (value && value.length > 0) {
-        if (cursorOffset >= 0 && cursorOffset <= 3) {
-          adjustment = {
-            range: [0, 3],
-            bound: [1, 9999],
-            length: 4
-          };
-        } else if (cursorOffset === 5 || cursorOffset === 6) {
-          adjustment = {
-            range: [5, 6],
-            bound: [1, 12],
-            length: 2
-          };
-        } else if (cursorOffset === 8 || cursorOffset === 9 || cursorOffset === 10) {
-          adjustment = {
-            range: [8, 9],
-            bound: [1, 31],
-            length: 2
-          };
+      if (`${input || ""}`.match(/[0-9]/)) {
+        if (focusedComponent === "year") {
+          setYearString(yearString + input);
+          setCursorOffset(clampCursorOffset(cursorOffset + 1));
+        } else if (focusedComponent === "month") {
+          setMonthString(monthString + input);
+          setCursorOffset(clampCursorOffset(cursorOffset + 1));
+        } else if (focusedComponent === "day") {
+          setDayString(dayString + input);
+          setCursorOffset(clampCursorOffset(cursorOffset + 1));
         }
-      }
-
-      if (adjustment) {
-        const rangeValue = parseInt(value.slice(adjustment.range[0], adjustment.range[1] + 1)) || 0;
-        let newRangeValue = rangeValue;
-
-        if (key.upArrow) {
-          if (key.shift) {
-            newRangeValue = rangeValue + 10;
-          } else {
-            newRangeValue = rangeValue + 1;
-          }
-        } else if (key.downArrow) {
-          if (key.shift) {
-            newRangeValue = rangeValue - 10;
-          } else {
-            newRangeValue = rangeValue - 1;
-          }
-        }
-
-        newRangeValue = clamp(newRangeValue, adjustment.bound[0], adjustment.bound[1]);
-
-        if (newRangeValue !== rangeValue) {
-          onChange(
-            replaceRange(
-              value,
-              adjustment.range[0],
-              adjustment.range[1] + 1,
-              `${newRangeValue}`.padStart(adjustment.length, "0")
-            )
-          );
+      } else if (key.backspace || key.delete) {
+        if (focusedComponent === "year" || cursorOffset === 5) {
+          setYearString(yearString.slice(0, yearString.length - 1));
+          setCursorOffset(clampCursorOffset(cursorOffset - 1));
+        } else if (focusedComponent === "month" || cursorOffset === 8) {
+          setMonthString(monthString.slice(0, monthString.length - 1));
+          setCursorOffset(clampCursorOffset(cursorOffset - 1));
+        } else if (focusedComponent === "day" || cursorOffset === 10) {
+          setDayString(dayString.slice(0, dayString.length - 1));
+          setCursorOffset(clampCursorOffset(cursorOffset - 1));
         }
       }
     },
-    [cursorOffset, value, onChange]
+    [cursorOffset, focusedComponent, yearString, monthString, dayString]
   );
 
-  useInput(handleUserInput, { isActive: focus });
+  useInput(handleInput, { isActive: focus });
 
-  return (
-    <TextInput
-      focus={focus}
-      value={value}
-      onChange={handleChange}
-      cursorState={[cursorOffset, setCursorOffset]}
-      multiline={false}
-      placeholder={"YYYY/MM/DD"}
-      maxLength={10}
-    />
-  );
+  const yearPlaceholderLength = 4 - yearString.length;
+  const monthPlaceholderLength = 2 - monthString.length;
+  const dayPlaceholderLength = 2 - dayString.length;
+
+  const renderedCharacters = [
+    `${yearString + "YYYY".slice(0, yearPlaceholderLength)}`,
+    `${monthString + "MM".slice(0, monthPlaceholderLength)}`,
+    `${dayString + "DD".slice(0, dayPlaceholderLength)}`
+  ]
+    .join("/")
+    .split("");
+
+  // Render an extra character at the end so the cursor can go there.
+  renderedCharacters.push(" ");
+
+  if (yearPlaceholderLength > 0) {
+    for (
+      let charIndex = yearString.length;
+      charIndex < yearString.length + yearPlaceholderLength;
+      charIndex++
+    ) {
+      renderedCharacters[charIndex] = chalk.grey(renderedCharacters[charIndex]);
+    }
+  }
+
+  if (monthPlaceholderLength > 0) {
+    for (
+      let charIndex = 5 + monthString.length;
+      charIndex < 5 + monthString.length + monthPlaceholderLength;
+      charIndex++
+    ) {
+      renderedCharacters[charIndex] = chalk.grey(renderedCharacters[charIndex]);
+    }
+  }
+
+  if (dayPlaceholderLength > 0) {
+    for (
+      let charIndex = 8 + dayString.length;
+      charIndex < 8 + dayString.length + dayPlaceholderLength;
+      charIndex++
+    ) {
+      renderedCharacters[charIndex] = chalk.grey(renderedCharacters[charIndex]);
+    }
+  }
+
+  if (focus) {
+    renderedCharacters[cursorOffset] = chalk.inverse(renderedCharacters[cursorOffset]);
+  }
+
+  return <Text>{renderedCharacters.join("")}</Text>;
 };
