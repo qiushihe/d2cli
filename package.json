@@ -31,7 +31,8 @@
     "react": "^17.0.2",
     "rrule": "^2.7.1",
     "table": "^6.8.1",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "yup": "^0.32.11"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",

@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "ink";
 
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { Form } from "~src/component/form";
+import { EventForm } from "~src/component/event-form";
 import { AppModule } from "~src/module/app.module";
 import { LogService } from "~src/service/log/log.service";
 
@@ -23,49 +23,20 @@ const cmd: CommandDefinition = {
     logger.debug(`Session ID: ${sessionId}`);
 
     const { clear, unmount, waitUntilExit } = render(
-      <Form
+      <EventForm
         focus={true}
-        fields={[
-          { name: "title", type: "text", label: "Title", placeholder: "Event title ..." },
-          { name: "date", type: "date", label: "Date" },
-          {
-            name: "repeat",
-            type: "select",
-            label: "Repeat",
-            options: [
-              { label: "No repeat", value: "no-repeat" },
-              { label: "Daily", value: "daily" },
-              { label: "Weekly", value: "weekly" },
-              { label: "Monthly", value: "monthly" },
-              { label: "Annual", value: "annual" }
-            ]
-          },
-          {
-            name: "weekdays",
-            type: "choice",
-            label: "Weekdays",
-            options: [
-              { label: "Su", value: "sunday" },
-              { label: "Mo", value: "monday" },
-              { label: "Tu", value: "tuesday" },
-              { label: "We", value: "wednesday" },
-              { label: "Th", value: "thursday" },
-              { label: "Fr", value: "friend" },
-              { label: "Sa", value: "saturday" }
-            ]
-          },
-          { name: "endDate", type: "date", label: "Repeat ends" },
-          { name: "notes", type: "textarea", label: "Notes", placeholder: "Enter some notes ..." }
-        ]}
-        onCancel={() => {
+        onCancel={(values) => {
           // clear();
           unmount();
-          logger.log("!!! onCancel", clear);
+          logger.log("!!! onCancel", JSON.stringify(values));
         }}
-        onSubmit={(value) => {
-          // clear();
+        onError={(errors, values) => {
+          logger.log("!!! onError", JSON.stringify(errors), JSON.stringify(values));
+        }}
+        onSubmit={(values) => {
+          clear();
           unmount();
-          logger.log("!!! onSubmit", clear, JSON.stringify(value));
+          logger.log("!!! onSubmit", JSON.stringify(values));
         }}
       />
     );
