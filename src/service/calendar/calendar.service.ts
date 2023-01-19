@@ -1,4 +1,3 @@
-import * as RR from "rrule";
 import { v4 as uuidV4 } from "uuid";
 
 import { AppModule } from "~src/module/app.module";
@@ -29,8 +28,7 @@ export class CalendarService {
 
   async createEventFromString(
     sessionId: string,
-    title: string,
-    options: string
+    title: string
   ): Promise<[Error, null] | [null, CalendarEvent]> {
     const [readErr, events] = await this.sessionService.getData<CalendarEvents>(
       sessionId,
@@ -42,13 +40,7 @@ export class CalendarService {
 
     const allEvents = events || {};
 
-    const rrule = RR.RRule.fromString(options);
-
-    const evt: CalendarEvent = {
-      id: uuidV4(),
-      title,
-      rfcString: RR.RRule.optionsToString(rrule.options)
-    };
+    const evt: CalendarEvent = { id: uuidV4(), title };
 
     allEvents[evt.id] = evt;
 

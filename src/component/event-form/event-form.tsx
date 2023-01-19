@@ -5,6 +5,9 @@ import { Form } from "~src/component/form";
 import { yupFormFieldValidator } from "~src/helper/validation.helper";
 import { getDateStringError } from "~src/helper/validation.helper";
 
+import { RepeatOption } from "./event-form.types";
+import { Weekday } from "./event-form.types";
+import { EventFormValues } from "./event-form.types";
 import { EventFormProps } from "./event-form.types";
 
 const shouldShowWeekdaysField = (values: Record<string, string>) =>
@@ -42,28 +45,13 @@ export const EventForm: React.FC<EventFormProps> = ({
           type: "select",
           name: "repeat",
           label: "Repeat",
-          options: [
-            { label: "No repeat", value: "no-repeat" },
-            { label: "Daily", value: "daily" },
-            { label: "Weekdays", value: "weekdays" },
-            { label: "Weekly", value: "weekly" },
-            { label: "Monthly", value: "monthly" },
-            { label: "Annual", value: "annual" }
-          ]
+          options: Object.entries(RepeatOption).map(([label, value]) => ({ label, value }))
         },
         {
           type: "choice",
           name: "weekdays",
           label: "Weekdays",
-          options: [
-            { label: "Su", value: "sunday" },
-            { label: "Mo", value: "monday" },
-            { label: "Tu", value: "tuesday" },
-            { label: "We", value: "wednesday" },
-            { label: "Th", value: "thursday" },
-            { label: "Fr", value: "friend" },
-            { label: "Sa", value: "saturday" }
-          ],
+          options: Object.entries(Weekday).map(([label, value]) => ({ label, value })),
           active: showWeekdaysField
         },
         { type: "date", name: "endDate", label: "Repeat ends", active: showRepeatEndField },
@@ -95,12 +83,24 @@ export const EventForm: React.FC<EventFormProps> = ({
         setShowRepeatEndField(shouldShowRepeatEndField(values));
 
         if (onChange) {
-          onChange(values);
+          onChange(values as EventFormValues);
         }
       }}
-      onError={onError}
-      onCancel={onCancel}
-      onSubmit={onSubmit}
+      onError={(errors, values) => {
+        if (onError) {
+          onError(errors, values as EventFormValues);
+        }
+      }}
+      onCancel={(values) => {
+        if (onCancel) {
+          onCancel(values as EventFormValues);
+        }
+      }}
+      onSubmit={(values) => {
+        if (onSubmit) {
+          onSubmit(values as EventFormValues);
+        }
+      }}
     />
   );
 };

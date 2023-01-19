@@ -45,16 +45,13 @@ export type FormField =
   | SelectFormField
   | ChoiceFormField;
 
-export type FormProps = {
+export type FormProps<TValues = Record<string, string>> = {
   focus?: boolean;
   fields: FormField[];
-  values?: Record<string, string>;
+  values?: TValues;
   validators?: Record<string, FormFieldValidator>;
-  onChange?: (values: Record<string, string>) => void;
-  onError?: (
-    errors: Record<string, Record<string, string[]>>,
-    values: Record<string, string>
-  ) => void;
-  onSubmit: (values: Record<string, string>) => void;
-  onCancel: (values: Record<string, string>) => void;
+  onChange?: (values: TValues) => void;
+  onError?: (errors: Record<string, Record<string, string[]>>, values: TValues) => void;
+  onSubmit: (values: TValues) => void;
+  onCancel: (values: TValues) => void;
 };

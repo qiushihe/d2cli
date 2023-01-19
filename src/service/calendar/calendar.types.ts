@@ -5,5 +5,4 @@ export type CalendarEvents = {
 export type CalendarEvent = {
   id: string;
   title: string;
-  rfcString: string;
 };
