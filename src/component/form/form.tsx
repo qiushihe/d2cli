@@ -47,16 +47,18 @@ export const Form: React.FC<FormProps> = ({
 
   const normalizedFieldValues = useMemo(
     () =>
-      fields.reduce(
-        (acc, field) =>
-          fieldActive[field.name]
-            ? {
-                ...acc,
-                [field.name]: `${(acc || {})[field.name] || ""}`.trim()
-              }
-            : acc,
-        fieldsValues
-      ),
+      fields.reduce((acc, field) => {
+        const newAcc = {
+          ...acc,
+          [field.name]: `${(acc || {})[field.name] || ""}`.trim()
+        };
+
+        if (!fieldActive[field.name]) {
+          delete newAcc[field.name];
+        }
+
+        return newAcc;
+      }, fieldsValues),
     [fields, fieldsValues, fieldActive]
   );
 
