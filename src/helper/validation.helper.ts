@@ -1,7 +1,7 @@
 import * as yup from "yup";
 
 import { FormFieldValidator } from "~src/component/form/form.types";
-import { isLeapYear } from "~src/helper/date.helper";
+import { isLeapYear, isLongMonth, parseDateString } from "~src/helper/date-string.helper";
 
 export const yupFormFieldValidator =
   (schema: yup.AnySchema | null | undefined): FormFieldValidator =>
@@ -38,11 +38,7 @@ export const getDateStringError = (
     return "the value must be in format of YYYY/MM/DD";
   }
 
-  const parts = value.split("/", 3);
-
-  const year = parseInt((parts[0] || "").replace(/^0*/, ""));
-  const month = parseInt((parts[1] || "").replace(/^0*/, ""));
-  const day = parseInt((parts[2] || "").replace(/^0*/, ""));
+  const [year, month, day] = parseDateString(value);
 
   if (year <= 999 || year > 9999) {
     return "the year value is invalid";
@@ -52,15 +48,7 @@ export const getDateStringError = (
     return "the month value is invalid";
   }
 
-  if (
-    month === 1 ||
-    month === 3 ||
-    month === 5 ||
-    month === 7 ||
-    month === 8 ||
-    month === 10 ||
-    month === 12
-  ) {
+  if (isLongMonth(month)) {
     if (day < 1 || day > 31) {
       return "the day value must be between 1 and 31";
     }
