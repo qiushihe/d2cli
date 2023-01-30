@@ -6,6 +6,7 @@ import { ChoiceInput } from "~src/component/choice-input";
 import { DateInput } from "~src/component/date-input";
 import { SelectInput } from "~src/component/select-input";
 import { TextInput } from "~src/component/text-input";
+import { ToggleInput } from "~src/component/toggle-input";
 
 import { FormProps } from "./form.types";
 import { FormInputProps } from "./form.types";
@@ -221,6 +222,8 @@ export const Form: React.FC<FormProps> = ({
                     return <SelectInput {...formInputProps} options={field.options || []} />;
                   } else if (field.type === "choice") {
                     return <ChoiceInput {...formInputProps} options={field.options || []} />;
+                  } else if (field.type === "toggle") {
+                    return <ToggleInput {...formInputProps} />;
                   } else {
                     return <Text>Unknown field type: {(field as any).type}</Text>;
                   }

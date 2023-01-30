@@ -4,7 +4,7 @@ export type FormInputProps = {
   onChange: (value: string) => void;
 };
 
-export type FormFieldType = "text" | "textarea" | "date" | "select" | "choice";
+export type FormFieldType = "text" | "textarea" | "date" | "select" | "choice" | "toggle";
 
 export type FormFieldValidator = (
   value: string | null | undefined,
@@ -38,12 +38,17 @@ export type ChoiceFormField = BaseFormField<"choice"> & {
   options: { label: string; value: string }[];
 };
 
+export type ToggleFormField = BaseFormField<"toggle"> & {
+  _?: never;
+};
+
 export type FormField =
   | TextFormField
   | TextAreaFormField
   | DateFormField
   | SelectFormField
-  | ChoiceFormField;
+  | ChoiceFormField
+  | ToggleFormField;
 
 export type FormProps<TValues = Record<string, string>> = {
   focus?: boolean;
