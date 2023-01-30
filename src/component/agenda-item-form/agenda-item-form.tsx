@@ -5,10 +5,10 @@ import { Form } from "~src/component/form";
 import { yupFormFieldValidator } from "~src/helper/validation.helper";
 import { getDateStringError } from "~src/helper/validation.helper";
 
-import { RepeatOption } from "./event-form.types";
-import { Weekday } from "./event-form.types";
-import { EventFormValues } from "./event-form.types";
-import { EventFormProps } from "./event-form.types";
+import { RepeatOption } from "./agenda-item-form.types";
+import { Weekday } from "./agenda-item-form.types";
+import { AgendaItemFormValues } from "./agenda-item-form.types";
+import { AgendaItemFormProps } from "./agenda-item-form.types";
 
 const shouldShowRepeatField = (values: Record<string, string>) =>
   (values["date"] || "").trim().length > 0;
@@ -21,7 +21,7 @@ const shouldShowRepeatEndField = (values: Record<string, string>) => {
   return repeatValue.length > 0 && repeatValue !== "no-repeat";
 };
 
-export const EventForm: React.FC<EventFormProps> = ({
+export const AgendaItemForm: React.FC<AgendaItemFormProps> = ({
   focus,
   values,
   onChange,
@@ -90,22 +90,22 @@ export const EventForm: React.FC<EventFormProps> = ({
         setShowRepeatEndField(shouldShowRepeatEndField(values));
 
         if (onChange) {
-          onChange(values as EventFormValues);
+          onChange(values as AgendaItemFormValues);
         }
       }}
       onError={(errors, values) => {
         if (onError) {
-          onError(errors, values as EventFormValues);
+          onError(errors, values as AgendaItemFormValues);
         }
       }}
       onCancel={(values) => {
         if (onCancel) {
-          onCancel(values as EventFormValues);
+          onCancel(values as AgendaItemFormValues);
         }
       }}
       onSubmit={(values) => {
         if (onSubmit) {
-          onSubmit(values as EventFormValues);
+          onSubmit(values as AgendaItemFormValues);
         }
       }}
     />

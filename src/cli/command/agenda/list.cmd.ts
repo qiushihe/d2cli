@@ -8,12 +8,12 @@ import { SessionIdCommandOptions } from "../../command-option/session-id.option"
 type CmdOptions = SessionIdCommandOptions & { _: never };
 
 const cmd: CommandDefinition = {
-  description: "List calendar events",
+  description: "List agenda items",
   options: [sessionIdOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("cmd:calendar:list");
+      .getLogger("cmd:agenda:list");
 
     const { session: sessionId } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);

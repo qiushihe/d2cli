@@ -1,7 +1,7 @@
 export enum SessionDataName {
+  AgendaItems = "agendaItems",
   BungieAccessToken = "bungieAccessToken",
-  CurrentCharacterInfo = "currentCharacterInfo",
-  CalendarEvents = "calendarEvents"
+  CurrentCharacterInfo = "currentCharacterInfo"
 }
 
 export type SessionData = {

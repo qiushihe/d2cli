@@ -19,7 +19,7 @@ export enum Weekday {
   Sa = "saturday"
 }
 
-export type EventFormValues = {
+export type AgendaItemFormValues = {
   title: string;
   date: string;
   repeat?: RepeatOption;
@@ -28,9 +28,9 @@ export type EventFormValues = {
   notes?: string;
 };
 
-type FormProps = BaseFormProps<EventFormValues>;
+type FormProps = BaseFormProps<AgendaItemFormValues>;
 
-export type EventFormProps = {
+export type AgendaItemFormProps = {
   focus?: FormProps["focus"];
   values?: FormProps["values"];
   onChange?: FormProps["onChange"];

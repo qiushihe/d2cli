@@ -1,7 +1,7 @@
+import { AgendaService } from "~src/service/agenda/agenda.service";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { CacheService } from "~src/service/cache/cache.service";
-import { CalendarService } from "~src/service/calendar/calendar.service";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { ConfigService } from "~src/service/config/config.service";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
@@ -16,10 +16,10 @@ import { FsStorageService } from "~src/service/storage/fs-storage.service";
 import { AppModule } from "./app.module";
 
 const MODULE: Record<string, new () => any> = {
+  AgendaService,
   BungieApiService,
   BungieOauthService,
   CacheService,
-  CalendarService,
   CharacterDescriptionService,
   ConfigService,
   Destiny2CharacterService,

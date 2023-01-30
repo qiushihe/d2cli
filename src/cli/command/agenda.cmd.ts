@@ -1,10 +1,10 @@
 import { CommandDefinition } from "~src/cli/d2cli.types";
 
-import add from "./calendar/add.cmd";
-import list from "./calendar/list.cmd";
+import add from "./agenda/add.cmd";
+import list from "./agenda/list.cmd";
 
 const cmd: CommandDefinition = {
-  description: "Calendar events",
+  description: "Agenda items",
   commands: { add, list }
 };
 
