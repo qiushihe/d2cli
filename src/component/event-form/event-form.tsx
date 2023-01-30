@@ -10,6 +10,9 @@ import { Weekday } from "./event-form.types";
 import { EventFormValues } from "./event-form.types";
 import { EventFormProps } from "./event-form.types";
 
+const shouldShowRepeatField = (values: Record<string, string>) =>
+  (values["date"] || "").trim().length > 0;
+
 const shouldShowWeekdaysField = (values: Record<string, string>) =>
   (values["repeat"] || "").trim() === "weekdays";
 
@@ -26,6 +29,10 @@ export const EventForm: React.FC<EventFormProps> = ({
   onCancel,
   onSubmit
 }) => {
+  const [showRepeatField, setShowRepeatField] = useState<boolean>(
+    shouldShowRepeatField(values || {})
+  );
+
   const [showWeekdaysField, setShowWeekdaysField] = useState<boolean>(
     shouldShowWeekdaysField(values || {})
   );
@@ -39,13 +46,15 @@ export const EventForm: React.FC<EventFormProps> = ({
       focus={focus}
       values={values}
       fields={[
+        { type: "toggle", name: "isTodo", label: "Todo" },
         { type: "text", name: "title", label: "Title", placeholder: "Event title ..." },
         { type: "date", name: "date", label: "Date" },
         {
           type: "select",
           name: "repeat",
           label: "Repeat",
-          options: Object.entries(RepeatOption).map(([label, value]) => ({ label, value }))
+          options: Object.entries(RepeatOption).map(([label, value]) => ({ label, value })),
+          active: showRepeatField
         },
         {
           type: "choice",
@@ -60,14 +69,11 @@ export const EventForm: React.FC<EventFormProps> = ({
       validators={{
         title: yupFormFieldValidator(yup.string().required()),
         date: yupFormFieldValidator(
-          yup
-            .string()
-            .required()
-            .test(
-              "invalid-date",
-              ({ value }) => getDateStringError(value || ""),
-              (value) => !getDateStringError(value || "")
-            )
+          yup.string().test(
+            "invalid-date",
+            ({ value }) => getDateStringError(value || "", { optional: true }),
+            (value) => !getDateStringError(value || "", { optional: true })
+          )
         ),
         weekdays: yupFormFieldValidator(yup.string().required()),
         endDate: yupFormFieldValidator(
@@ -79,6 +85,7 @@ export const EventForm: React.FC<EventFormProps> = ({
         )
       }}
       onChange={(values) => {
+        setShowRepeatField(shouldShowRepeatField(values));
         setShowWeekdaysField(shouldShowWeekdaysField(values));
         setShowRepeatEndField(shouldShowRepeatEndField(values));
 
