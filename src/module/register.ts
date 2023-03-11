@@ -6,6 +6,7 @@ import { CharacterDescriptionService } from "~src/service/character-description/
 import { ConfigService } from "~src/service/config/config.service";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
+import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
 import { Destiny2VendorService } from "~src/service/destiny2-vendor/destiny2-vendor.service";
@@ -24,6 +25,7 @@ const MODULE: Record<string, new () => any> = {
   ConfigService,
   Destiny2CharacterService,
   Destiny2InventoryService,
+  Destiny2ItemService,
   Destiny2ManifestService,
   Destiny2MembershipService,
   Destiny2VendorService,

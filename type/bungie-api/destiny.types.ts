@@ -79,3 +79,8 @@ export enum BucketCategory {
   Equippable = 3,
   Ignored = 4
 }
+
+export type DestinyStat = {
+  statHash: number;
+  value: number;
+};

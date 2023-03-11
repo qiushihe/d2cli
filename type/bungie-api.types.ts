@@ -2,6 +2,7 @@ import { DestinyVendorGroupComponent } from "~type/bungie-api/destiny/components
 import { DestinyCharacterComponent } from "~type/bungie-api/destiny/entities/characters.types";
 import { DestinyCharacterProgressionComponent } from "~type/bungie-api/destiny/entities/characters.types";
 import { DestinyInventoryComponent } from "~type/bungie-api/destiny/entities/inventory.types";
+import { DestinyItemInstanceComponent } from "~type/bungie-api/destiny/entities/items.types";
 import { DestinyVendorComponent } from "~type/bungie-api/destiny/entities/vendors.types";
 
 export type ApiResponse<TResponse = any> = {
@@ -13,6 +14,12 @@ export type ApiResponse<TResponse = any> = {
   Message: string;
   MessageData: any;
   DetailedErrorTrace: string;
+};
+
+export type SingleComponentResponseOfDestinyItemInstanceComponent = {
+  data: DestinyItemInstanceComponent;
+  privacy: number;
+  disabled?: boolean;
 };
 
 export type SingleComponentResponseOfDestinyInventoryComponent = {
