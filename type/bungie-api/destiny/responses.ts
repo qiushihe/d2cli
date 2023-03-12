@@ -19,6 +19,7 @@ export type DestinyCharacterResponse = {
 
 export type DestinyProfileResponse = {
   characters?: DictionaryComponentResponseOfint64AndDestinyCharacterComponent;
+  profileInventory?: SingleComponentResponseOfDestinyInventoryComponent;
 };
 
 export type DestinyVendorsResponse = {
