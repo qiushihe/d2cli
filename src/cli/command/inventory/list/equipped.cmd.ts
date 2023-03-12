@@ -17,7 +17,6 @@ import { verboseOption } from "../../../command-option/verbose.option";
 import { VerboseCommandOptions } from "../../../command-option/verbose.option";
 import { getItemInfo } from "../get-item-info";
 import { ItemInfo } from "../get-item-info";
-import { getIndexedItemInstances } from "../get-item-instances";
 import { BucketLabels } from "../inventory-bucket";
 import { BucketOrder } from "../inventory-bucket";
 import { groupInventoryItems } from "../inventory-bucket";
@@ -60,14 +59,17 @@ const cmd: CommandDefinition = {
       );
     }
 
-    const [equipmentItemsErr, equipmentItems] = await fnWithSpinner(
+    const [equipmentItemsErr, equipmentItems, equippedItemInstances] = await fnWithSpinner(
       "Retrieving equipment items ...",
       () =>
         destiny2InventoryService.getEquipmentItems(
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,
-          characterInfo.characterId
+          characterInfo.characterId,
+          {
+            includeItemInstances: verbose
+          }
         )
     );
     if (equipmentItemsErr) {
@@ -75,22 +77,6 @@ const cmd: CommandDefinition = {
     }
 
     const equippedItems = groupInventoryItems(equipmentItems);
-
-    const [itemInstancesErr, itemInstanceById] = await getIndexedItemInstances(
-      sessionId,
-      characterInfo.membershipType,
-      characterInfo.membershipId,
-      verbose
-        ? Object.values(equippedItems)
-            .flat()
-            .map((item) => item.itemInstanceId)
-        : []
-    );
-    if (itemInstancesErr) {
-      return logger.loggedError(
-        `Unable to retrieve equipped item instance: ${itemInstancesErr.message}`
-      );
-    }
 
     const tableData: string[][] = [];
 
@@ -114,7 +100,7 @@ const cmd: CommandDefinition = {
       const equippedItemInfo: ItemInfo = equippedItem
         ? getItemInfo(
             itemDefinitions[equippedItem.itemHash] || null,
-            itemInstanceById[equippedItem.itemInstanceId] || null
+            equippedItemInstances[equippedItem.itemInstanceId] || null
           )
         : { label: "UNKNOWN", powerLevel: "N/A" };
 

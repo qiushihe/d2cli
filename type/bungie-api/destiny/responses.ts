@@ -1,3 +1,4 @@
+import { DestinyItemComponentSetOfint64 } from "~type/bungie-api.types";
 import { SingleComponentResponseOfDestinyVendorGroupComponent } from "~type/bungie-api.types";
 import { SingleComponentResponseOfDestinyCharacterComponent } from "~type/bungie-api.types";
 import { SingleComponentResponseOfDestinyCharacterProgressionComponent } from "~type/bungie-api.types";
@@ -15,11 +16,13 @@ export type DestinyCharacterResponse = {
   equipment?: SingleComponentResponseOfDestinyInventoryComponent;
   inventory?: SingleComponentResponseOfDestinyInventoryComponent;
   progressions?: SingleComponentResponseOfDestinyCharacterProgressionComponent;
+  itemComponents?: DestinyItemComponentSetOfint64;
 };
 
 export type DestinyProfileResponse = {
   characters?: DictionaryComponentResponseOfint64AndDestinyCharacterComponent;
   profileInventory?: SingleComponentResponseOfDestinyInventoryComponent;
+  itemComponents?: DestinyItemComponentSetOfint64;
 };
 
 export type DestinyVendorsResponse = {

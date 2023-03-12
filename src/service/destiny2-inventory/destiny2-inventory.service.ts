@@ -7,11 +7,17 @@ import { DestinyComponentType } from "~type/bungie-api/destiny.types";
 import { ItemLocation } from "~type/bungie-api/destiny.types";
 import { DestinyInventoryBucketDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
+import { DestinyItemInstanceComponent } from "~type/bungie-api/destiny/entities/items.types";
 import { DestinyProfileResponse } from "~type/bungie-api/destiny/responses";
 import { DestinyCharacterResponse } from "~type/bungie-api/destiny/responses";
 import { Destiny2ManifestInventoryBucketDefinitions } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
+
+import { GetVaultItemsOptions } from "./destiny2-inventory.types";
+import { GetProfileInventoryItemsOptions } from "./destiny2-inventory.types";
+import { GetInventoryItemsOptions } from "./destiny2-inventory.types";
+import { GetEquipmentItemsOptions } from "./destiny2-inventory.types";
 
 export class Destiny2InventoryService {
   private readonly bungieApiService: BungieApiService;
@@ -28,31 +34,35 @@ export class Destiny2InventoryService {
   async getVaultItems(
     sessionId: string,
     membershipType: number,
-    membershipId: string
-  ): Promise<[Error, null] | [null, DestinyItemComponent[]]> {
+    membershipId: string,
+    options?: GetVaultItemsOptions
+  ): Promise<
+    | [Error, null, null]
+    | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
+  > {
     const logger = this.getLogger();
 
     logger.debug(`Getting vault buckets ...`);
     const [vaultBucketsErr, vaultBuckets] = await this.getLocationBuckets(ItemLocation.Vault);
     if (vaultBucketsErr) {
-      return [vaultBucketsErr, null];
+      return [vaultBucketsErr, null, null];
     }
 
     const vaultBucketHashes = vaultBuckets.map((vaultBucket) => vaultBucket.hash);
 
     logger.debug(`Getting profile inventory items ...`);
-    const [profileInventoryItemsErr, profileInventoryItems] = await this.getProfileInventoryItems(
-      sessionId,
-      membershipType,
-      membershipId
-    );
+    const [profileInventoryItemsErr, profileInventoryItems, profileInventoryItemInstances] =
+      await this.getProfileInventoryItems(sessionId, membershipType, membershipId, {
+        includeItemInstances: options?.includeItemInstances
+      });
     if (profileInventoryItemsErr) {
-      return [profileInventoryItemsErr, null];
+      return [profileInventoryItemsErr, null, null];
     }
 
     return [
       null,
-      profileInventoryItems.filter((item) => vaultBucketHashes.includes(item.bucketHash))
+      profileInventoryItems.filter((item) => vaultBucketHashes.includes(item.bucketHash)),
+      profileInventoryItemInstances
     ];
   }
 
@@ -141,37 +151,52 @@ export class Destiny2InventoryService {
   async getProfileInventoryItems(
     sessionId: string,
     membershipType: number,
-    membershipId: string
-  ): Promise<[Error, null] | [null, DestinyItemComponent[]]> {
+    membershipId: string,
+    options?: GetProfileInventoryItemsOptions
+  ): Promise<
+    | [Error, null, null]
+    | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
+  > {
     const logger = this.getLogger();
 
-    logger.debug(`Fetching all vault items for ${membershipType}/${membershipId} ...`);
-    const [characterInventoryErr, characterInventoryRes] =
+    logger.debug(`Fetching all profile inventory items for ${membershipType}/${membershipId} ...`);
+    const [profileInventoryErr, profileInventoryRes] =
       await this.bungieApiService.sendSessionApiRequest(
         sessionId,
         "GET",
-        `/Destiny2/${membershipType}/Profile/${membershipId}?components=${DestinyComponentType.ProfileInventories}`,
+        `/Destiny2/${membershipType}/Profile/${membershipId}?components=${[
+          DestinyComponentType.ProfileInventories,
+          ...(options?.includeItemInstances ? [DestinyComponentType.ItemInstances] : [])
+        ].join(",")}`,
         null
       );
-    if (characterInventoryErr) {
-      return [characterInventoryErr, null];
+    if (profileInventoryErr) {
+      return [profileInventoryErr, null, null];
     }
 
     const [profileInventoryJsonErr, profileInventoryJson] =
-      await this.bungieApiService.extractApiResponse<DestinyProfileResponse>(characterInventoryRes);
+      await this.bungieApiService.extractApiResponse<DestinyProfileResponse>(profileInventoryRes);
     if (profileInventoryJsonErr) {
-      return [profileInventoryJsonErr, null];
+      return [profileInventoryJsonErr, null, null];
     }
 
-    return [null, profileInventoryJson.Response?.profileInventory?.data.items || []];
+    return [
+      null,
+      profileInventoryJson.Response?.profileInventory?.data.items || [],
+      profileInventoryJson.Response?.itemComponents?.instances?.data || {}
+    ];
   }
 
   async getInventoryItems(
     sessionId: string,
     membershipType: number,
     membershipId: string,
-    characterId: string
-  ): Promise<[Error, null] | [null, DestinyItemComponent[]]> {
+    characterId: string,
+    options?: GetInventoryItemsOptions
+  ): Promise<
+    | [Error, null, null]
+    | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
+  > {
     const logger = this.getLogger();
 
     logger.debug(
@@ -181,11 +206,14 @@ export class Destiny2InventoryService {
       await this.bungieApiService.sendSessionApiRequest(
         sessionId,
         "GET",
-        `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${DestinyComponentType.CharacterInventories}`,
+        `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${[
+          DestinyComponentType.CharacterInventories,
+          ...(options?.includeItemInstances ? [DestinyComponentType.ItemInstances] : [])
+        ].join(",")}`,
         null
       );
     if (characterInventoryErr) {
-      return [characterInventoryErr, null];
+      return [characterInventoryErr, null, null];
     }
 
     const [characterInventoryJsonErr, characterInventoryJson] =
@@ -193,18 +221,26 @@ export class Destiny2InventoryService {
         characterInventoryRes
       );
     if (characterInventoryJsonErr) {
-      return [characterInventoryJsonErr, null];
+      return [characterInventoryJsonErr, null, null];
     }
 
-    return [null, characterInventoryJson.Response?.inventory?.data.items || []];
+    return [
+      null,
+      characterInventoryJson.Response?.inventory?.data.items || [],
+      characterInventoryJson.Response?.itemComponents?.instances?.data || {}
+    ];
   }
 
   async getEquipmentItems(
     sessionId: string,
     membershipType: number,
     membershipId: string,
-    characterId: string
-  ): Promise<[Error, null] | [null, DestinyItemComponent[]]> {
+    characterId: string,
+    options?: GetEquipmentItemsOptions
+  ): Promise<
+    | [Error, null, null]
+    | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
+  > {
     const logger = this.getLogger();
 
     logger.debug(
@@ -214,11 +250,14 @@ export class Destiny2InventoryService {
       await this.bungieApiService.sendSessionApiRequest(
         sessionId,
         "GET",
-        `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${DestinyComponentType.CharacterEquipment}`,
+        `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${[
+          DestinyComponentType.CharacterEquipment,
+          ...(options?.includeItemInstances ? [DestinyComponentType.ItemInstances] : [])
+        ].join(",")}`,
         null
       );
     if (characterInventoryErr) {
-      return [characterInventoryErr, null];
+      return [characterInventoryErr, null, null];
     }
 
     const [characterInventoryJsonErr, characterInventoryJson] =
@@ -226,10 +265,14 @@ export class Destiny2InventoryService {
         characterInventoryRes
       );
     if (characterInventoryJsonErr) {
-      return [characterInventoryJsonErr, null];
+      return [characterInventoryJsonErr, null, null];
     }
 
-    return [null, characterInventoryJson.Response?.equipment?.data.items || []];
+    return [
+      null,
+      characterInventoryJson.Response?.equipment?.data.items || [],
+      characterInventoryJson.Response?.itemComponents?.instances?.data || {}
+    ];
   }
 
   async getLocationBuckets(

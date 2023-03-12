@@ -57,3 +57,13 @@ export type DictionaryComponentResponseOfuint32AndDestinyVendorComponent = {
   privacy: number;
   disabled?: boolean;
 };
+
+export type DictionaryComponentResponseOfint64AndDestinyItemInstanceComponent = {
+  data: { [key: string]: DestinyItemInstanceComponent };
+  privacy: number;
+  disabled?: boolean;
+};
+
+export type DestinyItemComponentSetOfint64 = {
+  instances?: DictionaryComponentResponseOfint64AndDestinyItemInstanceComponent;
+};

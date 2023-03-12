@@ -16,7 +16,6 @@ import { verboseOption } from "../../../command-option/verbose.option";
 import { VerboseCommandOptions } from "../../../command-option/verbose.option";
 import { getItemInfo } from "../get-item-info";
 import { ItemInfo } from "../get-item-info";
-import { getIndexedItemInstances } from "../get-item-instances";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -56,28 +55,21 @@ const cmd: CommandDefinition = {
       );
     }
 
-    const [vaultItemsErr, vaultItems] = await fnWithSpinner("Retrieving vault items ...", () =>
-      destiny2InventoryService.getVaultItems(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId
-      )
+    const [vaultItemsErr, vaultItems, vaultItemInstances] = await fnWithSpinner(
+      "Retrieving vault items ...",
+      () =>
+        destiny2InventoryService.getVaultItems(
+          sessionId,
+          characterInfo.membershipType,
+          characterInfo.membershipId,
+          {
+            includeItemInstances: verbose
+          }
+        )
     );
     if (vaultItemsErr) {
       return logger.loggedError(
         `Unable to retrieve profile inventory items: ${vaultItemsErr.message}`
-      );
-    }
-
-    const [itemInstancesErr, itemInstanceById] = await getIndexedItemInstances(
-      sessionId,
-      characterInfo.membershipType,
-      characterInfo.membershipId,
-      verbose ? vaultItems.map((item) => item.itemInstanceId) : []
-    );
-    if (itemInstancesErr) {
-      return logger.loggedError(
-        `Unable to retrieve vault item instance: ${itemInstancesErr.message}`
       );
     }
 
@@ -95,7 +87,7 @@ const cmd: CommandDefinition = {
 
       const vaultItemInfo: ItemInfo = getItemInfo(
         itemDefinitions[vaultItem.itemHash] || null,
-        itemInstanceById[vaultItem.itemInstanceId] || null
+        vaultItemInstances[vaultItem.itemInstanceId] || null
       );
 
       if (verbose) {

@@ -17,7 +17,6 @@ import { verboseOption } from "../../../command-option/verbose.option";
 import { VerboseCommandOptions } from "../../../command-option/verbose.option";
 import { getItemInfo } from "../get-item-info";
 import { ItemInfo } from "../get-item-info";
-import { getIndexedItemInstances } from "../get-item-instances";
 import { BucketLabels } from "../inventory-bucket";
 import { BucketOrder } from "../inventory-bucket";
 import { groupInventoryItems } from "../inventory-bucket";
@@ -60,14 +59,17 @@ const cmd: CommandDefinition = {
       );
     }
 
-    const [inventoryItemsErr, inventoryItems] = await fnWithSpinner(
+    const [inventoryItemsErr, inventoryItems, inventoryItemInstances] = await fnWithSpinner(
       "Retrieving inventory items ...",
       () =>
         destiny2InventoryService.getInventoryItems(
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,
-          characterInfo.characterId
+          characterInfo.characterId,
+          {
+            includeItemInstances: verbose
+          }
         )
     );
     if (inventoryItemsErr) {
@@ -75,22 +77,6 @@ const cmd: CommandDefinition = {
     }
 
     const unequippedItems = groupInventoryItems(inventoryItems);
-
-    const [itemInstancesErr, itemInstanceById] = await getIndexedItemInstances(
-      sessionId,
-      characterInfo.membershipType,
-      characterInfo.membershipId,
-      verbose
-        ? Object.values(unequippedItems)
-            .flat()
-            .map((item) => item.itemInstanceId)
-        : []
-    );
-    if (itemInstancesErr) {
-      return logger.loggedError(
-        `Unable to retrieve unequipped item instance: ${itemInstancesErr.message}`
-      );
-    }
 
     const tableData: string[][] = [];
 
@@ -123,7 +109,7 @@ const cmd: CommandDefinition = {
         const unEquippedItem = bucketItems[unEquippedItemIndex];
         const unEquippedItemInfo: ItemInfo = getItemInfo(
           itemDefinitions[unEquippedItem.itemHash] || null,
-          itemInstanceById[unEquippedItem.itemInstanceId] || null
+          inventoryItemInstances[unEquippedItem.itemInstanceId] || null
         );
 
         unEquippedItemLabels.push(unEquippedItemInfo.label);
