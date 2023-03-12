@@ -142,6 +142,9 @@ export class BungieApiService {
     }
   }
 
+  // TODO: Handle rate limit errors
+  // It is important to know what the exact rate limit is: It's 25 requests per second.
+  // It is not important to have to worry about the rate limit at all time.
   private async fetch(url: string, options: any): Promise<Response> {
     return await fetch(url, options);
   }
