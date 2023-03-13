@@ -17,7 +17,6 @@
     "console:run": "node dist/src/cli/console.js"
   },
   "dependencies": {
-    "@types/uuid": "^9.0.0",
     "base-x": "^4.0.0",
     "base64-js": "^1.5.1",
     "chalk": "^5.2.0",
@@ -41,6 +40,7 @@
     "@types/opener": "^1.4.0",
     "@types/purdy": "^3.5.1",
     "@types/react": "^17.0.52",
+    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.47.1",
     "@typescript-eslint/parser": "^5.47.1",
     "eslint": "^8.30.0",
