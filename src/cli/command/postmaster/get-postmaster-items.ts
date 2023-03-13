@@ -1,5 +1,5 @@
 import { AppModule } from "~src/module/app.module";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
+import { Destiny2PostmasterService } from "~src/service/destiny2-postmaster/destiny2-postmaster.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 export const getPostmasterItems = async (
@@ -8,11 +8,10 @@ export const getPostmasterItems = async (
   membershipId: string,
   characterId: string
 ): Promise<[Error, null] | [null, DestinyItemComponent[]]> => {
-  const destiny2InventoryService = AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
-    "Destiny2InventoryService"
-  );
+  const destiny2PostmasterService =
+    AppModule.getDefaultInstance().resolve<Destiny2PostmasterService>("Destiny2PostmasterService");
 
-  const [postmasterItemsErr, postmasterItems] = await destiny2InventoryService.getPostmasterItems(
+  const [postmasterItemsErr, postmasterItems] = await destiny2PostmasterService.getItems(
     sessionId,
     membershipType,
     membershipId,

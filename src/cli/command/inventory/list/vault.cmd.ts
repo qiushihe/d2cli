@@ -14,8 +14,8 @@ import { sessionIdOption } from "../../../command-option/session-id.option";
 import { SessionIdCommandOptions } from "../../../command-option/session-id.option";
 import { verboseOption } from "../../../command-option/verbose.option";
 import { VerboseCommandOptions } from "../../../command-option/verbose.option";
-import { getItemInfo } from "../get-item-info";
-import { ItemInfo } from "../get-item-info";
+import { getItemInfo } from "./get-item-info";
+import { ItemInfo } from "./get-item-info";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -38,7 +38,7 @@ const cmd: CommandDefinition = {
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
-      return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
+      return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
     const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(

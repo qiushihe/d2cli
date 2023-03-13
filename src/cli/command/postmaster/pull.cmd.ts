@@ -4,8 +4,8 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
+import { Destiny2PostmasterService } from "~src/service/destiny2-postmaster/destiny2-postmaster.service";
 import { LogService } from "~src/service/log/log.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
@@ -49,8 +49,10 @@ const cmd: CommandDefinition = {
     const destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
 
-    const destiny2InventoryService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
+    const destiny2PostmasterService =
+      AppModule.getDefaultInstance().resolve<Destiny2PostmasterService>(
+        "Destiny2PostmasterService"
+      );
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -130,7 +132,7 @@ const cmd: CommandDefinition = {
               itemsToPull.length
             } from postmaster: ${itemDescription} ...`,
         () =>
-          destiny2InventoryService.pullItemFromPostmaster(
+          destiny2PostmasterService.pullItem(
             sessionId,
             characterInfo.membershipType,
             characterInfo.characterId,

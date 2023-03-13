@@ -32,11 +32,11 @@ export class BungieApiService {
   //   "MessageData": {}
   // }
 
-  async sendSessionApiRequest(
+  async sendSessionApiRequest<TBody = Record<string, unknown>>(
     sessionId: string,
     method: string,
     path: string,
-    body: Record<string, unknown> | null
+    body: TBody | null
   ): Promise<[Error, null] | [null, Response]> {
     const logger = this.getLogger();
 
@@ -112,13 +112,33 @@ export class BungieApiService {
     const logger = this.getLogger();
 
     try {
-      const reqDescription = `${options.method} ${url}`;
+      const reqDescription = `${options.method} ${url} ${JSON.stringify(options.body)}`;
       logger.debug(`Req => ${reqDescription} ...`);
       const response = await this.fetch(url, options);
       logger.debug(`Res => ${reqDescription} => ${response.status} (${response.statusText})`);
       return [null, response];
     } catch (err) {
       return [err as Error, null];
+    }
+  }
+
+  async extractResponseError(res: Response): Promise<Error | null> {
+    if (res.status < 200 || res.status > 299) {
+      const genericMessage = `Unable to extract error message for response status: ${res.status} ${res.statusText}`;
+
+      const [extractJsonResErr, jsonRes] = await this.extractResponseJson(res);
+      if (extractJsonResErr) {
+        const [extractTextResErr, textRes] = await this.extractResponseText(res);
+        if (extractTextResErr) {
+          return new Error(genericMessage);
+        } else {
+          return new Error(textRes);
+        }
+      } else {
+        return new Error(jsonRes.Message || genericMessage);
+      }
+    } else {
+      return null;
     }
   }
 

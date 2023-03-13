@@ -73,7 +73,7 @@ const cmd: CommandDefinition = {
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
-      return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
+      return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
     const [vendorDefinitionsErr, vendorDefinitions] = await fnWithSpinner(
