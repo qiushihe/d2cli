@@ -18,8 +18,8 @@ import { sessionIdOption } from "../../../command-option/session-id.option";
 import { SessionIdCommandOptions } from "../../../command-option/session-id.option";
 import { verboseOption } from "../../../command-option/verbose.option";
 import { VerboseCommandOptions } from "../../../command-option/verbose.option";
-import { ItemsCommandOptions } from "./items.option";
-import { itemsOption } from "./items.option";
+import { ItemsCommandOptions } from "../items.option";
+import { itemsOption } from "../items.option";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemsCommandOptions;
 
@@ -46,6 +46,16 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
       const destiny2ManifestService =
         AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
 
+      const destiny2InventoryService =
+        AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
+          "Destiny2InventoryService"
+        );
+
+      const destiny2InventoryTransferService =
+        AppModule.getDefaultInstance().resolve<Destiny2InventoryTransferService>(
+          "Destiny2InventoryTransferService"
+        );
+
       const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
       if (characterInfoErr) {
         return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
@@ -64,16 +74,6 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
         );
       }
-
-      const destiny2InventoryService =
-        AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
-          "Destiny2InventoryService"
-        );
-
-      const destiny2InventoryTransferService =
-        AppModule.getDefaultInstance().resolve<Destiny2InventoryTransferService>(
-          "Destiny2InventoryTransferService"
-        );
 
       const itemInstanceIds = (itemInstanceIdsStr || "").trim().split(",");
 
@@ -122,9 +122,8 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           itemInstanceIdIndex++
         ) {
           const itemInstanceId = itemInstanceIds[itemInstanceIdIndex];
+          const item = sourceItems.find((item) => item.itemInstanceId === itemInstanceId) || null;
 
-          const item =
-            sourceItems.find((vaultItem) => vaultItem.itemInstanceId === itemInstanceId) || null;
           if (item) {
             const itemDefinition = itemDefinitions[item.itemHash] || null;
 

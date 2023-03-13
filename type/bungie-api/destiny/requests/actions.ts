@@ -5,3 +5,9 @@ export type DestinyPostmasterTransferRequest = {
   itemId: string | null; // Item instance ID
   stackSize?: number;
 };
+
+export type DestinyItemActionRequest = {
+  membershipType: number;
+  characterId: string;
+  itemId: string; // Item instance ID
+};

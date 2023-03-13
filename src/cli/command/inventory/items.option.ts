@@ -1,4 +1,4 @@
-import { CommandOptionDefinition } from "../../../d2cli.types";
+import { CommandOptionDefinition } from "../../d2cli.types";
 
 export type ItemsCommandOptions = {
   itemInstanceIds: string;
