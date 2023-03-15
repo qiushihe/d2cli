@@ -7,11 +7,13 @@ import { CharacterDescriptionService } from "~src/service/character-description/
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
 import { LogService } from "~src/service/log/log.service";
 
+import { hasSelectedCharacter } from "../../command-helper/current-character.helper";
 import { getSelectedCharacterInfo } from "../../command-helper/current-character.helper";
 import { sessionIdOption } from "../../command-option/session-id.option";
 import { SessionIdCommandOptions } from "../../command-option/session-id.option";
 import { verboseOption } from "../../command-option/verbose.option";
 import { VerboseCommandOptions } from "../../command-option/verbose.option";
+import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -34,9 +36,19 @@ const cmd: CommandDefinition = {
         "CharacterDescriptionService"
       );
 
-    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
-    if (characterInfoErr) {
-      return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
+    const [hasCharacterInfoErr, hasCharacterInfo] = await hasSelectedCharacter(logger, sessionId);
+    if (hasCharacterInfoErr) {
+      return logger.loggedError(`Unable to check character info: ${hasCharacterInfoErr.message}`);
+    }
+
+    let characterInfo: CharacterReference | null = null;
+
+    if (hasCharacterInfo) {
+      const [characterInfoErr, _characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+      if (characterInfoErr) {
+        return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
+      }
+      characterInfo = _characterInfo;
     }
 
     const [charactersErr, characters] = await fnWithSpinner("Retrieving characters ...", () =>

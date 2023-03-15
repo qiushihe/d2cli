@@ -28,6 +28,18 @@ export const getCharacterSelectionInfo = async (
   return [null, characterInfo];
 };
 
+export const hasSelectedCharacter = async (
+  logger: Logger,
+  sessionId: string
+): Promise<[Error, null] | [null, boolean]> => {
+  const [characterInfoErr, characterInfo] = await getCharacterSelectionInfo(logger, sessionId);
+  if (characterInfoErr) {
+    return [characterInfoErr, null];
+  }
+
+  return [null, characterInfo !== null];
+};
+
 export const getSelectedCharacterInfo = async (
   logger: Logger,
   sessionId: string
