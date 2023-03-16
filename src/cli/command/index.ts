@@ -8,6 +8,7 @@ import inventory from "./inventory.cmd";
 import mod from "./mod.cmd";
 import postmaster from "./postmaster.cmd";
 import progression from "./progression.cmd";
+import subclass from "./subclass.cmd";
 import vendor from "./vendor.cmd";
 
 export const commands: CommandDefinitions = {
@@ -19,5 +20,6 @@ export const commands: CommandDefinitions = {
   mod,
   postmaster,
   progression,
+  subclass,
   vendor
 };

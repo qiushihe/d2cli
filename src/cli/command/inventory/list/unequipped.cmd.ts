@@ -4,7 +4,6 @@ import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
-import { CharacterInventoryBuckets } from "~src/service/destiny2-inventory/destiny2-inventory.types";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { LogService } from "~src/service/log/log.service";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
@@ -18,6 +17,7 @@ import { VerboseCommandOptions } from "../../../command-option/verbose.option";
 import { BucketLabels } from "../inventory-bucket";
 import { BucketOrder } from "../inventory-bucket";
 import { groupInventoryItems } from "../inventory-bucket";
+import { CharacterInventoryBuckets } from "../inventory-bucket";
 import { getItemInfo } from "./get-item-info";
 import { ItemInfo } from "./get-item-info";
 

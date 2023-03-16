@@ -66,14 +66,18 @@ const cmd: CommandDefinition = {
     const itemInstanceIds = (itemInstanceIdsStr || "").trim().split(",");
 
     if (itemInstanceIds.length > 0) {
-      const [inventoryItemsErr, inventoryItems] = await destiny2InventoryService.getInventoryItems(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId
+      const [inventoryItemsErr, inventoryItems] = await fnWithSpinner(
+        "Fetching inventory items",
+        () =>
+          destiny2InventoryService.getInventoryItems(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId
+          )
       );
       if (inventoryItemsErr) {
-        return logger.loggedError(`Unable to get inventory items: ${inventoryItemsErr.message}`);
+        return logger.loggedError(`Unable to fetch inventory items: ${inventoryItemsErr.message}`);
       }
 
       const tableData: string[][] = [];

@@ -5,7 +5,7 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
-import { Destiny2ModService } from "~src/service/destiny2-mod/destiny2-mod.service";
+import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { LogService } from "~src/service/log/log.service";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
@@ -43,8 +43,8 @@ const cmd: CommandDefinition = {
     const destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
 
-    const destiny2ModService =
-      AppModule.getDefaultInstance().resolve<Destiny2ModService>("Destiny2ModService");
+    const destiny2PlugService =
+      AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
 
     const destiny2ItemService =
       AppModule.getDefaultInstance().resolve<Destiny2ItemService>("Destiny2ItemService");
@@ -71,34 +71,36 @@ const cmd: CommandDefinition = {
     const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] = await fnWithSpinner(
       "Retrieving armour mod socket indices ...",
       () =>
-        destiny2ModService.getArmourModSocketIndices(
+        destiny2PlugService.getSocketIndices(
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,
           characterInfo.characterId,
-          itemHash
+          itemHash,
+          "ARMOR MODS"
         )
     );
     if (armourPlugItemSocketIndicesErr) {
       return logger.loggedError(
-        `Unable to retrieving armour mod socket indices: ${armourPlugItemSocketIndicesErr.message}`
+        `Unable to retrieve armour mod socket indices: ${armourPlugItemSocketIndicesErr.message}`
       );
     }
 
     const [armourPlugItemHashesErr, armourPlugItemHashes] = await fnWithSpinner(
       "Retrieving available armour mods ...",
       () =>
-        destiny2ModService.getArmourModPlugItemHashes(
+        destiny2PlugService.getPlugItemHashes(
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,
           characterInfo.characterId,
-          itemHash
+          itemHash,
+          "ARMOR MODS"
         )
     );
     if (armourPlugItemHashesErr) {
       return logger.loggedError(
-        `Unable to retrieving available armour mods: ${armourPlugItemHashesErr.message}`
+        `Unable to retrieve available armour mods: ${armourPlugItemHashesErr.message}`
       );
     }
 
@@ -113,7 +115,7 @@ const cmd: CommandDefinition = {
         );
       if (equippedPlugHashesErr) {
         return logger.loggedError(
-          `Unable to retrieving equipped plug hashes: ${equippedPlugHashesErr.message}`
+          `Unable to retrieve equipped plug hashes: ${equippedPlugHashesErr.message}`
         );
       }
 

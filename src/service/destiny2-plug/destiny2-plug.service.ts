@@ -9,12 +9,10 @@ import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
-type GetProfileCharacterPlugItemHashesOptions = {
-  includeProfilePlugs?: boolean;
-  includeCharacterPlugs?: boolean;
-};
+import { GetProfileCharacterPlugItemHashesOptions } from "./destiny2-plug.service.types";
+import { SocketName } from "./destiny2-plug.service.types";
 
-export class Destiny2ModService {
+export class Destiny2PlugService {
   private readonly bungieApiService: BungieApiService;
   private readonly destiny2ManifestService: Destiny2ManifestService;
 
@@ -26,12 +24,13 @@ export class Destiny2ModService {
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
   }
 
-  async getArmourModSocketIndices(
+  async getSocketIndices(
     sessionId: string,
     membershipType: number,
     membershipId: string,
     characterId: string,
-    itemHash: number
+    itemHash: number,
+    socketName: SocketName
   ): Promise<[Error, null] | [null, number[]]> {
     const logger = this.getLogger();
 
@@ -65,25 +64,26 @@ export class Destiny2ModService {
 
     const itemDefinitionSocketCategories = itemDefinition.sockets.socketCategories;
 
-    const armourModsSocketCategory =
+    const socketCategory =
       itemDefinitionSocketCategories.find((socketCategory) => {
         const socketCategoryDefinition =
           socketCategoryDefinitions[socketCategory.socketCategoryHash];
-        return socketCategoryDefinition?.displayProperties.name === "ARMOR MODS";
+        return socketCategoryDefinition?.displayProperties.name === socketName;
       }) || null;
-    if (!armourModsSocketCategory) {
-      return [new Error(`Item has no armour mods socket`), null];
+    if (!socketCategory) {
+      return [new Error(`Item has no matching sockets`), null];
     }
 
-    return [null, armourModsSocketCategory.socketIndexes];
+    return [null, socketCategory.socketIndexes];
   }
 
-  async getArmourModPlugItemHashes(
+  async getPlugItemHashes(
     sessionId: string,
     membershipType: number,
     membershipId: string,
     characterId: string,
-    itemHash: number
+    itemHash: number,
+    socketName: SocketName
   ): Promise<[Error, null] | [null, number[][]]> {
     const logger = this.getLogger();
 
@@ -105,20 +105,20 @@ export class Destiny2ModService {
       return [new Error(`Item has no sockets`), null];
     }
 
-    const [armourModsSocketIndicesErr, armourModsSocketIndices] =
-      await this.getArmourModSocketIndices(
-        sessionId,
-        membershipType,
-        membershipId,
-        characterId,
-        itemHash
-      );
-    if (armourModsSocketIndicesErr) {
-      return [armourModsSocketIndicesErr, null];
+    const [socketIndicesErr, socketIndices] = await this.getSocketIndices(
+      sessionId,
+      membershipType,
+      membershipId,
+      characterId,
+      itemHash,
+      socketName
+    );
+    if (socketIndicesErr) {
+      return [socketIndicesErr, null];
     }
 
     const itemDefinitionSocketEntries = itemDefinition.sockets.socketEntries;
-    const armourModItemHashes: number[][] = [];
+    const plugItemHashes: number[][] = [];
 
     // The values in `itemDefinition.sockets[].socketCategories[].socketIndexes`
     // are also indices but for the  `itemDefinition.sockets[].socketEntries`
@@ -129,10 +129,10 @@ export class Destiny2ModService {
     // outside world doesn't have to know about the internal index values.
     for (
       let socketEntryIndexIndex = 0;
-      socketEntryIndexIndex < armourModsSocketIndices.length;
+      socketEntryIndexIndex < socketIndices.length;
       socketEntryIndexIndex++
     ) {
-      const socketEntryIndex = armourModsSocketIndices[socketEntryIndexIndex];
+      const socketEntryIndex = socketIndices[socketEntryIndexIndex];
       const socketEntry = itemDefinitionSocketEntries[socketEntryIndex];
       const socketEntryPlugSources = socketEntry.plugSources;
 
@@ -140,11 +140,16 @@ export class Destiny2ModService {
       const hasProfilePlugs = !!(socketEntryPlugSources & SocketPlugSources.ProfilePlugSet);
       const hasCharacterPlugs = !!(socketEntryPlugSources & SocketPlugSources.CharacterPlugSet);
 
+      const plugHashes: number[] = [];
+
+      if (socketEntry.singleInitialItemHash) {
+        plugHashes.push(socketEntry.singleInitialItemHash);
+      }
+
       if (hasLocalPlugs) {
-        // Use `socketEntryIndexIndex` because that's the external index.
-        armourModItemHashes[socketEntryIndexIndex] = (socketEntry.reusablePlugItems || []).map(
-          (item) => item.plugItemHash
-        );
+        (socketEntry.reusablePlugItems || []).forEach((item) => {
+          plugHashes.push(item.plugItemHash);
+        });
       }
 
       if (hasProfilePlugs || hasCharacterPlugs) {
@@ -171,12 +176,18 @@ export class Destiny2ModService {
           return [profileCharacterPlugItemHashesErr, null];
         }
 
-        // Use `socketEntryIndexIndex` because that's the external index.
-        armourModItemHashes[socketEntryIndexIndex] = profileCharacterPlugItemHashes;
+        (profileCharacterPlugItemHashes || []).forEach((plugHash) => {
+          plugHashes.push(plugHash);
+        });
       }
+
+      // Use `socketEntryIndexIndex` because that's the external index.
+      plugItemHashes[socketEntryIndexIndex] = plugHashes.filter(
+        (value, index, array) => index === array.indexOf(value)
+      );
     }
 
-    return [null, armourModItemHashes];
+    return [null, plugItemHashes];
   }
 
   async getProfileCharacterPlugItemHashes(
@@ -231,6 +242,6 @@ export class Destiny2ModService {
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("Destiny2ModService");
+      .getLogger("Destiny2PlugService");
   }
 }
