@@ -1,10 +1,8 @@
 import { ItemLocation } from "~type/bungie-api/destiny.types";
 import { BucketScope } from "~type/bungie-api/destiny.types";
 import { BucketCategory } from "~type/bungie-api/destiny.types";
-import {
-  DestinyDisplayPropertiesDefinition,
-  DestinyIconSequenceDefinition
-} from "~type/bungie-api/destiny/definitions/common.types";
+import { DestinyDisplayPropertiesDefinition } from "~type/bungie-api/destiny/definitions/common.types";
+import { DestinyIconSequenceDefinition } from "~type/bungie-api/destiny/definitions/common.types";
 
 type AbstractDefinition<TDefinition> = TDefinition & {
   hash: number;
@@ -40,6 +38,40 @@ export type DestinyInventoryBucketDefinition = AbstractDefinition<{
   fifo: boolean;
 }>;
 
+export type DestinyItemSocketEntryPlugItemDefinition = {
+  plugItemHash: number;
+};
+
+export type DestinyItemSocketEntryDefinition = {
+  socketTypeHash: number;
+  singleInitialItemHash: number;
+  reusablePlugItems: DestinyItemSocketEntryPlugItemDefinition[];
+  preventInitializationOnVendorPurchase: boolean;
+  hidePerksInItemTooltip: boolean;
+  plugSources: number; // Bitmask; See Destiny.SocketPlugSources
+  reusablePlugSetHash?: number;
+  randomizedPlugSetHash?: number;
+  defaultVisible: boolean;
+};
+
+export type DestinyItemIntrinsicSocketEntryDefinition = {
+  plugItemHash: number;
+  socketTypeHash: number;
+  defaultVisible: boolean;
+};
+
+export type DestinyItemSocketCategoryDefinition = {
+  socketCategoryHash: number;
+  socketIndexes: number[];
+};
+
+export type DestinyItemSocketBlockDefinition = {
+  detail: string;
+  socketEntries: DestinyItemSocketEntryDefinition[];
+  intrinsicSockets: DestinyItemIntrinsicSocketEntryDefinition[];
+  socketCategories: DestinyItemSocketCategoryDefinition[];
+};
+
 export type DestinyInventoryItemDefinition = AbstractDefinition<{
   displayProperties: DestinyDisplayPropertiesDefinition;
   tooltipNotifications: unknown[];
@@ -63,7 +95,7 @@ export type DestinyInventoryItemDefinition = AbstractDefinition<{
   quality?: unknown;
   acquireRewardSiteHash?: number;
   acquireUnlockHash?: number;
-  sockets?: unknown;
+  sockets?: DestinyItemSocketBlockDefinition;
   talentGrid?: unknown;
   investmentStats: unknown[];
   perks: unknown[];

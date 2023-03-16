@@ -11,6 +11,7 @@ import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventor
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
+import { Destiny2ModService } from "~src/service/destiny2-mod/destiny2-mod.service";
 import { Destiny2PostmasterService } from "~src/service/destiny2-postmaster/destiny2-postmaster.service";
 import { Destiny2VendorService } from "~src/service/destiny2-vendor/destiny2-vendor.service";
 import { LogService } from "~src/service/log/log.service";
@@ -33,6 +34,7 @@ const MODULE: Record<string, new () => any> = {
   Destiny2ItemService,
   Destiny2ManifestService,
   Destiny2MembershipService,
+  Destiny2ModService,
   Destiny2PostmasterService,
   Destiny2VendorService,
   LogService,

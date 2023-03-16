@@ -84,3 +84,13 @@ export type DestinyStat = {
   statHash: number;
   value: number;
 };
+
+// The values are denoted as binary, because plug sources are usually used in
+// a bitmask. However, this enum's values can still be used as integers.
+export enum SocketPlugSources {
+  None = 0b0000, // 0
+  InventorySourced = 0b0001, // 1
+  ReusablePlugItems = 0b0010, // 2
+  ProfilePlugSet = 0b0100, // 4
+  CharacterPlugSet = 0b1000 // 8
+}

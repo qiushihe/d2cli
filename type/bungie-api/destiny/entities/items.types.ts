@@ -31,3 +31,14 @@ export type DestinyItemInstanceComponent = {
   breakerTypeHash: any;
   energy: any;
 };
+
+export type DestinyItemSocketState = {
+  plugHash?: number;
+  isEnabled: boolean;
+  isVisible: boolean;
+  enableFailIndexes?: number[];
+};
+
+export type DestinyItemSocketsComponent = {
+  sockets: DestinyItemSocketState[];
+};

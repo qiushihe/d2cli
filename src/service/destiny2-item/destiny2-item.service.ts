@@ -57,6 +57,40 @@ export class Destiny2ItemService {
     return [null, itemJson.Response.instance.data];
   }
 
+  async getItemEquippedPlugHashes(
+    sessionId: string,
+    membershipType: number,
+    membershipId: string,
+    itemInstanceId: string
+  ): Promise<[Error, null] | [null, number[]]> {
+    const logger = this.getLogger();
+
+    logger.debug(`Fetching item instance ...`);
+    const [itemErr, itemRes] = await this.bungieApiService.sendSessionApiRequest(
+      sessionId,
+      "GET",
+      `/Destiny2/${membershipType}/Profile/${membershipId}/Item/${itemInstanceId}?components=${DestinyComponentType.ItemSockets}`,
+      null
+    );
+    if (itemErr) {
+      return [itemErr, null];
+    }
+
+    const [itemJsonErr, itemJson] =
+      await this.bungieApiService.extractApiResponse<DestinyItemResponse>(itemRes);
+    if (itemJsonErr) {
+      return [itemJsonErr, null];
+    }
+    if (!itemJson.Response) {
+      return [new Error("Response missing data"), null];
+    }
+    if (!itemJson.Response.sockets) {
+      return [new Error("Response missing sockets data"), null];
+    }
+
+    return [null, itemJson.Response.sockets.data.sockets.map((socket) => socket.plugHash || -1)];
+  }
+
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")

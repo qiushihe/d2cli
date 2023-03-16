@@ -26,7 +26,8 @@ export enum Destiny2ManifestComponent {
   VendorDefinition = "DestinyVendorDefinition",
   VendorGroupDefinition = "DestinyVendorGroupDefinition",
   DestinationDefinition = "DestinyDestinationDefinition",
-  PlaceDefinition = "DestinyPlaceDefinition"
+  PlaceDefinition = "DestinyPlaceDefinition",
+  SocketCategoryDefinition = "DestinySocketCategoryDefinition"
 }
 
 export type Destiny2ManifestRaceDefinition = Record<number, DestinyRaceDefinition>;

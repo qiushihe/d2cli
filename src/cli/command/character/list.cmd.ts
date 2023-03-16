@@ -5,6 +5,7 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
+import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
 import { LogService } from "~src/service/log/log.service";
 
 import { hasSelectedCharacter } from "../../command-helper/current-character.helper";
@@ -13,7 +14,6 @@ import { sessionIdOption } from "../../command-option/session-id.option";
 import { SessionIdCommandOptions } from "../../command-option/session-id.option";
 import { verboseOption } from "../../command-option/verbose.option";
 import { VerboseCommandOptions } from "../../command-option/verbose.option";
-import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
