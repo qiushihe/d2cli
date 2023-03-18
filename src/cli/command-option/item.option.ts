@@ -16,7 +16,7 @@ export type ItemInstanceIdsCommandOptions = {
 };
 
 export const itemInstanceIdsOption: CommandOptionDefinition = {
-  flags: ["i", "item-instance-ids <ids>"],
+  flags: ["i", "item-instance-ids <instance-ids>"],
   description: 'Instance IDs of items (use "," to separate multiple values)',
   defaultValue: ""
 };
