@@ -28,7 +28,7 @@ const cmd: CommandDefinition = {
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("cmd:inventory:list:unequipped");
+      .getLogger("cmd:equipment:unequipped");
 
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);

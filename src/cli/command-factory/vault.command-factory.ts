@@ -33,7 +33,7 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
     action: async (_, opts) => {
       const logger = AppModule.getDefaultInstance()
         .resolve<LogService>("LogService")
-        .getLogger(options.toVault ? "cmd:inventory:vault:put" : "cmd:inventory:vault:take");
+        .getLogger(options.toVault ? "cmd:vault:deposit" : "cmd:vault:withdraw");
 
       const {
         session: sessionId,

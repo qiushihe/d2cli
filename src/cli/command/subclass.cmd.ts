@@ -1,10 +1,11 @@
 import { CommandDefinition } from "~src/cli/d2cli.types";
 
-import list from "./subclass/list.cmd";
+import equipped from "./subclass/equipped.cmd";
+import unequipped from "./subclass/unequipped.cmd";
 
 const cmd: CommandDefinition = {
   description: "Destiny 2 character subclass",
-  commands: { list }
+  commands: { equipped, unequipped }
 };
 
 export default cmd;

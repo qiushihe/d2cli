@@ -5,10 +5,6 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
-import { BucketLabels } from "~src/helper/inventory-bucket.helper";
-import { BucketOrder } from "~src/helper/inventory-bucket.helper";
-import { groupInventoryItems } from "~src/helper/inventory-bucket.helper";
-import { CharacterInventoryBuckets } from "~src/helper/inventory-bucket.helper";
 import { ItemInfo } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
@@ -23,12 +19,12 @@ import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/des
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
 const cmd: CommandDefinition = {
-  description: "List currently equipped items in character inventory",
+  description: "List items in vault",
   options: [sessionIdOption, verboseOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("cmd:inventory:list:equipped");
+      .getLogger("cmd:vault:list");
 
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
@@ -58,66 +54,50 @@ const cmd: CommandDefinition = {
       );
     }
 
-    const [equipmentItemsErr, equipmentItems, equippedItemInstances] = await fnWithSpinner(
-      "Retrieving equipment items ...",
+    const [vaultItemsErr, vaultItems, vaultItemInstances] = await fnWithSpinner(
+      "Retrieving vault items ...",
       () =>
-        destiny2InventoryService.getEquipmentItems(
+        destiny2InventoryService.getVaultItems(
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,
-          characterInfo.characterId,
           {
             includeItemInstances: verbose
           }
         )
     );
-    if (equipmentItemsErr) {
-      return logger.loggedError(`Unable to retrieve equipment items: ${equipmentItemsErr.message}`);
+    if (vaultItemsErr) {
+      return logger.loggedError(
+        `Unable to retrieve profile inventory items: ${vaultItemsErr.message}`
+      );
     }
-
-    const equippedItems = groupInventoryItems(equipmentItems);
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["Slot", "Item", "Hash", "Instance ID"];
+    const basicHeaders = ["Item", "Hash", "Instance ID"];
     if (verbose) {
       tableData.push([...basicHeaders, "Power Level"]);
     } else {
       tableData.push(basicHeaders);
     }
 
-    const buckets = Object.values(CharacterInventoryBuckets).sort(
-      (a, b) => BucketOrder.indexOf(a) - BucketOrder.indexOf(b)
-    );
+    for (let vaultItemIndex = 0; vaultItemIndex < vaultItems.length; vaultItemIndex++) {
+      const vaultItem = vaultItems[vaultItemIndex];
 
-    for (let bucketNameIndex = 0; bucketNameIndex < buckets.length; bucketNameIndex++) {
-      const bucket = buckets[bucketNameIndex];
-      const bucketLabel = BucketLabels[bucket];
-      const bucketItems = equippedItems[bucket];
-
-      const equippedItem = bucketItems[0];
-      const equippedItemInfo: ItemInfo = equippedItem
-        ? getItemNameAndPowerLevel(
-            itemDefinitions[equippedItem.itemHash] || null,
-            equippedItemInstances[equippedItem.itemInstanceId] || null
-          )
-        : { label: "UNKNOWN", powerLevel: "N/A" };
+      const vaultItemInfo: ItemInfo = getItemNameAndPowerLevel(
+        itemDefinitions[vaultItem.itemHash] || null,
+        vaultItemInstances[vaultItem.itemInstanceId] || null
+      );
 
       if (verbose) {
         tableData.push([
-          bucketLabel,
-          equippedItemInfo.label,
-          equippedItem ? `${equippedItem.itemHash}` : "N/A",
-          equippedItem ? equippedItem.itemInstanceId : "N/A",
-          equippedItemInfo.powerLevel.padStart(4, " ")
+          vaultItemInfo.label,
+          `${vaultItem.itemHash}`,
+          vaultItem.itemInstanceId,
+          vaultItemInfo.powerLevel
         ]);
       } else {
-        tableData.push([
-          bucketLabel,
-          equippedItemInfo.label,
-          equippedItem ? `${equippedItem.itemHash}` : "N/A",
-          equippedItem ? equippedItem.itemInstanceId : "N/A"
-        ]);
+        tableData.push([vaultItemInfo.label, `${vaultItem.itemHash}`, vaultItem.itemInstanceId]);
       }
     }
 

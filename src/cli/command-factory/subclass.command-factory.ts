@@ -59,7 +59,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
     action: async (_, opts) => {
       const logger = AppModule.getDefaultInstance()
         .resolve<LogService>("LogService")
-        .getLogger(`cmd:subclass:list:${options.listEquipped ? "equipped" : "unequipped"}`);
+        .getLogger(`cmd:subclass:${options.listEquipped ? "equipped" : "unequipped"}`);
 
       const { session: sessionId, verbose, showAll } = opts as CmdOptions;
       logger.debug(`Session ID: ${sessionId}`);
