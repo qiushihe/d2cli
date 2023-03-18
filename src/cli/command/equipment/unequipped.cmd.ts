@@ -9,7 +9,7 @@ import { BucketLabels } from "~src/helper/inventory-bucket.helper";
 import { BucketOrder } from "~src/helper/inventory-bucket.helper";
 import { groupInventoryItems } from "~src/helper/inventory-bucket.helper";
 import { CharacterInventoryBuckets } from "~src/helper/inventory-bucket.helper";
-import { ItemInfo } from "~src/helper/item.helper";
+import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
@@ -106,7 +106,7 @@ const cmd: CommandDefinition = {
         unEquippedItemIndex++
       ) {
         const unEquippedItem = bucketItems[unEquippedItemIndex];
-        const unEquippedItemInfo: ItemInfo = getItemNameAndPowerLevel(
+        const unEquippedItemInfo: ItemNameAndPowerLevel = getItemNameAndPowerLevel(
           itemDefinitions[unEquippedItem.itemHash] || null,
           inventoryItemInstances[unEquippedItem.itemInstanceId] || null
         );

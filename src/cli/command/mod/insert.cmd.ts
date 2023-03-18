@@ -1,10 +1,15 @@
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
-import { itemIdOption } from "~src/cli/command-option/item.option";
-import { ItemIdCommandOptions } from "~src/cli/command-option/item.option";
+import { itemIdentifierOption } from "~src/cli/command-option/item.option";
+import { ItemIdentifierCommandOptions } from "~src/cli/command-option/item.option";
+import { socketNumberOption } from "~src/cli/command-option/socket.option";
+import { SocketNumberCommandOptions } from "~src/cli/command-option/socket.option";
+import { plugIHashOption } from "~src/cli/command-option/socket.option";
+import { PlugHashCommandOptions } from "~src/cli/command-option/socket.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
+import { parseItemIdentifier } from "~src/helper/item.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
@@ -14,38 +19,34 @@ import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions &
-  ItemIdCommandOptions & { modHash: string } & { slotNumber: string };
+  ItemIdentifierCommandOptions &
+  SocketNumberCommandOptions &
+  PlugHashCommandOptions;
 
 const cmd: CommandDefinition = {
   description: "Install a mod into an socket",
-  options: [
-    sessionIdOption,
-    itemIdOption,
-    {
-      flags: ["m", "mod-hash <hash>"],
-      description: "The item hash of the mod item to insert",
-      defaultValue: ""
-    },
-    {
-      flags: ["n", "slot-number <slot>"],
-      description: "The number of the slot to insert the mod",
-      defaultValue: ""
-    }
-  ],
+  options: [sessionIdOption, itemIdentifierOption, socketNumberOption, plugIHashOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
       .getLogger("cmd:mod:insert");
 
-    const { session: sessionId, itemId, modHash, slotNumber } = opts as CmdOptions;
+    const { session: sessionId, item, socket, plugHash } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const itemIds = `${itemId}`.trim().split(":", 2);
-    const itemHash = parseInt(itemIds[0], 10) || 0;
-    const itemInstanceId = (itemIds[1] || "").trim();
+    const itemIdentifier = parseItemIdentifier(item);
+    if (!itemIdentifier) {
+      return logger.loggedError(`Missing item identifier`);
+    }
+    if (!itemIdentifier.itemHash) {
+      return logger.loggedError(`Missing item hash`);
+    }
+    if (!itemIdentifier.itemInstanceId) {
+      return logger.loggedError(`Missing item instance ID`);
+    }
 
-    const socketIndex = (parseInt(slotNumber, 10) || 0) - 1;
-    const plugItemHash = parseInt(modHash, 10) || 0;
+    const socketIndex = (parseInt(socket, 10) || 0) - 1;
+    const plugItemHash = parseInt(plugHash, 10) || 0;
 
     const destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
@@ -72,7 +73,7 @@ const cmd: CommandDefinition = {
       );
     }
 
-    const itemDefinition = itemDefinitions[itemHash];
+    const itemDefinition = itemDefinitions[itemIdentifier.itemHash];
     const plugItemDefinition = itemDefinitions[plugItemHash];
 
     const itemDescription = itemDefinition.displayProperties.name;
@@ -85,7 +86,7 @@ const cmd: CommandDefinition = {
           sessionId,
           characterInfo?.membershipType,
           characterInfo?.characterId,
-          itemInstanceId,
+          itemIdentifier.itemInstanceId,
           socketIndex,
           plugItemHash
         )

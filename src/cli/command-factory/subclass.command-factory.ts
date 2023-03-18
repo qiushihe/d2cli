@@ -2,6 +2,8 @@ import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
+import { showAllOption } from "~src/cli/command-option/cli.option";
+import { ShowAllCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
@@ -19,7 +21,7 @@ import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
-type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & { showAll: boolean };
+type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ShowAllCommandOptions;
 
 type SubclassPlugRecord = {
   name: string;
@@ -47,15 +49,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
     description: `List ${
       options.listEquipped ? "equipped subclass" : "unequipped subclasses"
     } of the current character`,
-    options: [
-      sessionIdOption,
-      verboseOption,
-      {
-        flags: ["a", "show-all"],
-        description: "Show unequipped slot items",
-        defaultValue: false
-      }
-    ],
+    options: [sessionIdOption, verboseOption, showAllOption],
     action: async (_, opts) => {
       const logger = AppModule.getDefaultInstance()
         .resolve<LogService>("LogService")

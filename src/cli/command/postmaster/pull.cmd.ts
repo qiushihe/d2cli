@@ -26,7 +26,7 @@ const cmd: CommandDefinition = {
     sessionIdOption,
     verboseOption,
     {
-      flags: ["i", "item-number <num>"],
+      flags: ["n", "item-number <num>"],
       description: "Specific item number to pull"
     }
   ],

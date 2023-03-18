@@ -5,7 +5,7 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
-import { ItemInfo } from "~src/helper/item.helper";
+import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
@@ -84,7 +84,7 @@ const cmd: CommandDefinition = {
     for (let vaultItemIndex = 0; vaultItemIndex < vaultItems.length; vaultItemIndex++) {
       const vaultItem = vaultItems[vaultItemIndex];
 
-      const vaultItemInfo: ItemInfo = getItemNameAndPowerLevel(
+      const vaultItemInfo: ItemNameAndPowerLevel = getItemNameAndPowerLevel(
         itemDefinitions[vaultItem.itemHash] || null,
         vaultItemInstances[vaultItem.itemInstanceId] || null
       );

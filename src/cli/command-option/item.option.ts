@@ -1,13 +1,16 @@
 import { CommandOptionDefinition } from "../d2cli.types";
 
-export type ItemIdCommandOptions = {
-  itemId: string;
+export type ItemIdentifierCommandOptions = {
+  item: string;
 };
 
-export const itemIdOption: CommandOptionDefinition = {
-  flags: ["i", "item-id <id>"],
-  description:
-    'Either the item hash itself, or both item hash and item instance ID in the format of "[hash]:[instance ID]";',
+export const itemIdentifierOption: CommandOptionDefinition = {
+  flags: ["t", "item <identifier>"],
+  description: [
+    "Identifier of the item;",
+    'Valid forms are: "[Item Hash]", ":[Item Instance Id]" or "[Item Hash]:[Item Instance Id]";',
+    "Certain commands may require both, while other commands may function without one or another."
+  ].join(" "),
   defaultValue: ""
 };
 

@@ -2,11 +2,14 @@ import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
-import { itemIdOption } from "~src/cli/command-option/item.option";
-import { ItemIdCommandOptions } from "~src/cli/command-option/item.option";
+import { showAllOption } from "~src/cli/command-option/cli.option";
+import { ShowAllCommandOptions } from "~src/cli/command-option/cli.option";
+import { itemIdentifierOption } from "~src/cli/command-option/item.option";
+import { ItemIdentifierCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
+import { parseItemIdentifier } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
@@ -19,37 +22,26 @@ import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/des
 
 type CmdOptions = SessionIdCommandOptions &
   VerboseCommandOptions &
-  ItemIdCommandOptions & { showAll: boolean };
+  ShowAllCommandOptions &
+  ItemIdentifierCommandOptions;
 
 const cmd: CommandDefinition = {
   description: "List available mods for an item",
-  options: [
-    sessionIdOption,
-    verboseOption,
-    itemIdOption,
-    {
-      flags: ["a", "show-all"],
-      description: "Show unequipped slot mods",
-      defaultValue: false
-    }
-  ],
+  options: [sessionIdOption, verboseOption, showAllOption, itemIdentifierOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
       .getLogger("cmd:mod:list");
 
-    const { session: sessionId, verbose, showAll, itemId } = opts as CmdOptions;
+    const { session: sessionId, verbose, showAll, item } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const itemIds = `${itemId}`.trim().split(":", 2);
-    const itemHash = parseInt(itemIds[0], 10) || 0;
-    const itemInstanceId = (itemIds[1] || "").trim();
-
-    if (!itemHash) {
-      return logger.loggedError(`Missing item hash`);
+    const itemIdentifier = parseItemIdentifier(item);
+    if (!itemIdentifier) {
+      return logger.loggedError(`Missing item identifier`);
     }
-    if (itemHash <= 0) {
-      return logger.loggedError(`Invalid item hash`);
+    if (!itemIdentifier.itemHash) {
+      return logger.loggedError(`Missing item hash`);
     }
 
     const destiny2ManifestService =
@@ -88,7 +80,7 @@ const cmd: CommandDefinition = {
           characterInfo.membershipType,
           characterInfo.membershipId,
           characterInfo.characterId,
-          itemHash,
+          itemIdentifier.itemHash,
           "ARMOR MODS"
         )
     );
@@ -106,7 +98,7 @@ const cmd: CommandDefinition = {
           characterInfo.membershipType,
           characterInfo.membershipId,
           characterInfo.characterId,
-          itemHash,
+          itemIdentifier.itemHash,
           "ARMOR MODS"
         )
     );
@@ -117,13 +109,13 @@ const cmd: CommandDefinition = {
     }
 
     let equippedPlugHashes: number[] = [];
-    if (itemInstanceId) {
+    if (itemIdentifier.itemInstanceId) {
       const [equippedPlugHashesErr, _equippedPlugHashes] =
         await destiny2ItemService.getItemEquippedPlugHashes(
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,
-          itemInstanceId
+          itemIdentifier.itemInstanceId
         );
       if (equippedPlugHashesErr) {
         return logger.loggedError(
@@ -153,12 +145,19 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const tableHeader = ["Slot", "Equipped"];
+    const tableHeader = ["Slot"];
+    if (itemIdentifier.itemInstanceId) {
+      tableHeader.push("Equipped");
+    }
     if (verbose) {
       tableHeader.push("ID");
     }
-    if (showAll) {
-      tableHeader.push("Unequipped");
+    if (showAll || !itemIdentifier.itemInstanceId) {
+      if (itemIdentifier.itemInstanceId) {
+        tableHeader.push("Unequipped");
+      } else {
+        tableHeader.push("Available");
+      }
       if (verbose) {
         tableHeader.push("ID");
       }
@@ -170,12 +169,15 @@ const cmd: CommandDefinition = {
 
       const equippedPlug = plugs.find((plug) => plug.isEquipped) || null;
 
-      const tableRow = [`${slotIndex + 1}`, equippedPlug ? equippedPlug.label : ""];
+      const tableRow = [`${slotIndex + 1}`];
 
+      if (itemIdentifier.itemInstanceId) {
+        tableRow.push(equippedPlug ? equippedPlug.label : "");
+      }
       if (verbose) {
         tableRow.push(equippedPlug ? `${equippedPlug.hash}` : "");
       }
-      if (showAll) {
+      if (showAll || !itemIdentifier.itemInstanceId) {
         const unequippedPlugs = plugs.filter((plug) => !plug.isEquipped);
         tableRow.push(unequippedPlugs.map((plug) => plug.label).join("\n"));
         if (verbose) {
