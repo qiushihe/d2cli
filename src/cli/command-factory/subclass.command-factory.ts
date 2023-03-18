@@ -8,6 +8,7 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
+import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
@@ -41,8 +42,6 @@ type SubclassRecord = {
 type ListCommandOptions = {
   listEquipped: boolean;
 };
-
-const SOCKET_NAMES = ["ABILITIES", "SUPER", "ASPECTS", "FRAGMENTS"];
 
 export const listCommand = (options: ListCommandOptions): CommandDefinition => {
   return {
@@ -159,8 +158,12 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           );
         }
 
-        for (let socketNameIndex = 0; socketNameIndex < SOCKET_NAMES.length; socketNameIndex++) {
-          const socketName = SOCKET_NAMES[socketNameIndex] as SocketName;
+        for (
+          let socketNameIndex = 0;
+          socketNameIndex < SUBCLASS_SOCKET_NAMES.length;
+          socketNameIndex++
+        ) {
+          const socketName = SUBCLASS_SOCKET_NAMES[socketNameIndex] as SocketName;
 
           const [socketIndicesErr, socketIndices] = await fnWithSpinner(
             `Fetching ${subclassName} ${socketName.toLocaleLowerCase()} socket indices ...`,

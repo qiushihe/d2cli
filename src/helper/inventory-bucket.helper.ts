@@ -64,6 +64,18 @@ export const BucketOrder = [
   CharacterInventoryBuckets.Ship
 ];
 
+export const ArmourInventoryBuckets = [
+  CharacterInventoryBuckets.Helmet,
+  CharacterInventoryBuckets.Gauntlet,
+  CharacterInventoryBuckets.ChestArmour,
+  CharacterInventoryBuckets.LegArmour,
+  CharacterInventoryBuckets.ClassItem
+];
+
+export const ArmourInventoryBucketHashes = ArmourInventoryBuckets.map(
+  (bucket) => CharacterInventoryBucketHashes[bucket]
+);
+
 export const groupInventoryItems = (
   items: DestinyItemComponent[]
 ): Record<CharacterInventoryBuckets, DestinyItemComponent[]> => {
