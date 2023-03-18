@@ -1,6 +1,7 @@
 import fetch, { Response } from "node-fetch";
 
 import { AppModule } from "~src/module/app.module";
+import { CacheService } from "~src/service/cache/cache.service";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
@@ -8,13 +9,19 @@ import { Logger } from "~src/service/log/log.types";
 import { SessionService } from "~src/service/session/session.service";
 import { ApiResponse } from "~type/bungie-api.types";
 
+const LIMIT_REQUESTS_PER_SECOND = 10;
+
 export class BungieApiService {
   private readonly config: ConfigService;
   private readonly sessionService: SessionService;
+  private readonly cacheService: CacheService;
+  private lastRequestTime: number;
 
   constructor() {
     this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
     this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
+    this.cacheService = AppModule.getDefaultInstance().resolve<CacheService>("CacheService");
+    this.lastRequestTime = 0;
   }
 
   // ThrottleSeconds will now be populated with an integer value of how many seconds you should wait to clear your
@@ -162,11 +169,21 @@ export class BungieApiService {
     }
   }
 
-  // TODO: Handle rate limit errors
-  // It is important to know what the exact rate limit is: It's 25 requests per second.
-  // It is not important to have to worry about the rate limit at all time.
   private async fetch(url: string, options: any): Promise<Response> {
-    return await fetch(url, options);
+    const logger = this.getLogger();
+
+    const rateLimitTimeout = 1000 / LIMIT_REQUESTS_PER_SECOND;
+    const nowTime = new Date().getTime();
+    const timeSinceLastRequest = nowTime - this.lastRequestTime;
+
+    if (timeSinceLastRequest > rateLimitTimeout) {
+      logger.debug(`Rate limit exceeded. Waiting for ${rateLimitTimeout}ms ...`);
+      await new Promise((resolve) => setTimeout(resolve, rateLimitTimeout));
+    }
+
+    const fetchResult = await fetch(url, options);
+    this.lastRequestTime = new Date().getTime();
+    return fetchResult;
   }
 
   private getLogger(): Logger {
