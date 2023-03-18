@@ -17,6 +17,7 @@ import { Destiny2ManifestProgressionDefinitions } from "~type/bungie-asset/desti
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
 const DISPLAY_HASHES = [
+  47964159, // War Table
   2083746873, // Crucible
   3696598664, // Competitive
   3008065600, // Gambit
