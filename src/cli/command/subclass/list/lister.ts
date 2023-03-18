@@ -26,7 +26,8 @@ type SubclassPlugRecord = {
   name: string;
   itemHash: number;
   isEquipped: boolean;
-  index: number;
+  socketIndex: number;
+  sortOrder: number;
 };
 
 type SubclassRecord = {
@@ -211,9 +212,10 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           subclassRecord.sockets[socketName] = [];
 
           for (let index = 0; index < socketIndices.length; index++) {
+            const socketIndex = socketIndices[index];
             const slotPlugRecords: SubclassPlugRecord[] = [];
             const slotPlugItemHashes = plugItemHashes[index];
-            const equippedPlugItemHash = equippedPlugHashes[socketIndices[index]] || -1;
+            const equippedPlugItemHash = equippedPlugHashes[socketIndex] || -1;
 
             for (
               let plugItemIndex = 0;
@@ -229,7 +231,8 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
                   : `Plug: ${plugItemHash}`,
                 itemHash: plugItemHash,
                 isEquipped: equippedPlugItemHash === plugItemHash,
-                index: plugItemDefinition.index
+                socketIndex,
+                sortOrder: plugItemDefinition.index
               };
 
               slotPlugRecords.push(plugRecord);
@@ -244,7 +247,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
 
       const tableData: string[][] = [];
 
-      const tableHeader: string[] = ["Slot", "Equipped"];
+      const tableHeader: string[] = ["Name", "Slot", "Equipped"];
       if (verbose) {
         tableHeader.push("ID");
       }
@@ -257,7 +260,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       tableData.push(tableHeader);
 
       subclassRecords.forEach((subclassRecord) => {
-        const subClassColumns = ["Subclass", subclassRecord.name];
+        const subClassColumns = ["Subclass", "", subclassRecord.name];
         if (verbose) {
           subClassColumns.push(`${subclassRecord.itemHash}:${subclassRecord.itemInstanceId}`);
         }
@@ -273,7 +276,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           subclassRecord.sockets["SUPER"].flat().find((superRecord) => superRecord.isEquipped) ||
           null;
         if (equippedSuper) {
-          const superColumns = ["Super", equippedSuper.name];
+          const superColumns = ["Super", `${equippedSuper.socketIndex + 1}`, equippedSuper.name];
           if (verbose) {
             superColumns.push(`${equippedSuper.itemHash}`);
           }
@@ -281,7 +284,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
             const unequippedSupers = subclassRecord.sockets["SUPER"]
               .flat()
               .filter((superRecord) => !superRecord.isEquipped)
-              .sort((a, b) => a.index - b.index);
+              .sort((a, b) => a.sortOrder - b.sortOrder);
             superColumns.push(unequippedSupers.map((superRecord) => superRecord.name).join("\n"));
             if (verbose) {
               superColumns.push(
@@ -297,14 +300,18 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           (abilityRecord) => abilityRecord.isEquipped
         );
         if (equippedClassAbility) {
-          const classAbilityColumns = ["Class Ability", equippedClassAbility.name];
+          const classAbilityColumns = [
+            "Class Ability",
+            `${equippedClassAbility.socketIndex + 1}`,
+            equippedClassAbility.name
+          ];
           if (verbose) {
             classAbilityColumns.push(`${equippedClassAbility.itemHash}`);
           }
           if (showAll) {
             const unequippedClassAbility = (subclassRecord.sockets["ABILITIES"][0] || [])
               .filter((abilityRecord) => !abilityRecord.isEquipped)
-              .sort((a, b) => a.index - b.index);
+              .sort((a, b) => a.sortOrder - b.sortOrder);
             classAbilityColumns.push(
               unequippedClassAbility.map((abilityRecord) => abilityRecord.name).join("\n")
             );
@@ -324,14 +331,18 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           (abilityRecord) => abilityRecord.isEquipped
         );
         if (equippedMovementAbility) {
-          const movementAbilityColumns = ["Movement", equippedMovementAbility.name];
+          const movementAbilityColumns = [
+            "Movement",
+            `${equippedMovementAbility.socketIndex + 1}`,
+            equippedMovementAbility.name
+          ];
           if (verbose) {
             movementAbilityColumns.push(`${equippedMovementAbility.itemHash}`);
           }
           if (showAll) {
             const unequippedMovementAbility = (subclassRecord.sockets["ABILITIES"][1] || [])
               .filter((abilityRecord) => !abilityRecord.isEquipped)
-              .sort((a, b) => a.index - b.index);
+              .sort((a, b) => a.sortOrder - b.sortOrder);
             movementAbilityColumns.push(
               unequippedMovementAbility.map((abilityRecord) => abilityRecord.name).join("\n")
             );
@@ -351,14 +362,18 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           (abilityRecord) => abilityRecord.isEquipped
         );
         if (equippedMeleeAbility) {
-          const meleeAbilityColumns = ["Melee", equippedMeleeAbility.name];
+          const meleeAbilityColumns = [
+            "Melee",
+            `${equippedMeleeAbility.socketIndex + 1}`,
+            equippedMeleeAbility.name
+          ];
           if (verbose) {
             meleeAbilityColumns.push(`${equippedMeleeAbility.itemHash}`);
           }
           if (showAll) {
             const unequippedMeleeAbility = (subclassRecord.sockets["ABILITIES"][2] || [])
               .filter((abilityRecord) => !abilityRecord.isEquipped)
-              .sort((a, b) => a.index - b.index);
+              .sort((a, b) => a.sortOrder - b.sortOrder);
             meleeAbilityColumns.push(
               unequippedMeleeAbility.map((abilityRecord) => abilityRecord.name).join("\n")
             );
@@ -378,14 +393,18 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           (abilityRecord) => abilityRecord.isEquipped
         );
         if (equippedGrenadeAbility) {
-          const grenadeAbilityColumns = ["Grenade", equippedGrenadeAbility.name];
+          const grenadeAbilityColumns = [
+            "Grenade",
+            `${equippedGrenadeAbility.socketIndex + 1}`,
+            equippedGrenadeAbility.name
+          ];
           if (verbose) {
             grenadeAbilityColumns.push(`${equippedGrenadeAbility.itemHash}`);
           }
           if (showAll) {
             const unequippedGrenadeAbility = (subclassRecord.sockets["ABILITIES"][3] || [])
               .filter((abilityRecord) => !abilityRecord.isEquipped)
-              .sort((a, b) => a.index - b.index);
+              .sort((a, b) => a.sortOrder - b.sortOrder);
             grenadeAbilityColumns.push(
               unequippedGrenadeAbility.map((abilityRecord) => abilityRecord.name).join("\n")
             );
@@ -404,9 +423,10 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
         const equippedAspects = subclassRecord.sockets["ASPECTS"]
           .flat()
           .filter((aspectRecord) => aspectRecord.isEquipped)
-          .sort((a, b) => a.index - b.index);
+          .sort((a, b) => a.sortOrder - b.sortOrder);
         const aspectsColumns = [
           "Aspects",
+          `${equippedAspects[0].socketIndex + 1}`,
           equippedAspects.map((aspectRecord) => aspectRecord.name).join("\n")
         ];
         if (verbose) {
@@ -427,7 +447,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
                 (acc, record) => ({ ...acc, [record.itemHash]: record }),
                 {} as Record<number, SubclassPlugRecord>
               )
-          ).sort((a, b) => a.index - b.index);
+          ).sort((a, b) => a.sortOrder - b.sortOrder);
           aspectsColumns.push(
             unequippedAspects.map((aspectRecord) => aspectRecord.name).join("\n")
           );
@@ -442,9 +462,10 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
         const equippedFragments = subclassRecord.sockets["FRAGMENTS"]
           .flat()
           .filter((fragmentRecord) => fragmentRecord.isEquipped)
-          .sort((a, b) => a.index - b.index);
+          .sort((a, b) => a.sortOrder - b.sortOrder);
         const fragmentsColumns = [
           "Fragments",
+          `${equippedFragments[0].socketIndex + 1}`,
           equippedFragments.map((fragmentRecord) => fragmentRecord.name).join("\n")
         ];
         if (verbose) {
@@ -468,7 +489,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
                 (acc, record) => ({ ...acc, [record.itemHash]: record }),
                 {} as Record<number, SubclassPlugRecord>
               )
-          ).sort((a, b) => a.index - b.index);
+          ).sort((a, b) => a.sortOrder - b.sortOrder);
           fragmentsColumns.push(
             unequippedFragments.map((fragmentRecord) => fragmentRecord.name).join("\n")
           );
