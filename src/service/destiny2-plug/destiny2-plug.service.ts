@@ -3,14 +3,18 @@ import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
-import { DestinyComponentType, SocketPlugSources } from "~type/bungie-api/destiny.types";
+import { DestinyComponentType } from "~type/bungie-api/destiny.types";
+import { SocketPlugSources } from "~type/bungie-api/destiny.types";
+import { DestinyInsertPlugsFreeActionRequest } from "~type/bungie-api/destiny/requests/actions";
+import { DestinySocketArrayType } from "~type/bungie-api/destiny/requests/actions";
 import { DestinyProfileResponse } from "~type/bungie-api/destiny/responses";
+import { DestinyItemChangeResponse } from "~type/bungie-api/destiny/responses";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
-import { GetProfileCharacterPlugItemHashesOptions } from "./destiny2-plug.service.types";
 import { SocketName } from "./destiny2-plug.service.types";
+import { GetProfileCharacterPlugItemHashesOptions } from "./destiny2-plug.service.types";
 
 export class Destiny2PlugService {
   private readonly bungieApiService: BungieApiService;
@@ -22,6 +26,46 @@ export class Destiny2PlugService {
 
     this.destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+  }
+
+  async insert(
+    sessionId: string,
+    membershipType: number,
+    characterId: string,
+    itemInstanceId: string,
+    socketIndex: number,
+    plugItemHash: number
+  ): Promise<Error | null> {
+    const logger = this.getLogger();
+
+    logger.debug(`Inserting plug into socket ...`);
+    const [insertErr, insertRes] =
+      await this.bungieApiService.sendSessionApiRequest<DestinyInsertPlugsFreeActionRequest>(
+        sessionId,
+        "POST",
+        "/Destiny2/Actions/Items/InsertSocketPlugFree",
+        {
+          plug: {
+            socketIndex,
+            socketArrayType: DestinySocketArrayType.Default,
+            plugItemHash
+          },
+          membershipType,
+          characterId,
+          itemId: itemInstanceId
+        }
+      );
+    if (insertErr) {
+      return insertErr;
+    }
+
+    const [insertJsonErr, insertJson] =
+      await this.bungieApiService.extractApiResponse<DestinyItemChangeResponse>(insertRes);
+    if (insertJsonErr) {
+      return insertJson;
+    }
+
+    return null;
   }
 
   async getSocketIndices(

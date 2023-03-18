@@ -9,6 +9,7 @@ import { SingleComponentResponseOfDestinyItemInstanceComponent } from "~type/bun
 import { SingleComponentResponseOfDestinyPlugSetsComponent } from "~type/bungie-api.types";
 import { DictionaryComponentResponseOfint64AndDestinyPlugSetsComponent } from "~type/bungie-api.types";
 import { SingleComponentResponseOfDestinyItemSocketsComponent } from "~type/bungie-api.types";
+import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 export type DestinyItemResponse = {
   instance: SingleComponentResponseOfDestinyItemInstanceComponent;
@@ -34,4 +35,10 @@ export type DestinyProfileResponse = {
 export type DestinyVendorsResponse = {
   vendorGroups?: SingleComponentResponseOfDestinyVendorGroupComponent;
   vendors?: DictionaryComponentResponseOfuint32AndDestinyVendorComponent;
+};
+
+export type DestinyItemChangeResponse = {
+  item: DestinyItemResponse;
+  addedInventoryItems: DestinyItemComponent[];
+  removedInventoryItems: DestinyItemComponent[];
 };

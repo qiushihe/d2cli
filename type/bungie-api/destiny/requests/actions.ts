@@ -11,3 +11,21 @@ export type DestinyItemActionRequest = {
   characterId: string;
   itemId: string; // Item instance ID
 };
+
+export enum DestinySocketArrayType {
+  Default = 0,
+  Intrinsic = 1
+}
+
+export type DestinyInsertPlugsRequestEntry = {
+  socketIndex: number;
+  socketArrayType: DestinySocketArrayType;
+  plugItemHash: number;
+};
+
+export type DestinyInsertPlugsFreeActionRequest = {
+  plug: DestinyInsertPlugsRequestEntry;
+  itemId: string;
+  characterId: string;
+  membershipType: number;
+};
