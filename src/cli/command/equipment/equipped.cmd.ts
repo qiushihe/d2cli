@@ -79,7 +79,7 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["Slot", "Item", "Hash", "Instance ID"];
+    const basicHeaders = ["Slot", "Item", "ID"];
     if (verbose) {
       tableData.push([...basicHeaders, "Power Level"]);
     } else {
@@ -107,16 +107,14 @@ const cmd: CommandDefinition = {
         tableData.push([
           bucketLabel,
           equippedItemInfo.label,
-          equippedItem ? `${equippedItem.itemHash}` : "N/A",
-          equippedItem ? equippedItem.itemInstanceId : "N/A",
+          equippedItem ? `${equippedItem.itemHash}:${equippedItem.itemInstanceId}` : "N/A",
           equippedItemInfo.powerLevel.padStart(4, " ")
         ]);
       } else {
         tableData.push([
           bucketLabel,
           equippedItemInfo.label,
-          equippedItem ? `${equippedItem.itemHash}` : "N/A",
-          equippedItem ? equippedItem.itemInstanceId : "N/A"
+          equippedItem ? `${equippedItem.itemHash}:${equippedItem.itemInstanceId}` : "N/A"
         ]);
       }
     }

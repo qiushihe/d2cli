@@ -79,7 +79,7 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["Slot", "Item", "Hash", "Instance ID"];
+    const basicHeaders = ["Slot", "Item", "ID"];
     if (verbose) {
       tableData.push([...basicHeaders, "Power Level"]);
     } else {
@@ -96,8 +96,7 @@ const cmd: CommandDefinition = {
       const bucketItems = unequippedItems[bucket];
 
       const unEquippedItemLabels: string[] = [];
-      const unEquippedItemHashes: string[] = [];
-      const unEquippedItemInstanceIds: string[] = [];
+      const unEquippedItemIds: string[] = [];
       const unEquippedItemPowerLevels: string[] = [];
 
       for (
@@ -112,8 +111,7 @@ const cmd: CommandDefinition = {
         );
 
         unEquippedItemLabels.push(unEquippedItemInfo.label);
-        unEquippedItemHashes.push(`${unEquippedItem.itemHash}`);
-        unEquippedItemInstanceIds.push(unEquippedItem.itemInstanceId);
+        unEquippedItemIds.push(`${unEquippedItem.itemHash}:${unEquippedItem.itemInstanceId}`);
         unEquippedItemPowerLevels.push(unEquippedItemInfo.powerLevel);
       }
 
@@ -121,16 +119,14 @@ const cmd: CommandDefinition = {
         tableData.push([
           bucketLabel,
           unEquippedItemLabels.join("\n"),
-          unEquippedItemHashes.join("\n"),
-          unEquippedItemInstanceIds.join("\n"),
+          unEquippedItemIds.join("\n"),
           unEquippedItemPowerLevels.map((lvl) => lvl.padStart(4, " ")).join("\n")
         ]);
       } else {
         tableData.push([
           bucketLabel,
           unEquippedItemLabels.join("\n"),
-          unEquippedItemHashes.join("\n"),
-          unEquippedItemInstanceIds.join("\n")
+          unEquippedItemIds.join("\n")
         ]);
       }
     }
