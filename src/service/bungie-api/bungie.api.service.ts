@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import fetch, { Response } from "node-fetch";
 
 import { AppModule } from "~src/module/app.module";
@@ -28,7 +29,9 @@ import { ApiResponse } from "~type/bungie-api.types";
 //       >   "MessageData": {}
 //       > }
 
-const LIMIT_REQUESTS_PER_SECOND = 10;
+// The simplest for of Bungie.net API rate limit is 25 requests per second.
+const LIMIT_REQUESTS_PER_SECOND = 25;
+const LIMIT_REQUEST_WAIT_MULTIPLIER = 1.1;
 
 export class BungieApiService {
   private readonly config: ConfigService;
@@ -128,9 +131,13 @@ export class BungieApiService {
 
     try {
       const reqDescription = `${options.method} ${url} ${JSON.stringify(options.body)}`;
-      logger.debug(`Req => ${reqDescription} ...`);
+      logger.debug(`${chalk.bgMagenta(`Req`)} => ${reqDescription} ...`);
       const response = await this.fetch(url, options);
-      logger.debug(`Res => ${reqDescription} => ${response.status} (${response.statusText})`);
+      logger.debug(
+        `${chalk.magenta(`Res`)} => ${reqDescription} => ${response.status} (${
+          response.statusText
+        })`
+      );
       return [null, response];
     } catch (err) {
       return [err as Error, null];
@@ -144,9 +151,17 @@ export class BungieApiService {
     const nowTime = new Date().getTime();
     const timeSinceLastRequest = nowTime - this.lastRequestTime;
 
-    if (timeSinceLastRequest > rateLimitTimeout) {
-      logger.debug(`Rate limit exceeded. Waiting for ${rateLimitTimeout}ms ...`);
-      await new Promise((resolve) => setTimeout(resolve, rateLimitTimeout));
+    if (timeSinceLastRequest < rateLimitTimeout) {
+      const waitTime = rateLimitTimeout * LIMIT_REQUEST_WAIT_MULTIPLIER;
+
+      logger.debug(
+        [
+          `${chalk.red("Rate limit exceeded")} (${timeSinceLastRequest} < ${rateLimitTimeout}).`,
+          `Waiting for ${waitTime}ms ...`
+        ].join(" ")
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
     const fetchResult = await fetch(url, options);

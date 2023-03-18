@@ -14,10 +14,6 @@ const CACHE_EXPIRY = 1000 * 60 * 60 * 24;
 export class Destiny2ManifestService {
   private readonly config: ConfigService;
   private readonly bungieApiService: BungieApiService;
-
-  // Also explicit use CacheService here because the BungieApiService level caching only caches the
-  // API response content. But ManifestService deals with extremely large JSON objects, so here we
-  // also use CacheService to cache the parsed JSON objects.
   private readonly cacheService: CacheService;
 
   constructor() {
