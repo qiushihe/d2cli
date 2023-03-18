@@ -4,8 +4,8 @@ import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
-import { itemsOption } from "~src/cli/command-option/item.option";
-import { ItemsCommandOptions } from "~src/cli/command-option/item.option";
+import { itemInstanceIdsOption } from "~src/cli/command-option/item.option";
+import { ItemInstanceIdsCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
@@ -19,11 +19,11 @@ import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
-type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemsCommandOptions;
+type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemInstanceIdsCommandOptions;
 
 const cmd: CommandDefinition = {
   description: "Equip an item",
-  options: [sessionIdOption, verboseOption, itemsOption],
+  options: [sessionIdOption, verboseOption, itemInstanceIdsOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")

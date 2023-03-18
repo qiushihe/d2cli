@@ -1,6 +1,7 @@
-import { SessionIdCommandOptions, sessionIdOption } from "~src/cli/command-option/cli.option";
-import { itemOption } from "~src/cli/command-option/item.option";
-import { ItemCommandOptions } from "~src/cli/command-option/item.option";
+import { sessionIdOption } from "~src/cli/command-option/cli.option";
+import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
+import { itemIdOption } from "~src/cli/command-option/item.option";
+import { ItemIdCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
@@ -13,13 +14,13 @@ import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions &
-  ItemCommandOptions & { modHash: string } & { slotNumber: string };
+  ItemIdCommandOptions & { modHash: string } & { slotNumber: string };
 
 const cmd: CommandDefinition = {
   description: "Install a mod into an socket",
   options: [
     sessionIdOption,
-    itemOption,
+    itemIdOption,
     {
       flags: ["m", "mod-hash <hash>"],
       description: "The item hash of the mod item to insert",

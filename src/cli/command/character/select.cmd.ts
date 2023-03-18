@@ -1,4 +1,5 @@
-import { SessionIdCommandOptions, sessionIdOption } from "~src/cli/command-option/cli.option";
+import { sessionIdOption } from "~src/cli/command-option/cli.option";
+import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";

@@ -1,6 +1,9 @@
-import { SessionIdCommandOptions, sessionIdOption } from "~src/cli/command-option/cli.option";
-import { itemOption } from "~src/cli/command-option/item.option";
-import { ItemCommandOptions } from "~src/cli/command-option/item.option";
+import { sessionIdOption } from "~src/cli/command-option/cli.option";
+import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
+import { verboseOption } from "~src/cli/command-option/cli.option";
+import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
+import { itemIdOption } from "~src/cli/command-option/item.option";
+import { ItemIdCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
@@ -14,17 +17,28 @@ import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
-type CmdOptions = SessionIdCommandOptions & ItemCommandOptions;
+type CmdOptions = SessionIdCommandOptions &
+  VerboseCommandOptions &
+  ItemIdCommandOptions & { showAll: boolean };
 
 const cmd: CommandDefinition = {
   description: "List available mods for an item",
-  options: [sessionIdOption, itemOption],
+  options: [
+    sessionIdOption,
+    verboseOption,
+    itemIdOption,
+    {
+      flags: ["a", "show-all"],
+      description: "Show unequipped slot mods",
+      defaultValue: false
+    }
+  ],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
       .getLogger("cmd:mod:list");
 
-    const { session: sessionId, itemId } = opts as CmdOptions;
+    const { session: sessionId, verbose, showAll, itemId } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
     const itemIds = `${itemId}`.trim().split(":", 2);
@@ -120,7 +134,7 @@ const cmd: CommandDefinition = {
       equippedPlugHashes = armourPlugItemSocketIndices.map((index) => _equippedPlugHashes[index]);
     }
 
-    const availablePlugHashesBySlotIndex = armourPlugItemHashes.map((plugItemHashes, slotIndex) => {
+    const plugsBySlotIndex = armourPlugItemHashes.map((plugItemHashes, slotIndex) => {
       return plugItemHashes.map((plugItemHash) => {
         const isEquipped = equippedPlugHashes[slotIndex] === plugItemHash;
         const plugItemDefinition = itemDefinitions[plugItemHash];
@@ -137,29 +151,36 @@ const cmd: CommandDefinition = {
       });
     });
 
-    const maxColumnsCount = availablePlugHashesBySlotIndex.length;
-    const maxRowsCount = Math.max(...availablePlugHashesBySlotIndex.map((hashes) => hashes.length));
-
     const tableData: string[][] = [];
 
-    const tableHeader: string[] = [];
-    for (let columnIndex = 0; columnIndex < maxColumnsCount; columnIndex++) {
-      tableHeader.push(`Slot ${columnIndex + 1} Mod`);
-      tableHeader.push("Hash");
+    const tableHeader = ["Slot", "Equipped"];
+    if (verbose) {
+      tableHeader.push("ID");
+    }
+    if (showAll) {
+      tableHeader.push("Unequipped");
+      if (verbose) {
+        tableHeader.push("ID");
+      }
     }
     tableData.push(tableHeader);
 
-    for (let rowIndex = 0; rowIndex < maxRowsCount; rowIndex++) {
-      const tableRow: string[] = [];
+    for (let slotIndex = 0; slotIndex < plugsBySlotIndex.length; slotIndex++) {
+      const plugs = plugsBySlotIndex[slotIndex];
 
-      for (let columnIndex = 0; columnIndex < maxColumnsCount; columnIndex++) {
-        const data = availablePlugHashesBySlotIndex[columnIndex][rowIndex];
-        if (itemInstanceId) {
-          tableRow.push(data ? (data.isEquipped ? `> ${data.label}` : `  ${data.label}`) : "");
-        } else {
-          tableRow.push(data ? data.label : "");
+      const equippedPlug = plugs.find((plug) => plug.isEquipped) || null;
+
+      const tableRow = [`${slotIndex + 1}`, equippedPlug ? equippedPlug.label : ""];
+
+      if (verbose) {
+        tableRow.push(equippedPlug ? `${equippedPlug.hash}` : "");
+      }
+      if (showAll) {
+        const unequippedPlugs = plugs.filter((plug) => !plug.isEquipped);
+        tableRow.push(unequippedPlugs.map((plug) => plug.label).join("\n"));
+        if (verbose) {
+          tableRow.push(unequippedPlugs.map((plug) => `${plug.hash}`).join("\n"));
         }
-        tableRow.push(data ? `${data.hash}` : "");
       }
 
       tableData.push(tableRow);

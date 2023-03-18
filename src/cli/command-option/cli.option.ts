@@ -17,7 +17,7 @@ export type SessionIdCommandOptions = {
 };
 
 export const sessionIdOption: CommandOptionDefinition = {
-  flags: ["s", "session <id>"],
+  flags: ["session <id>"],
   description: "Destiny 2 CLI session ID",
   defaultValue: DEFAULT_SESSION_ID
 };

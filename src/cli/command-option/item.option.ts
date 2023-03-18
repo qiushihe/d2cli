@@ -1,23 +1,21 @@
 import { CommandOptionDefinition } from "../d2cli.types";
 
-export type ItemCommandOptions = {
+export type ItemIdCommandOptions = {
   itemId: string;
 };
 
-export const itemOption: CommandOptionDefinition = {
+export const itemIdOption: CommandOptionDefinition = {
   flags: ["i", "item-id <id>"],
-  description: [
+  description:
     'Either the item hash itself, or both item hash and item instance ID in the format of "[hash]:[instance ID]";',
-    "Specifying instance ID will show currently equipped mods"
-  ].join(" "),
   defaultValue: ""
 };
 
-export type ItemsCommandOptions = {
+export type ItemInstanceIdsCommandOptions = {
   itemInstanceIds: string;
 };
 
-export const itemsOption: CommandOptionDefinition = {
+export const itemInstanceIdsOption: CommandOptionDefinition = {
   flags: ["i", "item-instance-ids <ids>"],
   description: 'Instance IDs of items (use "," to separate multiple values)',
   defaultValue: ""
