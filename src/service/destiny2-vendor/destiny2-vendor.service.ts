@@ -23,7 +23,10 @@ export class Destiny2VendorService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching vendors ...`);
-    const [vendorsErr, vendorsRes] = await this.bungieApiService.sendSessionApiRequest(
+    const [vendorsErr, vendorsRes] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyVendorsResponse
+    >(
       sessionId,
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}/Vendors?components=${DestinyComponentType.Vendors}`,
@@ -32,22 +35,14 @@ export class Destiny2VendorService {
     if (vendorsErr) {
       return [vendorsErr, null];
     }
-
-    const [vendorsJsonErr, vendorsJson] =
-      await this.bungieApiService.extractApiResponse<DestinyVendorsResponse>(vendorsRes);
-    if (vendorsJsonErr) {
-      return [vendorsJsonErr, null];
-    }
-    if (!vendorsJson.Response) {
+    if (!vendorsRes) {
       return [new Error("Response missing data"), null];
     }
-    if (!vendorsJson.Response.vendors) {
+    if (!vendorsRes.vendors) {
       return [new Error("Response missing vendors data"), null];
     }
 
-    const vendors = Object.values(vendorsJson.Response.vendors.data);
-
-    return [null, vendors];
+    return [null, Object.values(vendorsRes.vendors.data)];
   }
 
   private getLogger(): Logger {

@@ -32,7 +32,10 @@ export class Destiny2ItemService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching item instance ...`);
-    const [itemErr, itemRes] = await this.bungieApiService.sendSessionApiRequest(
+    const [itemErr, itemRes] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyItemResponse
+    >(
       sessionId,
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}/Item/${itemInstanceId}?components=${DestinyComponentType.ItemInstances}`,
@@ -41,20 +44,14 @@ export class Destiny2ItemService {
     if (itemErr) {
       return [itemErr, null];
     }
-
-    const [itemJsonErr, itemJson] =
-      await this.bungieApiService.extractApiResponse<DestinyItemResponse>(itemRes);
-    if (itemJsonErr) {
-      return [itemJsonErr, null];
-    }
-    if (!itemJson.Response) {
+    if (!itemRes) {
       return [new Error("Response missing data"), null];
     }
-    if (!itemJson.Response.instance) {
+    if (!itemRes.instance) {
       return [new Error("Response missing instance data"), null];
     }
 
-    return [null, itemJson.Response.instance.data];
+    return [null, itemRes.instance.data];
   }
 
   async getItemEquippedPlugHashes(
@@ -66,7 +63,10 @@ export class Destiny2ItemService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching item instance ...`);
-    const [itemErr, itemRes] = await this.bungieApiService.sendSessionApiRequest(
+    const [itemErr, itemRes] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyItemResponse
+    >(
       sessionId,
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}/Item/${itemInstanceId}?components=${DestinyComponentType.ItemSockets}`,
@@ -75,20 +75,14 @@ export class Destiny2ItemService {
     if (itemErr) {
       return [itemErr, null];
     }
-
-    const [itemJsonErr, itemJson] =
-      await this.bungieApiService.extractApiResponse<DestinyItemResponse>(itemRes);
-    if (itemJsonErr) {
-      return [itemJsonErr, null];
-    }
-    if (!itemJson.Response) {
+    if (!itemRes) {
       return [new Error("Response missing data"), null];
     }
-    if (!itemJson.Response.sockets) {
+    if (!itemRes.sockets) {
       return [new Error("Response missing sockets data"), null];
     }
 
-    return [null, itemJson.Response.sockets.data.sockets.map((socket) => socket.plugHash || -1)];
+    return [null, itemRes.sockets.data.sockets.map((socket) => socket.plugHash || -1)];
   }
 
   private getLogger(): Logger {

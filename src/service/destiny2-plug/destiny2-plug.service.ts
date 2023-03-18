@@ -39,30 +39,21 @@ export class Destiny2PlugService {
     const logger = this.getLogger();
 
     logger.debug(`Inserting plug into socket ...`);
-    const [insertErr, insertRes] =
-      await this.bungieApiService.sendSessionApiRequest<DestinyInsertPlugsFreeActionRequest>(
-        sessionId,
-        "POST",
-        "/Destiny2/Actions/Items/InsertSocketPlugFree",
-        {
-          plug: {
-            socketIndex,
-            socketArrayType: DestinySocketArrayType.Default,
-            plugItemHash
-          },
-          membershipType,
-          characterId,
-          itemId: itemInstanceId
-        }
-      );
+    const [insertErr] = await this.bungieApiService.sendApiRequest<
+      DestinyInsertPlugsFreeActionRequest,
+      DestinyItemChangeResponse
+    >(sessionId, "POST", "/Destiny2/Actions/Items/InsertSocketPlugFree", {
+      plug: {
+        socketIndex,
+        socketArrayType: DestinySocketArrayType.Default,
+        plugItemHash
+      },
+      membershipType,
+      characterId,
+      itemId: itemInstanceId
+    });
     if (insertErr) {
       return insertErr;
-    }
-
-    const [insertJsonErr, insertJson] =
-      await this.bungieApiService.extractApiResponse<DestinyItemChangeResponse>(insertRes);
-    if (insertJsonErr) {
-      return insertJson;
     }
 
     return null;
@@ -249,7 +240,10 @@ export class Destiny2PlugService {
     const logger = this.getLogger();
 
     logger.debug(`Getting profile item sockets ...`);
-    const [profileErr, profileRes] = await this.bungieApiService.sendSessionApiRequest(
+    const [profileErr, profileRes] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyProfileResponse
+    >(
       sessionId,
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}?components=${DestinyComponentType.ItemSockets}`,
@@ -259,15 +253,8 @@ export class Destiny2PlugService {
       return [profileErr, null];
     }
 
-    const [profileJsonErr, profileJson] =
-      await this.bungieApiService.extractApiResponse<DestinyProfileResponse>(profileRes);
-    if (profileJsonErr) {
-      return [profileJsonErr, null];
-    }
-
-    const profilePlugSets = profileJson.Response?.profilePlugSets?.data?.plugs || {};
-    const characterPlugSets =
-      (profileJson.Response?.characterPlugSets?.data || {})[characterId]?.plugs || {};
+    const profilePlugSets = profileRes?.profilePlugSets?.data?.plugs || {};
+    const characterPlugSets = (profileRes?.characterPlugSets?.data || {})[characterId]?.plugs || {};
 
     const profilePlugSet = profilePlugSets[plugSetHash] || [];
     const characterPlugSet = characterPlugSets[plugSetHash] || [];

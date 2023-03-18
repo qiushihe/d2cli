@@ -23,22 +23,21 @@ export class Destiny2InventoryEquipmentService {
     characterId: string,
     itemInstanceId: string
   ): Promise<Error | null> {
-    const [equipItemErr, equipItemRes] =
-      await this.bungieApiService.sendSessionApiRequest<DestinyItemActionRequest>(
-        sessionId,
-        "POST",
-        "/Destiny2/Actions/Items/EquipItem",
-        {
-          itemId: itemInstanceId,
-          characterId,
-          membershipType
-        }
-      );
+    const [equipItemErr] = await this.bungieApiService.sendApiRequest<DestinyItemActionRequest>(
+      sessionId,
+      "POST",
+      "/Destiny2/Actions/Items/EquipItem",
+      {
+        itemId: itemInstanceId,
+        characterId,
+        membershipType
+      }
+    );
     if (equipItemErr) {
       return equipItemErr;
     }
 
-    return await this.bungieApiService.extractResponseError(equipItemRes);
+    return null;
   }
 
   private getLogger(): Logger {

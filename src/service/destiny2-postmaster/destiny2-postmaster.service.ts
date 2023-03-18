@@ -63,8 +63,8 @@ export class Destiny2PostmasterService {
     itemHash: number,
     itemInstanceId: string | null
   ): Promise<Error | null> {
-    const [pullItemErr, pullItemRes] =
-      await this.bungieApiService.sendSessionApiRequest<DestinyPostmasterTransferRequest>(
+    const [pullItemErr] =
+      await this.bungieApiService.sendApiRequest<DestinyPostmasterTransferRequest>(
         sessionId,
         "POST",
         "/Destiny2/Actions/Items/PullFromPostmaster",
@@ -79,7 +79,7 @@ export class Destiny2PostmasterService {
       return pullItemErr;
     }
 
-    return await this.bungieApiService.extractResponseError(pullItemRes);
+    return null;
   }
 
   private getLogger(): Logger {

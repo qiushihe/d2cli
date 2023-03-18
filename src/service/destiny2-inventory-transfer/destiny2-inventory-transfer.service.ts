@@ -24,8 +24,8 @@ export class Destiny2InventoryTransferService {
     itemHash: number,
     itemInstanceId: string | null
   ): Promise<Error | null> {
-    const [transferItemErr, transferItemRes] =
-      await this.bungieApiService.sendSessionApiRequest<DestinyItemTransferRequest>(
+    const [transferItemErr] =
+      await this.bungieApiService.sendApiRequest<DestinyItemTransferRequest>(
         sessionId,
         "POST",
         "/Destiny2/Actions/Items/TransferItem",
@@ -41,7 +41,7 @@ export class Destiny2InventoryTransferService {
       return transferItemErr;
     }
 
-    return await this.bungieApiService.extractResponseError(transferItemRes);
+    return null;
   }
 
   async transferFromVault(
@@ -51,8 +51,8 @@ export class Destiny2InventoryTransferService {
     itemHash: number,
     itemInstanceId: string | null
   ): Promise<Error | null> {
-    const [transferItemErr, transferItemRes] =
-      await this.bungieApiService.sendSessionApiRequest<DestinyItemTransferRequest>(
+    const [transferItemErr] =
+      await this.bungieApiService.sendApiRequest<DestinyItemTransferRequest>(
         sessionId,
         "POST",
         "/Destiny2/Actions/Items/TransferItem",
@@ -68,7 +68,7 @@ export class Destiny2InventoryTransferService {
       return transferItemErr;
     }
 
-    return await this.bungieApiService.extractResponseError(transferItemRes);
+    return null;
   }
 
   private getLogger(): Logger {

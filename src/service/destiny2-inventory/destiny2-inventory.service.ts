@@ -78,30 +78,26 @@ export class Destiny2InventoryService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching all profile inventory items for ${membershipType}/${membershipId} ...`);
-    const [profileInventoryErr, profileInventoryRes] =
-      await this.bungieApiService.sendSessionApiRequest(
-        sessionId,
-        "GET",
-        `/Destiny2/${membershipType}/Profile/${membershipId}?components=${[
-          DestinyComponentType.ProfileInventories,
-          ...(options?.includeItemInstances ? [DestinyComponentType.ItemInstances] : [])
-        ].join(",")}`,
-        null
-      );
+    const [profileInventoryErr, profileInventoryRes] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyProfileResponse
+    >(
+      sessionId,
+      "GET",
+      `/Destiny2/${membershipType}/Profile/${membershipId}?components=${[
+        DestinyComponentType.ProfileInventories,
+        ...(options?.includeItemInstances ? [DestinyComponentType.ItemInstances] : [])
+      ].join(",")}`,
+      null
+    );
     if (profileInventoryErr) {
       return [profileInventoryErr, null, null];
     }
 
-    const [profileInventoryJsonErr, profileInventoryJson] =
-      await this.bungieApiService.extractApiResponse<DestinyProfileResponse>(profileInventoryRes);
-    if (profileInventoryJsonErr) {
-      return [profileInventoryJsonErr, null, null];
-    }
-
     return [
       null,
-      profileInventoryJson.Response?.profileInventory?.data.items || [],
-      profileInventoryJson.Response?.itemComponents?.instances?.data || {}
+      profileInventoryRes?.profileInventory?.data.items || [],
+      profileInventoryRes?.itemComponents?.instances?.data || {}
     ];
   }
 
@@ -121,7 +117,7 @@ export class Destiny2InventoryService {
       `Fetching all inventory items for ${membershipType}/${membershipId}/${characterId} ...`
     );
     const [characterInventoryErr, characterInventoryRes] =
-      await this.bungieApiService.sendSessionApiRequest(
+      await this.bungieApiService.sendApiRequest<null, DestinyCharacterResponse>(
         sessionId,
         "GET",
         `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${[
@@ -134,18 +130,10 @@ export class Destiny2InventoryService {
       return [characterInventoryErr, null, null];
     }
 
-    const [characterInventoryJsonErr, characterInventoryJson] =
-      await this.bungieApiService.extractApiResponse<DestinyCharacterResponse>(
-        characterInventoryRes
-      );
-    if (characterInventoryJsonErr) {
-      return [characterInventoryJsonErr, null, null];
-    }
-
     return [
       null,
-      characterInventoryJson.Response?.inventory?.data.items || [],
-      characterInventoryJson.Response?.itemComponents?.instances?.data || {}
+      characterInventoryRes?.inventory?.data.items || [],
+      characterInventoryRes?.itemComponents?.instances?.data || {}
     ];
   }
 
@@ -165,7 +153,7 @@ export class Destiny2InventoryService {
       `Fetching all equipment items for ${membershipType}/${membershipId}/${characterId} ...`
     );
     const [characterInventoryErr, characterInventoryRes] =
-      await this.bungieApiService.sendSessionApiRequest(
+      await this.bungieApiService.sendApiRequest<null, DestinyCharacterResponse>(
         sessionId,
         "GET",
         `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${[
@@ -178,18 +166,10 @@ export class Destiny2InventoryService {
       return [characterInventoryErr, null, null];
     }
 
-    const [characterInventoryJsonErr, characterInventoryJson] =
-      await this.bungieApiService.extractApiResponse<DestinyCharacterResponse>(
-        characterInventoryRes
-      );
-    if (characterInventoryJsonErr) {
-      return [characterInventoryJsonErr, null, null];
-    }
-
     return [
       null,
-      characterInventoryJson.Response?.equipment?.data.items || [],
-      characterInventoryJson.Response?.itemComponents?.instances?.data || {}
+      characterInventoryRes?.equipment?.data.items || [],
+      characterInventoryRes?.itemComponents?.instances?.data || {}
     ];
   }
 

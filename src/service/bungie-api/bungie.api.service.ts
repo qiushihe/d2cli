@@ -9,6 +9,25 @@ import { Logger } from "~src/service/log/log.types";
 import { SessionService } from "~src/service/session/session.service";
 import { ApiResponse } from "~type/bungie-api.types";
 
+// TODO: Implement handling of special rate limiting response logic.
+//       > ThrottleSeconds will now be populated with an integer value of how many seconds you
+//       > should wait to clear your particular throttle value. This will almost always be 10
+//       > seconds in the current runtime config, as if you're getting throttled we're going to
+//       > make you wait a full "cycle" for the request counters to clear. Applies to ErrorCodes
+//       > PerApplicationThrottleExceeded, PerApplicationAuthenticatedThrottleExceeded,
+//       > PerEndpointRequestThrottleExceeded,PerUserThrottleExceeded, and
+//       > PerApplicationAnonymousThrottleExceeded. I also added a value called
+//       > MaximumRequestsPerSecond that will indicate the approximate rate that will get you
+//       > throttled to the exceptions MessageData dictionary. These changes will go live sometime in the beginning of March.
+//       > ```
+//       > {
+//       >   "ErrorCode": 51,
+//       >   "ThrottleSeconds": 0,
+//       >   "ErrorStatus": "PerEndpointRequestThrottleExceeded",
+//       >   "Message": "Too many platform requests per second.",
+//       >   "MessageData": {}
+//       > }
+
 const LIMIT_REQUESTS_PER_SECOND = 10;
 
 export class BungieApiService {
@@ -24,73 +43,52 @@ export class BungieApiService {
     this.lastRequestTime = 0;
   }
 
-  // ThrottleSeconds will now be populated with an integer value of how many seconds you should wait to clear your
-  // particular throttle value. This will almost always be 10 seconds in the current runtime config, as if you're
-  // getting throttled we're going to make you wait a full "cycle" for the request counters to clear. Applies to
-  // ErrorCodes PerApplicationThrottleExceeded, PerApplicationAuthenticatedThrottleExceeded,
-  // PerEndpointRequestThrottleExceeded,PerUserThrottleExceeded, and PerApplicationAnonymousThrottleExceeded.
-  // I also added a value called MaximumRequestsPerSecond that will indicate the approximate rate that will get you
-  // throttled to the exceptions MessageData dictionary. These changes will go live sometime in the beginning of March.
-  // {
-  //   "ErrorCode": 51,
-  //   "ThrottleSeconds": 0,
-  //   "ErrorStatus": "PerEndpointRequestThrottleExceeded",
-  //   "Message": "Too many platform requests per second.",
-  //   "MessageData": {}
-  // }
-
-  async sendSessionApiRequest<TBody = Record<string, unknown>>(
-    sessionId: string,
+  async sendApiRequest<TBody = Record<string, unknown>, TResponse = any>(
+    sessionId: string | null,
     method: string,
     path: string,
     body: TBody | null
-  ): Promise<[Error, null] | [null, Response]> {
+  ): Promise<[Error, null] | [null, TResponse]> {
     const logger = this.getLogger();
-
-    const [upToDateAccessTokenErr, upToDateAccessToken] =
-      await this.sessionService.getUpToDateAccessToken(sessionId);
-    if (upToDateAccessTokenErr) {
-      return [upToDateAccessTokenErr, null];
-    }
 
     const [apiKeyErr, apiKey] = this.config.getAppConfig(AppConfigName.BungieApiKey);
     if (apiKeyErr) {
       return [apiKeyErr, null];
+    }
+
+    const requestHeader: Record<string, any> = {
+      "X-API-Key": apiKey
+    };
+
+    if (sessionId) {
+      const [upToDateAccessTokenErr, upToDateAccessToken] =
+        await this.sessionService.getUpToDateAccessToken(sessionId);
+      if (upToDateAccessTokenErr) {
+        return [upToDateAccessTokenErr, null];
+      }
+      requestHeader["Authorization"] = `Bearer ${upToDateAccessToken}`;
     }
 
     logger.debug(`Sending request for session: ${sessionId} ...`);
-    return await this.sendRequest(`${this.config.getBungieApiRoot()}${path}`, {
+    const [resErr, res] = await this.sendRequest(`${this.config.getBungieApiRoot()}${path}`, {
       method,
       "Content-Type": "application/json",
-      headers: {
-        Authorization: `Bearer ${upToDateAccessToken}`,
-        "X-API-Key": apiKey
-      },
+      headers: requestHeader,
       body: body ? JSON.stringify(body) : undefined
     });
-  }
-
-  async sendApiRequest(
-    method: string,
-    path: string,
-    body: Record<string, unknown> | null
-  ): Promise<[Error, null] | [null, Response]> {
-    const logger = this.getLogger();
-
-    const [apiKeyErr, apiKey] = this.config.getAppConfig(AppConfigName.BungieApiKey);
-    if (apiKeyErr) {
-      return [apiKeyErr, null];
+    if (resErr) {
+      return [resErr, null];
     }
 
-    logger.debug(`Sending request without session ...`);
-    return await this.sendRequest(`${this.config.getBungieApiRoot()}${path}`, {
-      method,
-      "Content-Type": "application/json",
-      headers: {
-        "X-API-Key": apiKey
-      },
-      body: body ? JSON.stringify(body) : undefined
-    });
+    const [apiResErr, apiRes] = await this.extractApiResponse<TResponse>(res);
+    if (apiResErr) {
+      return [apiResErr, null];
+    }
+    if (!apiRes.Response) {
+      return [new Error(`API response missing Response object`), null];
+    }
+
+    return [null, apiRes.Response];
   }
 
   async extractApiResponse<TResponse = any>(
@@ -115,40 +113,6 @@ export class BungieApiService {
     }
   }
 
-  async sendRequest(url: string, options: any): Promise<[Error, null] | [null, Response]> {
-    const logger = this.getLogger();
-
-    try {
-      const reqDescription = `${options.method} ${url} ${JSON.stringify(options.body)}`;
-      logger.debug(`Req => ${reqDescription} ...`);
-      const response = await this.fetch(url, options);
-      logger.debug(`Res => ${reqDescription} => ${response.status} (${response.statusText})`);
-      return [null, response];
-    } catch (err) {
-      return [err as Error, null];
-    }
-  }
-
-  async extractResponseError(res: Response): Promise<Error | null> {
-    if (res.status < 200 || res.status > 299) {
-      const genericMessage = `Unable to extract error message for response status: ${res.status} ${res.statusText}`;
-
-      const [extractJsonResErr, jsonRes] = await this.extractResponseJson(res);
-      if (extractJsonResErr) {
-        const [extractTextResErr, textRes] = await this.extractResponseText(res);
-        if (extractTextResErr) {
-          return new Error(genericMessage);
-        } else {
-          return new Error(textRes);
-        }
-      } else {
-        return new Error(jsonRes.Message || genericMessage);
-      }
-    } else {
-      return null;
-    }
-  }
-
   async extractResponseJson(res: Response): Promise<[Error, null] | [null, any]> {
     let responseJson: any;
     try {
@@ -159,11 +123,15 @@ export class BungieApiService {
     }
   }
 
-  async extractResponseText(res: Response): Promise<[Error, null] | [null, string]> {
-    let responseText: string;
+  async sendRequest(url: string, options: any): Promise<[Error, null] | [null, Response]> {
+    const logger = this.getLogger();
+
     try {
-      responseText = await res.text();
-      return [null, responseText];
+      const reqDescription = `${options.method} ${url} ${JSON.stringify(options.body)}`;
+      logger.debug(`Req => ${reqDescription} ...`);
+      const response = await this.fetch(url, options);
+      logger.debug(`Res => ${reqDescription} => ${response.status} (${response.statusText})`);
+      return [null, response];
     } catch (err) {
       return [err as Error, null];
     }

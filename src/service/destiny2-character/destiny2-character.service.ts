@@ -34,7 +34,10 @@ export class Destiny2CharacterService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching character progressions ...`);
-    const [characterErr, characterRes] = await this.bungieApiService.sendSessionApiRequest(
+    const [characterErr, characterRes] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyCharacterResponse
+    >(
       sessionId,
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${DestinyComponentType.CharacterProgressions}`,
@@ -43,20 +46,14 @@ export class Destiny2CharacterService {
     if (characterErr) {
       return [characterErr, null];
     }
-
-    const [characterJsonErr, characterJson] =
-      await this.bungieApiService.extractApiResponse<DestinyCharacterResponse>(characterRes);
-    if (characterJsonErr) {
-      return [characterJsonErr, null];
-    }
-    if (!characterJson.Response) {
+    if (!characterRes) {
       return [new Error("Response missing data"), null];
     }
-    if (!characterJson.Response.progressions) {
+    if (!characterRes.progressions) {
       return [new Error("Response missing character progressions data"), null];
     }
 
-    return [null, characterJson.Response.progressions.data];
+    return [null, characterRes.progressions.data];
   }
 
   async getCharacter(
@@ -68,7 +65,10 @@ export class Destiny2CharacterService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching character ...`);
-    const [characterErr, characterRes] = await this.bungieApiService.sendSessionApiRequest(
+    const [characterErr, characterRes] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyCharacterResponse
+    >(
       sessionId,
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${DestinyComponentType.Characters}`,
@@ -77,20 +77,14 @@ export class Destiny2CharacterService {
     if (characterErr) {
       return [characterErr, null];
     }
-
-    const [characterJsonErr, characterJson] =
-      await this.bungieApiService.extractApiResponse<DestinyCharacterResponse>(characterRes);
-    if (characterJsonErr) {
-      return [characterJsonErr, null];
-    }
-    if (!characterJson.Response) {
+    if (!characterRes) {
       return [new Error("Response missing data"), null];
     }
-    if (!characterJson.Response.character) {
+    if (!characterRes.character) {
       return [new Error("Response missing character data"), null];
     }
 
-    return [null, characterJson.Response.character.data];
+    return [null, characterRes.character.data];
   }
 
   async getCharacters(
@@ -123,7 +117,10 @@ export class Destiny2CharacterService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching characters ...`);
-    const [profileErr, profileRes] = await this.bungieApiService.sendSessionApiRequest(
+    const [profileErr, profileRes] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyProfileResponse
+    >(
       sessionId,
       "GET",
       `/Destiny2/${membershipType}/Profile/${membershipId}?components=${DestinyComponentType.Characters}`,
@@ -132,21 +129,14 @@ export class Destiny2CharacterService {
     if (profileErr) {
       return [profileErr, null];
     }
-
-    const [profileJsonErr, profileJson] =
-      await this.bungieApiService.extractApiResponse<DestinyProfileResponse>(profileRes);
-    if (profileJsonErr) {
-      return [profileJsonErr, null];
-    }
-
-    if (!profileJson.Response) {
+    if (!profileRes) {
       return [new Error("Response missing data"), null];
     }
-    if (!profileJson.Response.characters) {
+    if (!profileRes.characters) {
       return [new Error("Response missing characters data"), null];
     }
 
-    return [null, Object.values(profileJson.Response.characters.data)];
+    return [null, Object.values(profileRes.characters.data)];
   }
 
   private getLogger(): Logger {

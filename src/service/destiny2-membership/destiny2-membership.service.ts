@@ -50,56 +50,31 @@ export class Destiny2MembershipService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching Destiny 2 memberships from Bungie.net membership ...`);
-    const [bungieNetUserErr, bungieNetUserRes] = await this.bungieApiService.sendApiRequest(
-      "GET",
-      `/User/GetBungieNetUserById/${bungieNetMembershipId}`,
-      null
-    );
+    const [bungieNetUserErr, bungieNetUser] = await this.bungieApiService.sendApiRequest<
+      null,
+      GeneralUser
+    >(null, "GET", `/User/GetBungieNetUserById/${bungieNetMembershipId}`, null);
     if (bungieNetUserErr) {
       return [bungieNetUserErr, null];
     }
 
-    const [bungieNetUserJsonErr, bungieNetUserJson] =
-      await this.bungieApiService.extractApiResponse<GeneralUser>(bungieNetUserRes);
-    if (bungieNetUserJsonErr) {
-      return [bungieNetUserJsonErr, null];
-    }
-    if (!bungieNetUserJson.Response) {
-      return [new Error(`Missing response in Bungie.net user result`), null];
-    }
-
-    const uniqueName = bungieNetUserJson.Response.uniqueName.split("#", 2);
+    const uniqueName = bungieNetUser.uniqueName.split("#", 2);
 
     logger.debug(`Searching for Destiny 2 players with (${uniqueName[0]} / ${uniqueName[1]}) ...`);
-    const [searchDestinyPlayersErr, searchDestinyPlayersRes] =
-      await this.bungieApiService.sendApiRequest(
-        "POST",
-        `/Destiny2/SearchDestinyPlayerByBungieName/All`,
-        { displayName: uniqueName[0], displayNameCode: uniqueName[1] }
-      );
-    if (searchDestinyPlayersErr) {
-      return [searchDestinyPlayersErr, null];
-    }
-
-    const [searchDestinyPlayersJsonErr, searchDestinyPlayersJson] =
-      await this.bungieApiService.extractApiResponse<UserInfoCard[]>(searchDestinyPlayersRes);
-    if (searchDestinyPlayersJsonErr) {
-      return [searchDestinyPlayersJsonErr, null];
-    }
-    if (!searchDestinyPlayersJson.Response) {
-      return [
-        new Error(
-          `Missing response in Destiny 2 players search result: ${JSON.stringify(
-            searchDestinyPlayersJson
-          )}`
-        ),
-        null
-      ];
+    const [userInfoCardsErr, userInfoCards] = await this.bungieApiService.sendApiRequest<
+      any,
+      UserInfoCard[]
+    >(null, "POST", `/Destiny2/SearchDestinyPlayerByBungieName/All`, {
+      displayName: uniqueName[0],
+      displayNameCode: uniqueName[1]
+    });
+    if (userInfoCardsErr) {
+      return [userInfoCardsErr, null];
     }
 
     return [
       null,
-      searchDestinyPlayersJson.Response.filter((membership) =>
+      userInfoCards.filter((membership) =>
         membership.applicableMembershipTypes.includes(membership.crossSaveOverride)
       )
     ];

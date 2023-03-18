@@ -160,32 +160,18 @@ export class Destiny2ManifestService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching Destiny 2 manifest ...`);
-    const [manifestErr, manifestRes] = await this.bungieApiService.sendApiRequest(
-      "GET",
-      "/Destiny2/Manifest",
-      null
-    );
+    const [manifestErr, manifest] = await this.bungieApiService.sendApiRequest<
+      null,
+      DestinyManifest
+    >(null, "GET", "/Destiny2/Manifest", null);
     if (manifestErr) {
       return [
         logger.loggedError(`Unable to fetch Destiny 2 manifest: ${manifestErr.message}`),
         null
       ];
-    } else {
-      const [manifestJsonErr, manifestJson] =
-        await this.bungieApiService.extractApiResponse<DestinyManifest>(manifestRes);
-      if (manifestJsonErr) {
-        return [
-          logger.loggedError(
-            `Unable to extract Destiny 2 manifest response: ${manifestJsonErr.message}`
-          ),
-          null
-        ];
-      } else if (!manifestJson.Response) {
-        return [logger.loggedError("Missing Destiny 2 manifest in response"), null];
-      } else {
-        return [null, manifestJson.Response];
-      }
     }
+
+    return [null, manifest];
   }
 
   private getLogger(): Logger {
