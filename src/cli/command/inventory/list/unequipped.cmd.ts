@@ -1,6 +1,16 @@
-import { getSelectedCharacterInfo } from "~src/cli/command-helper/current-character.helper";
+import { sessionIdOption } from "~src/cli/command-option/cli.option";
+import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
+import { verboseOption } from "~src/cli/command-option/cli.option";
+import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
+import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
+import { BucketLabels } from "~src/helper/inventory-bucket.helper";
+import { BucketOrder } from "~src/helper/inventory-bucket.helper";
+import { groupInventoryItems } from "~src/helper/inventory-bucket.helper";
+import { CharacterInventoryBuckets } from "~src/helper/inventory-bucket.helper";
+import { ItemInfo } from "~src/helper/item.helper";
+import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
@@ -9,17 +19,6 @@ import { LogService } from "~src/service/log/log.service";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
-
-import { sessionIdOption } from "../../../command-option/session-id.option";
-import { SessionIdCommandOptions } from "../../../command-option/session-id.option";
-import { verboseOption } from "../../../command-option/verbose.option";
-import { VerboseCommandOptions } from "../../../command-option/verbose.option";
-import { BucketLabels } from "../inventory-bucket";
-import { BucketOrder } from "../inventory-bucket";
-import { groupInventoryItems } from "../inventory-bucket";
-import { CharacterInventoryBuckets } from "../inventory-bucket";
-import { getItemInfo } from "./get-item-info";
-import { ItemInfo } from "./get-item-info";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -107,7 +106,7 @@ const cmd: CommandDefinition = {
         unEquippedItemIndex++
       ) {
         const unEquippedItem = bucketItems[unEquippedItemIndex];
-        const unEquippedItemInfo: ItemInfo = getItemInfo(
+        const unEquippedItemInfo: ItemInfo = getItemNameAndPowerLevel(
           itemDefinitions[unEquippedItem.itemHash] || null,
           inventoryItemInstances[unEquippedItem.itemInstanceId] || null
         );

@@ -1,3 +1,4 @@
+import { SessionIdCommandOptions, sessionIdOption } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
@@ -7,9 +8,6 @@ import { CharacterReference } from "~src/service/destiny2-character/destiny2-cha
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
-
-import { sessionIdOption } from "../../command-option/session-id.option";
-import { SessionIdCommandOptions } from "../../command-option/session-id.option";
 
 type CmdOptions = SessionIdCommandOptions & { _: never };
 

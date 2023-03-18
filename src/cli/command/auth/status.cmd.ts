@@ -1,3 +1,7 @@
+import { sessionIdOption } from "~src/cli/command-option/cli.option";
+import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
+import { verboseOption } from "~src/cli/command-option/cli.option";
+import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { stringifyTable } from "~src/helper/table.helper";
@@ -5,11 +9,6 @@ import { AppModule } from "~src/module/app.module";
 import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
-
-import { sessionIdOption } from "../../command-option/session-id.option";
-import { SessionIdCommandOptions } from "../../command-option/session-id.option";
-import { verboseOption } from "../../command-option/verbose.option";
-import { VerboseCommandOptions } from "../../command-option/verbose.option";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 

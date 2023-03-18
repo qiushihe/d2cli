@@ -1,9 +1,8 @@
+import { sessionIdOption } from "~src/cli/command-option/cli.option";
+import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { AppModule } from "~src/module/app.module";
 import { LogService } from "~src/service/log/log.service";
-
-import { sessionIdOption } from "../../command-option/session-id.option";
-import { SessionIdCommandOptions } from "../../command-option/session-id.option";
 
 type CmdOptions = SessionIdCommandOptions & { _: never };
 

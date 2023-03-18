@@ -1,6 +1,9 @@
-import { getSelectedCharacterInfo } from "~src/cli/command-helper/current-character.helper";
+import { SessionIdCommandOptions, sessionIdOption } from "~src/cli/command-option/cli.option";
+import { itemOption } from "~src/cli/command-option/item.option";
+import { ItemCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
+import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
@@ -8,11 +11,6 @@ import { LogService } from "~src/service/log/log.service";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
-
-import { sessionIdOption } from "../../command-option/session-id.option";
-import { SessionIdCommandOptions } from "../../command-option/session-id.option";
-import { itemOption } from "./item.option";
-import { ItemCommandOptions } from "./item.option";
 
 type CmdOptions = SessionIdCommandOptions &
   ItemCommandOptions & { modHash: string } & { slotNumber: string };

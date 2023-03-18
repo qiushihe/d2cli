@@ -3,7 +3,7 @@ import { DestinyItemInstanceComponent } from "~type/bungie-api/destiny/entities/
 
 export type ItemInfo = { label: string; powerLevel: string };
 
-export const getItemInfo = (
+export const getItemNameAndPowerLevel = (
   itemDefinition: DestinyInventoryItemDefinition | null,
   itemInstance: DestinyItemInstanceComponent | null
 ): ItemInfo => {
