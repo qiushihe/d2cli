@@ -2,6 +2,8 @@ import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { loadoutNameOption } from "~src/cli/command-option/loadout.option";
 import { LoadoutNameCommandOptions } from "~src/cli/command-option/loadout.option";
+import { includeUnequippedOption } from "~src/cli/command-option/loadout.option";
+import { IncludeUnequippedCommandOptions } from "~src/cli/command-option/loadout.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
@@ -25,17 +27,19 @@ import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
-type CmdOptions = SessionIdCommandOptions & LoadoutNameCommandOptions;
+type CmdOptions = SessionIdCommandOptions &
+  LoadoutNameCommandOptions &
+  IncludeUnequippedCommandOptions;
 
 const cmd: CommandDefinition = {
-  description: "Snapshot the currently equipped loadout",
-  options: [sessionIdOption, loadoutNameOption],
+  description: "Export the currently equipped loadout",
+  options: [sessionIdOption, loadoutNameOption, includeUnequippedOption],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("cmd:loadout:snapshot");
+      .getLogger("cmd:loadout:export");
 
-    const { session: sessionId, loadoutName } = opts as CmdOptions;
+    const { session: sessionId, loadoutName, includeUnequipped } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
     const destiny2ManifestService =
@@ -69,6 +73,31 @@ const cmd: CommandDefinition = {
       );
     }
 
+    const allItems: DestinyItemComponent[] = [];
+    const extraItemHashes: number[] = [];
+
+    if (includeUnequipped) {
+      const [inventoryItemsErr, inventoryItems] = await fnWithSpinner(
+        "Retrieving inventory items ...",
+        () =>
+          destiny2InventoryService.getInventoryItems(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId
+          )
+      );
+      if (inventoryItemsErr) {
+        return logger.loggedError(
+          `Unable to retrieve inventory items: ${inventoryItemsErr.message}`
+        );
+      }
+      inventoryItems.forEach((item) => {
+        allItems.push(item);
+        extraItemHashes.push(item.itemHash);
+      });
+    }
+
     const [equipmentItemsErr, equipmentItems] = await fnWithSpinner(
       "Retrieving equipment items ...",
       () =>
@@ -82,6 +111,7 @@ const cmd: CommandDefinition = {
     if (equipmentItemsErr) {
       return logger.loggedError(`Unable to retrieve equipment items: ${equipmentItemsErr.message}`);
     }
+    equipmentItems.forEach((item) => allItems.push(item));
 
     const subclass = getSubclassItems(equipmentItems)[0];
     if (!subclass) {
@@ -103,11 +133,11 @@ const cmd: CommandDefinition = {
     );
     if (subclassPlugRecordsErr) {
       return logger.loggedError(
-        `Unable to snapshot subclass plugs: ${subclassPlugRecordsErr.message}`
+        `Unable to export subclass plugs: ${subclassPlugRecordsErr.message}`
       );
     }
 
-    const equipmentsByBucket = groupInventoryItems(equipmentItems);
+    const equipmentsByBucket = groupInventoryItems(allItems);
     const equipments = LoadoutInventoryBuckets.reduce(
       (acc, bucket) => [...acc, ...equipmentsByBucket[bucket]],
       [] as DestinyItemComponent[]
@@ -135,7 +165,7 @@ const cmd: CommandDefinition = {
         );
         if (equipmentPlugRecordsErr) {
           return logger.loggedError(
-            `Unable to snapshot equipment plugs for ${
+            `Unable to export equipment plugs for ${
               equipmentDefinition?.displayProperties.name || `ITEM: ${equipment.itemHash}`
             } (${equipment.itemHash}:${equipment.itemInstanceId}): ${
               equipmentPlugRecordsErr.message
@@ -147,9 +177,9 @@ const cmd: CommandDefinition = {
       }
     }
 
-    const snapshot: string[] = [];
+    const exportLines: string[] = [];
 
-    snapshot.push(
+    exportLines.push(
       `LOADOUT // ${
         loadoutName ||
         `${
@@ -158,25 +188,32 @@ const cmd: CommandDefinition = {
       }`
     );
 
-    snapshot.push(serializeItem(itemDefinitions, subclass, true));
+    exportLines.push(serializeItem(itemDefinitions, subclass, true));
 
     serializeItemPlugs(itemDefinitions, subclass, subclassPlugRecords).forEach((serialized) => {
-      snapshot.push(serialized);
+      exportLines.push(serialized);
     });
 
-    equipments.forEach((equipment) => {
-      snapshot.push(serializeItem(itemDefinitions, equipment, true));
+    (
+      [
+        [equipments.filter((equipment) => !extraItemHashes.includes(equipment.itemHash)), true],
+        [equipments.filter((equipment) => extraItemHashes.includes(equipment.itemHash)), false]
+      ] as [DestinyItemComponent[], boolean][]
+    ).forEach(([_equipments, equip]) => {
+      _equipments.forEach((equipment) => {
+        exportLines.push(serializeItem(itemDefinitions, equipment, equip));
 
-      serializeItemPlugs(
-        itemDefinitions,
-        equipment,
-        equipmentsPlugRecords[equipment.itemHash] || []
-      ).forEach((serialized) => {
-        snapshot.push(serialized);
+        serializeItemPlugs(
+          itemDefinitions,
+          equipment,
+          equipmentsPlugRecords[equipment.itemHash] || []
+        ).forEach((serialized) => {
+          exportLines.push(serialized);
+        });
       });
     });
 
-    console.log(snapshot.join("\n"));
+    console.log(exportLines.join("\n"));
   }
 };
 

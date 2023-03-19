@@ -1,10 +1,10 @@
 import { CommandDefinition } from "~src/cli/d2cli.types";
 
-import snapshot from "./loadout/snapshot.cmd";
+import exportLoadout from "./loadout/export.cmd";
 
 const cmd: CommandDefinition = {
   description: "Destiny 2 character loadout",
-  commands: { snapshot }
+  commands: { export: exportLoadout }
 };
 
 export default cmd;

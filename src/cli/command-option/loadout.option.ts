@@ -6,6 +6,16 @@ export type LoadoutNameCommandOptions = {
 
 export const loadoutNameOption: CommandOptionDefinition = {
   flags: ["loadout-name <str>"],
-  description: "Name of the loadout to store in the snapshot",
+  description: "Name of the loadout to store in the export",
+  defaultValue: ""
+};
+
+export type IncludeUnequippedCommandOptions = {
+  includeUnequipped: string;
+};
+
+export const includeUnequippedOption: CommandOptionDefinition = {
+  flags: ["include-unequipped"],
+  description: "Include unequipped items in the export",
   defaultValue: ""
 };
