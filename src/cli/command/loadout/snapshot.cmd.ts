@@ -8,6 +8,9 @@ import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { groupInventoryItems } from "~src/helper/inventory-bucket.helper";
 import { ArmourInventoryBucketHashes } from "~src/helper/inventory-bucket.helper";
+import { LoadoutInventoryBuckets } from "~src/helper/loadout.helper";
+import { serializeItem } from "~src/helper/loadout.helper";
+import { serializeItemPlugs } from "~src/helper/loadout.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { getLoadoutPlugRecords } from "~src/helper/subclass.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
@@ -17,6 +20,7 @@ import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.se
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { LogService } from "~src/service/log/log.service";
+import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
@@ -79,26 +83,20 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to retrieve equipment items: ${equipmentItemsErr.message}`);
     }
 
-    const itemNameByHash: Record<number, string> = {};
-
     const subclass = getSubclassItems(equipmentItems)[0];
     if (!subclass) {
       return logger.loggedError(`Unable to retrieve equipped subclass items`);
     }
 
-    const subclassDefinition = itemDefinitions[subclass.itemHash];
-    itemNameByHash[subclass.itemHash] =
-      subclassDefinition?.displayProperties.name || "UNKNOWN SUBCLASS";
-
     const [subclassPlugRecordsErr, subclassPlugRecords] = await getLoadoutPlugRecords(
       logger,
+      itemDefinitions,
       destiny2ItemService,
       destiny2PlugService,
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId,
       characterInfo.characterId,
-      itemNameByHash[subclass.itemHash],
       subclass.itemHash,
       subclass.itemInstanceId,
       SUBCLASS_SOCKET_NAMES
@@ -109,93 +107,76 @@ const cmd: CommandDefinition = {
       );
     }
 
-    subclassPlugRecords.forEach((plugRecord) => {
-      const plugDefinition = itemDefinitions[plugRecord.itemHash];
-      itemNameByHash[plugRecord.itemHash] =
-        plugDefinition?.displayProperties.name || "UNKNOWN PLUG";
-    });
+    const equipmentsByBucket = groupInventoryItems(equipmentItems);
+    const equipments = LoadoutInventoryBuckets.reduce(
+      (acc, bucket) => [...acc, ...equipmentsByBucket[bucket]],
+      [] as DestinyItemComponent[]
+    );
 
-    const equipments = Object.values(groupInventoryItems(equipmentItems)).flat();
     const equipmentsPlugRecords: Record<number, LoadoutPlugRecord[]> = {};
 
     for (let equipmentIndex = 0; equipmentIndex < equipments.length; equipmentIndex++) {
       const equipment = equipments[equipmentIndex];
       const equipmentDefinition = itemDefinitions[equipment.itemHash];
 
-      itemNameByHash[equipment.itemHash] =
-        equipmentDefinition?.displayProperties.name || "UNKNOWN ITEM";
-
       if (ArmourInventoryBucketHashes.includes(equipment.bucketHash)) {
         const [equipmentPlugRecordsErr, equipmentPlugRecords] = await getLoadoutPlugRecords(
           logger,
+          itemDefinitions,
           destiny2ItemService,
           destiny2PlugService,
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,
           characterInfo.characterId,
-          itemNameByHash[equipment.itemHash],
           equipment.itemHash,
           equipment.itemInstanceId,
           ["ARMOR MODS"]
         );
         if (equipmentPlugRecordsErr) {
           return logger.loggedError(
-            `Unable to snapshot equipment plugs for ${itemNameByHash[equipment.itemHash]} (${
-              equipment.itemHash
-            }:${equipment.itemInstanceId}): ${equipmentPlugRecordsErr.message}`
+            `Unable to snapshot equipment plugs for ${
+              equipmentDefinition?.displayProperties.name || `ITEM: ${equipment.itemHash}`
+            } (${equipment.itemHash}:${equipment.itemInstanceId}): ${
+              equipmentPlugRecordsErr.message
+            }`
           );
         }
-
-        equipmentPlugRecords.forEach((plugRecord) => {
-          const plugDefinition = itemDefinitions[plugRecord.itemHash];
-          itemNameByHash[plugRecord.itemHash] =
-            plugDefinition?.displayProperties.name || "UNKNOWN PLUG";
-        });
 
         equipmentsPlugRecords[equipment.itemHash] = equipmentPlugRecords;
       }
     }
 
-    const snapshot = {
-      name: loadoutName || `Loadout: ${itemNameByHash[subclass.itemHash]}`,
-      loadout: [] as string[][]
-    };
+    const snapshot: string[] = [];
 
-    snapshot.loadout.push([
-      "subclass",
-      `item:${subclass.itemHash}:${subclass.itemInstanceId}`,
-      itemNameByHash[subclass.itemHash]
-    ]);
+    snapshot.push(
+      `LOADOUT // ${
+        loadoutName ||
+        `${
+          itemDefinitions[subclass.itemHash]?.displayProperties.name || "UNKNOWN SUBCLASS"
+        } Loadout`
+      }`
+    );
 
-    subclassPlugRecords.forEach((plugRecord) => {
-      snapshot.loadout.push([
-        "subclass-socket",
-        `index:${plugRecord.socketIndex}`,
-        `hash:${plugRecord.itemHash}`,
-        itemNameByHash[plugRecord.itemHash]
-      ]);
+    snapshot.push(serializeItem(itemDefinitions, subclass, true));
+
+    serializeItemPlugs(itemDefinitions, subclass, subclassPlugRecords).forEach((serialized) => {
+      snapshot.push(serialized);
     });
 
     equipments.forEach((equipment) => {
-      snapshot.loadout.push([
-        "equipment",
-        `item:${equipment.itemHash}:${equipment.itemInstanceId}`,
-        itemNameByHash[equipment.itemHash]
-      ]);
+      snapshot.push(serializeItem(itemDefinitions, equipment, true));
 
-      (equipmentsPlugRecords[equipment.itemHash] || []).forEach((plugRecord) => {
-        snapshot.loadout.push([
-          "equipment-socket",
-          `item:${equipment.itemHash}:${equipment.itemInstanceId}`,
-          `index:${plugRecord.socketIndex}`,
-          `hash:${plugRecord.itemHash}`,
-          itemNameByHash[plugRecord.itemHash]
-        ]);
+      serializeItemPlugs(
+        itemDefinitions,
+        equipment,
+        equipmentsPlugRecords[equipment.itemHash] || []
+      ).forEach((serialized) => {
+        snapshot.push(serialized);
       });
     });
 
-    console.log(JSON.stringify(snapshot));
+    console.log(snapshot.join("\n"));
   }
 };
 

@@ -3,6 +3,7 @@ import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.se
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
 import { Logger } from "~src/service/log/log.types";
+import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 export const SUBCLASS_SOCKET_NAMES = ["ABILITIES", "SUPER", "ASPECTS", "FRAGMENTS"];
 
@@ -13,17 +14,18 @@ export type LoadoutPlugRecord = {
 
 export const getLoadoutPlugRecords = async (
   logger: Logger,
+  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
   destiny2ItemService: Destiny2ItemService,
   destiny2PlugService: Destiny2PlugService,
   sessionId: string,
   membershipType: number,
   membershipId: string,
   characterId: string,
-  itemName: string,
   itemHash: number,
   itemInstanceId: string,
   socketNames: string[]
 ): Promise<[Error, null] | [null, LoadoutPlugRecord[]]> => {
+  const itemName = itemDefinitions[itemHash]?.displayProperties.name || "UNKNOWN ITEM";
   const plugRecords: LoadoutPlugRecord[] = [];
 
   const [equippedPlugHashesErr, equippedPlugHashes] = await fnWithSpinner(
