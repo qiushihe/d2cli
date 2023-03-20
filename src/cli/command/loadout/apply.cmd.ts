@@ -25,6 +25,7 @@ import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { LogService } from "~src/service/log/log.service";
 import { DestinyInventoryItemDefinition } from "~type/bungie-api/destiny/definitions.types";
+import { DestinyCharacterComponent } from "~type/bungie-api/destiny/entities/characters.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
@@ -190,6 +191,7 @@ type LoadoutStepType = "DEPOSIT" | "WITHDRAW" | "EQUIP" | "SOCKET";
 
 type LoadoutAction = {
   type: LoadoutStepType;
+  characterName: string;
   characterId: string;
   itemName: string;
   itemHash: number;
@@ -201,6 +203,7 @@ type LoadoutAction = {
 
 const resolveTransferActions = async (
   itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
+  characterDescriptions: Record<string, string>,
   characterId: string,
   equipmentsInfo: ItemInfo[],
   characterItemsInfo: { equipped: ItemInfo[]; unequipped: ItemInfo[] },
@@ -230,6 +233,7 @@ const resolveTransferActions = async (
       ) {
         actions.push({
           type: "WITHDRAW",
+          characterName: characterDescriptions[characterId],
           characterId: characterId,
           itemName: itemDefinitions[equipment.itemHash]?.displayProperties.name,
           itemHash: equipment.itemHash,
@@ -250,6 +254,7 @@ const resolveTransferActions = async (
         if (unequippedOtherCharacterId) {
           actions.push({
             type: "DEPOSIT",
+            characterName: characterDescriptions[unequippedOtherCharacterId],
             characterId: unequippedOtherCharacterId,
             itemName: itemDefinitions[equipment.itemHash]?.displayProperties.name,
             itemHash: equipment.itemHash,
@@ -260,6 +265,7 @@ const resolveTransferActions = async (
           });
           actions.push({
             type: "WITHDRAW",
+            characterName: characterDescriptions[characterId],
             characterId: characterId,
             itemName: itemDefinitions[equipment.itemHash]?.displayProperties.name,
             itemHash: equipment.itemHash,
@@ -309,6 +315,7 @@ const resolveTransferActions = async (
 };
 
 const resolveDeExoticActions = (
+  characterDescriptions: Record<string, string>,
   characterId: string,
   extraEquipmentsInfo: ItemInfo[],
   otherCharacterItemsInfo: Record<string, { equipped: ItemInfo[]; unequipped: ItemInfo[] }>,
@@ -325,6 +332,7 @@ const resolveDeExoticActions = (
   if (extraNonExoticItem) {
     actions.push({
       type: "EQUIP",
+      characterName: characterDescriptions[characterId],
       characterId: characterId,
       itemName: extraNonExoticItem.itemName,
       itemHash: extraNonExoticItem.itemHash,
@@ -341,6 +349,7 @@ const resolveDeExoticActions = (
     if (vaultNonExoticItem) {
       actions.push({
         type: "WITHDRAW",
+        characterName: characterDescriptions[characterId],
         characterId: characterId,
         itemName: vaultNonExoticItem.itemName,
         itemHash: vaultNonExoticItem.itemHash,
@@ -352,6 +361,7 @@ const resolveDeExoticActions = (
 
       actions.push({
         type: "EQUIP",
+        characterName: characterDescriptions[characterId],
         characterId: characterId,
         itemName: vaultNonExoticItem.itemName,
         itemHash: vaultNonExoticItem.itemHash,
@@ -380,6 +390,7 @@ const resolveDeExoticActions = (
         if (otherCharacterUnequippedNonExoticItem) {
           actions.push({
             type: "DEPOSIT",
+            characterName: characterDescriptions[otherCharacterId],
             characterId: otherCharacterId,
             itemName: otherCharacterUnequippedNonExoticItem.itemName,
             itemHash: otherCharacterUnequippedNonExoticItem.itemHash,
@@ -391,6 +402,7 @@ const resolveDeExoticActions = (
 
           actions.push({
             type: "WITHDRAW",
+            characterName: characterDescriptions[characterId],
             characterId: characterId,
             itemName: otherCharacterUnequippedNonExoticItem.itemName,
             itemHash: otherCharacterUnequippedNonExoticItem.itemHash,
@@ -402,6 +414,7 @@ const resolveDeExoticActions = (
 
           actions.push({
             type: "EQUIP",
+            characterName: characterDescriptions[characterId],
             characterId: characterId,
             itemName: otherCharacterUnequippedNonExoticItem.itemName,
             itemHash: otherCharacterUnequippedNonExoticItem.itemHash,
@@ -515,6 +528,137 @@ const applyLoadoutAction = async (
     }
   }
   return null;
+};
+
+type AllExistingItemsInfo = {
+  currentCharacter: {
+    equipped: ItemInfo[];
+    unequipped: ItemInfo[];
+  };
+  otherCharacter: {
+    [key: string]: {
+      equipped: ItemInfo[];
+      unequipped: ItemInfo[];
+    };
+  };
+  vault: ItemInfo[];
+};
+
+const getAllCharacterDescriptions = async (
+  destiny2CharacterService: Destiny2CharacterService,
+  characterDescriptionService: CharacterDescriptionService,
+  sessionId: string
+): Promise<[Error, null] | [null, Record<string, string>]> => {
+  const characterDescriptions: Record<string, string> = {};
+
+  const [charactersErr, characters] = await fnWithSpinner("Fetching characters ...", () =>
+    destiny2CharacterService.getCharacters(sessionId)
+  );
+  if (charactersErr) {
+    return [charactersErr, null];
+  }
+
+  for (let characterIndex = 0; characterIndex < characters.length; characterIndex++) {
+    const character = characters[characterIndex];
+    const [characterDescriptionErr, characterDescription] = await fnWithSpinner(
+      "Retrieving character description ...",
+      () => characterDescriptionService.getDescription(character)
+    );
+    if (characterDescriptionErr) {
+      return [characterDescriptionErr, null];
+    }
+
+    characterDescriptions[
+      character.characterId
+    ] = `${characterDescription.gender} ${characterDescription?.race} ${characterDescription?.class}`;
+  }
+
+  return [null, characterDescriptions];
+};
+
+const getAllExistingItemsInfo = async (
+  destiny2InventoryService: Destiny2InventoryService,
+  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
+  characterDescriptions: Record<string, string>,
+  sessionId: string,
+  membershipType: number,
+  membershipId: string,
+  characterId: string
+): Promise<[Error, null] | [null, AllExistingItemsInfo]> => {
+  const [ownItemsInfoErr, ownEquippedItemsInfo, ownUnequippedItemsInfo] = await fnWithSpinner(
+    `Fetching items for character ${characterDescriptions[characterId]} ...`,
+    () =>
+      getCharacterItemIds(
+        itemDefinitions,
+        destiny2InventoryService,
+        sessionId,
+        membershipType,
+        membershipId,
+        characterId
+      )
+  );
+  if (ownItemsInfoErr) {
+    return [ownItemsInfoErr, null];
+  }
+
+  const otherCharacterItemsInfo: Record<string, { equipped: ItemInfo[]; unequipped: ItemInfo[] }> =
+    {};
+
+  const otherCharacterIds = Object.keys(characterDescriptions).filter((id) => id !== characterId);
+
+  for (
+    let otherCharacterIndex = 0;
+    otherCharacterIndex < otherCharacterIds.length;
+    otherCharacterIndex++
+  ) {
+    const otherCharacterId = otherCharacterIds[otherCharacterIndex];
+
+    const [othersItemsInfoErr, othersEquippedItemsInfo, othersUnequippedItemsInfo] =
+      await fnWithSpinner(
+        `Fetching items for character ${characterDescriptions[otherCharacterId]} ...`,
+        () =>
+          getCharacterItemIds(
+            itemDefinitions,
+            destiny2InventoryService,
+            sessionId,
+            membershipType,
+            membershipId,
+            otherCharacterId
+          )
+      );
+    if (othersItemsInfoErr) {
+      return [othersItemsInfoErr, null];
+    }
+
+    otherCharacterItemsInfo[otherCharacterId] = {
+      equipped: othersEquippedItemsInfo,
+      unequipped: othersUnequippedItemsInfo
+    };
+  }
+
+  const [vaultItemsErr, vaultItems] = await fnWithSpinner("Retrieving vault items ...", () =>
+    destiny2InventoryService.getVaultItems(sessionId, membershipType, membershipId)
+  );
+  if (vaultItemsErr) {
+    return [vaultItemsErr, null];
+  }
+
+  const [vaultItemsInfoErr, vaultItemsInfo] = getItemsInfo(itemDefinitions, vaultItems);
+  if (vaultItemsInfoErr) {
+    return [vaultItemsInfoErr, null];
+  }
+
+  return [
+    null,
+    {
+      currentCharacter: {
+        equipped: ownEquippedItemsInfo,
+        unequipped: ownUnequippedItemsInfo
+      },
+      otherCharacter: otherCharacterItemsInfo,
+      vault: vaultItemsInfo
+    }
+  ];
 };
 
 const cmd: CommandDefinition = {
@@ -684,120 +828,28 @@ const cmd: CommandDefinition = {
       }
     }
 
-    const [charactersErr, characters] = await fnWithSpinner("Fetching characters ...", () =>
-      destiny2CharacterService.getCharacters(sessionId)
+    const [characterDescriptionsErr, characterDescriptions] = await getAllCharacterDescriptions(
+      destiny2CharacterService,
+      characterDescriptionService,
+      sessionId
     );
-    if (charactersErr) {
-      return logger.loggedError(`Unable to fetch characters: ${charactersErr.message}`);
-    }
-
-    const characterDescriptions: Record<string, string> = {};
-    for (let characterIndex = 0; characterIndex < characters.length; characterIndex++) {
-      const character = characters[characterIndex];
-      const [characterDescriptionErr, characterDescription] = await fnWithSpinner(
-        "Retrieving character description ...",
-        () => characterDescriptionService.getDescription(character)
-      );
-      if (characterDescriptionErr) {
-        return logger.loggedError(
-          `Unable to fetch character description: ${characterDescriptionErr.message}`
-        );
-      }
-
-      characterDescriptions[
-        character.characterId
-      ] = `${characterDescription.gender} ${characterDescription?.race} ${characterDescription?.class}`;
-    }
-
-    const otherCharacterItemsInfo: Record<
-      string,
-      { equipped: ItemInfo[]; unequipped: ItemInfo[] }
-    > = {};
-
-    const [characterItemIdsErr, characterEquippedItemIds, characterUnequippedItemIds] =
-      await fnWithSpinner(
-        `Fetching equipped items for character ${
-          characterDescriptions[characterInfo.characterId]
-        } ...`,
-        () =>
-          getCharacterItemIds(
-            itemDefinitions,
-            destiny2InventoryService,
-            sessionId,
-            characterInfo.membershipType,
-            characterInfo.membershipId,
-            characterInfo.characterId
-          )
-      );
-    if (characterItemIdsErr) {
+    if (characterDescriptionsErr) {
       return logger.loggedError(
-        `Unable to fetch equipped items for ${characterDescriptions[characterInfo.characterId]}: ${
-          characterItemIdsErr.message
-        }`
+        `Unable to index character descriptions: ${characterDescriptionsErr.message}`
       );
     }
 
-    const characterItemsInfo = {
-      equipped: characterEquippedItemIds,
-      unequipped: characterUnequippedItemIds
-    };
-
-    const otherCharacterIds = characters
-      .filter((character) => character.characterId !== characterInfo.characterId)
-      .map((character) => character.characterId);
-
-    for (
-      let otherCharacterIndex = 0;
-      otherCharacterIndex < otherCharacterIds.length;
-      otherCharacterIndex++
-    ) {
-      const otherCharacterId = otherCharacterIds[otherCharacterIndex];
-
-      const [characterItemIdsErr, characterEquippedItemIds, characterUnequippedItemIds] =
-        await fnWithSpinner(
-          `Fetching unequipped items for character ${
-            characterDescriptions[characterInfo.characterId]
-          } ...`,
-          () =>
-            getCharacterItemIds(
-              itemDefinitions,
-              destiny2InventoryService,
-              sessionId,
-              characterInfo.membershipType,
-              characterInfo.membershipId,
-              otherCharacterId
-            )
-        );
-      if (characterItemIdsErr) {
-        return logger.loggedError(
-          `Unable to fetch unequipped items for character ${
-            characterDescriptions[characterInfo.characterId]
-          }: ${characterItemIdsErr.message}`
-        );
-      }
-
-      otherCharacterItemsInfo[otherCharacterId] = {
-        equipped: characterEquippedItemIds,
-        unequipped: characterUnequippedItemIds
-      };
-    }
-
-    const [vaultItemsErr, vaultItems] = await fnWithSpinner("Retrieving vault items ...", () =>
-      destiny2InventoryService.getVaultItems(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId
-      )
+    const [allItemsInfoErr, allItemsInfo] = await getAllExistingItemsInfo(
+      destiny2InventoryService,
+      itemDefinitions,
+      characterDescriptions,
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId
     );
-    if (vaultItemsErr) {
-      return logger.loggedError(
-        `Unable to retrieve profile inventory items: ${vaultItemsErr.message}`
-      );
-    }
-
-    const [vaultItemsInfoErr, vaultItemsInfo] = getItemsInfo(itemDefinitions, vaultItems);
-    if (vaultItemsInfoErr) {
-      return logger.loggedError(`Unable to get vault items info: ${vaultItemsInfoErr.message}`);
+    if (allItemsInfoErr) {
+      return logger.loggedError(`Unable to index existing items: ${allItemsInfoErr.message}`);
     }
 
     const loadoutActions: LoadoutAction[] = [];
@@ -807,11 +859,12 @@ const cmd: CommandDefinition = {
       () =>
         resolveTransferActions(
           itemDefinitions,
+          characterDescriptions,
           characterInfo.characterId,
           loadoutEquipments,
-          characterItemsInfo,
-          otherCharacterItemsInfo,
-          vaultItemsInfo
+          allItemsInfo.currentCharacter,
+          allItemsInfo.otherCharacter,
+          allItemsInfo.vault
         )
     );
     if (equipmentTransferActionsErr) {
@@ -826,11 +879,12 @@ const cmd: CommandDefinition = {
       () =>
         resolveTransferActions(
           itemDefinitions,
+          characterDescriptions,
           characterInfo.characterId,
           loadoutExtraEquipments,
-          characterItemsInfo,
-          otherCharacterItemsInfo,
-          vaultItemsInfo
+          allItemsInfo.currentCharacter,
+          allItemsInfo.otherCharacter,
+          allItemsInfo.vault
         )
     );
     if (extraEquipmentTransferActionsErr) {
@@ -844,10 +898,11 @@ const cmd: CommandDefinition = {
       loadoutEquipments.find((item) => item.itemType === "WEAPON" && item.isItemExotic) || null;
     if (exoticWeaponEquipment) {
       const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
+        characterDescriptions,
         characterInfo.characterId,
         loadoutExtraEquipments,
-        otherCharacterItemsInfo,
-        vaultItemsInfo,
+        allItemsInfo.otherCharacter,
+        allItemsInfo.vault,
         "WEAPON",
         exoticWeaponEquipment.itemBucket
       );
@@ -863,10 +918,11 @@ const cmd: CommandDefinition = {
       loadoutEquipments.find((item) => item.itemType === "ARMOUR" && item.isItemExotic) || null;
     if (exoticArmourEquipment) {
       const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
+        characterDescriptions,
         characterInfo.characterId,
         loadoutExtraEquipments,
-        otherCharacterItemsInfo,
-        vaultItemsInfo,
+        allItemsInfo.otherCharacter,
+        allItemsInfo.vault,
         "ARMOUR",
         exoticArmourEquipment.itemBucket
       );
@@ -883,6 +939,7 @@ const cmd: CommandDefinition = {
       .forEach((item) => {
         loadoutActions.push({
           type: "EQUIP",
+          characterName: characterDescriptions[characterInfo.characterId],
           characterId: characterInfo.characterId,
           itemName: item.itemName,
           itemHash: item.itemHash,
@@ -898,6 +955,7 @@ const cmd: CommandDefinition = {
       .forEach((item) => {
         loadoutActions.push({
           type: "EQUIP",
+          characterName: characterDescriptions[characterInfo.characterId],
           characterId: characterInfo.characterId,
           itemName: item.itemName,
           itemHash: item.itemHash,
@@ -914,6 +972,7 @@ const cmd: CommandDefinition = {
 
       loadoutActions.push({
         type: "SOCKET",
+        characterName: characterDescriptions[characterInfo.characterId],
         characterId: characterInfo.characterId,
         itemName: itemDefinition?.displayProperties.name || "UNKNOWN ITEM",
         itemHash: loadoutSocket.itemHash,
@@ -978,7 +1037,7 @@ const cmd: CommandDefinition = {
       if (!dryRun) {
         tableRow.push(actionSuccess ? chalk.bgGreen(" Yes ") : chalk.bgRed(" No "));
       }
-      tableRow.push(characterDescriptions[loadoutAction.characterId]);
+      tableRow.push(loadoutAction.characterName);
       tableRow.push(loadoutAction.type);
       tableRow.push(loadoutAction.itemName);
       if (verbose) {
