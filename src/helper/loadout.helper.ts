@@ -1,17 +1,17 @@
-import { CharacterInventoryBuckets } from "~src/helper/inventory-bucket.helper";
+import { InventoryBucket } from "~src/helper/inventory-bucket.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 export const LoadoutInventoryBuckets = [
-  CharacterInventoryBuckets.KineticWeapon,
-  CharacterInventoryBuckets.EnergyWeapon,
-  CharacterInventoryBuckets.PowerWeapon,
-  CharacterInventoryBuckets.Helmet,
-  CharacterInventoryBuckets.Gauntlet,
-  CharacterInventoryBuckets.ChestArmour,
-  CharacterInventoryBuckets.LegArmour,
-  CharacterInventoryBuckets.ClassItem
+  InventoryBucket.KineticWeapon,
+  InventoryBucket.EnergyWeapon,
+  InventoryBucket.PowerWeapon,
+  InventoryBucket.Helmet,
+  InventoryBucket.Gauntlet,
+  InventoryBucket.ChestArmour,
+  InventoryBucket.LegArmour,
+  InventoryBucket.ClassItem
 ];
 
 export const serializeItem = (

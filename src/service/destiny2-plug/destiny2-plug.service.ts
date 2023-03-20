@@ -42,16 +42,47 @@ export class Destiny2PlugService {
     const [insertErr] = await this.bungieApiService.sendApiRequest<
       DestinyInsertPlugsFreeActionRequest,
       DestinyItemChangeResponse
-    >(sessionId, "POST", "/Destiny2/Actions/Items/InsertSocketPlugFree", {
-      plug: {
-        socketIndex,
-        socketArrayType: DestinySocketArrayType.Default,
-        plugItemHash
+    >(
+      sessionId,
+      "POST",
+      "/Destiny2/Actions/Items/InsertSocketPlugFree",
+      {
+        plug: {
+          socketIndex,
+          socketArrayType: DestinySocketArrayType.Default,
+          plugItemHash
+        },
+        membershipType,
+        characterId,
+        itemId: itemInstanceId
       },
-      membershipType,
-      characterId,
-      itemId: itemInstanceId
-    });
+      {
+        // TODO: Refactor this `insert` so we don't have to do these special checks
+        validateApiResponse: (apiRes) => {
+          if (
+            // This happens when attempting to insert into a subclass socket when the subclass'
+            // aspects do not provide enough fragment sockets to cover the socket index.
+            apiRes.ErrorStatus === "DestinyItemActionForbidden" ||
+            // This happens when attempting to insert into a socket that already has the plug.
+            apiRes.ErrorStatus === "DestinySocketAlreadyHasPlug"
+          ) {
+            return null;
+          }
+
+          if (apiRes.ErrorCode > 1) {
+            return new Error(
+              `Unable to insert plug: ${apiRes.ErrorCode} (${apiRes.ErrorStatus}) - ${apiRes.Message}`
+            );
+          }
+
+          if (apiRes.Response === null || apiRes.Response === undefined) {
+            return new Error(`API response missing Response object`);
+          }
+
+          return null;
+        }
+      }
+    );
     if (insertErr) {
       return insertErr;
     }

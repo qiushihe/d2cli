@@ -84,8 +84,8 @@ const cmd: CommandDefinition = {
       () =>
         destiny2PlugService.insert(
           sessionId,
-          characterInfo?.membershipType,
-          characterInfo?.characterId,
+          characterInfo.membershipType,
+          characterInfo.characterId,
           itemIdentifier.itemInstanceId,
           socketIndex,
           plugItemHash

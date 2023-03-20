@@ -72,6 +72,22 @@ export type DestinyItemSocketBlockDefinition = {
   socketCategories: DestinyItemSocketCategoryDefinition[];
 };
 
+export type DestinyItemInventoryBlockDefinition = {
+  stackUniqueLabel: string;
+  maxStackSize: number;
+  bucketTypeHash: number;
+  recoveryBucketTypeHash: number;
+  tierTypeHash: number;
+  isInstanceItem: boolean;
+  tierTypeName: string;
+  tierType: number;
+  expirationTooltip: string;
+  expiredInActivityMessage: string;
+  expiredInOrbitMessage: string;
+  suppressExpirationWhenObjectivesComplete: boolean;
+  recipeItemHash: number;
+};
+
 export type DestinyInventoryItemDefinition = AbstractDefinition<{
   displayProperties: DestinyDisplayPropertiesDefinition;
   tooltipNotifications: unknown[];
@@ -87,7 +103,7 @@ export type DestinyInventoryItemDefinition = AbstractDefinition<{
   displaySource: string;
   action: unknown;
   crafting?: unknown;
-  inventory: unknown;
+  inventory: DestinyItemInventoryBlockDefinition;
   stats?: unknown;
   equippingBlock?: unknown;
   translationBlock?: unknown;

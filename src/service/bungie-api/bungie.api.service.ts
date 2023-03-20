@@ -33,6 +33,12 @@ import { ApiResponse } from "~type/bungie-api.types";
 const LIMIT_REQUESTS_PER_SECOND = 25;
 const LIMIT_REQUEST_WAIT_MULTIPLIER = 1.1;
 
+type SendApiRequestOptions = {
+  validateApiResponse?: <TResponse>(
+    apiRes: ApiResponse<TResponse>
+  ) => Promise<Error | null> | Error | null;
+};
+
 export class BungieApiService {
   private readonly config: ConfigService;
   private readonly sessionService: SessionService;
@@ -50,7 +56,8 @@ export class BungieApiService {
     sessionId: string | null,
     method: string,
     path: string,
-    body: TBody | null
+    body: TBody | null,
+    options?: SendApiRequestOptions
   ): Promise<[Error, null] | [null, TResponse]> {
     const logger = this.getLogger();
 
@@ -87,11 +94,18 @@ export class BungieApiService {
     if (apiResErr) {
       return [apiResErr, null];
     }
-    if (!apiRes.Response) {
-      return [new Error(`API response missing Response object`), null];
+    if (options?.validateApiResponse) {
+      const apiResErr = await options.validateApiResponse<TResponse>(apiRes);
+      if (apiResErr) {
+        return [apiResErr, null];
+      }
+      return [null, apiRes.Response as TResponse];
+    } else {
+      if (apiRes.Response === null || apiRes.Response === undefined) {
+        return [new Error(`API response missing Response object`), null];
+      }
+      return [null, apiRes.Response];
     }
-
-    return [null, apiRes.Response];
   }
 
   async extractApiResponse<TResponse = any>(

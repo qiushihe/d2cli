@@ -1,14 +1,7 @@
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
-export const SubclassInventoryBucketHash = 3284755031;
-
-export const getSubclassItems = (items: DestinyItemComponent[]): DestinyItemComponent[] => {
-  return items.filter((item) => {
-    return item.bucketHash === SubclassInventoryBucketHash;
-  });
-};
-
-export enum CharacterInventoryBuckets {
+export enum InventoryBucket {
+  Subclass = "subclass",
   KineticWeapon = "kineticWeapon",
   EnergyWeapon = "energyWeapon",
   PowerWeapon = "powerWeapon",
@@ -22,114 +15,122 @@ export enum CharacterInventoryBuckets {
   ClassItem = "classItem"
 }
 
-export const CharacterInventoryBucketHashes: Record<CharacterInventoryBuckets, number> = {
-  [CharacterInventoryBuckets.KineticWeapon]: 1498876634,
-  [CharacterInventoryBuckets.EnergyWeapon]: 2465295065,
-  [CharacterInventoryBuckets.PowerWeapon]: 953998645,
-  [CharacterInventoryBuckets.Ghost]: 4023194814,
-  [CharacterInventoryBuckets.Vehicle]: 2025709351,
-  [CharacterInventoryBuckets.Ship]: 284967655,
-  [CharacterInventoryBuckets.Helmet]: 3448274439,
-  [CharacterInventoryBuckets.Gauntlet]: 3551918588,
-  [CharacterInventoryBuckets.ChestArmour]: 14239492,
-  [CharacterInventoryBuckets.LegArmour]: 20886954,
-  [CharacterInventoryBuckets.ClassItem]: 1585787867
+export const InventoryBucketHashes: Record<InventoryBucket, number> = {
+  [InventoryBucket.Subclass]: 3284755031,
+  [InventoryBucket.KineticWeapon]: 1498876634,
+  [InventoryBucket.EnergyWeapon]: 2465295065,
+  [InventoryBucket.PowerWeapon]: 953998645,
+  [InventoryBucket.Ghost]: 4023194814,
+  [InventoryBucket.Vehicle]: 2025709351,
+  [InventoryBucket.Ship]: 284967655,
+  [InventoryBucket.Helmet]: 3448274439,
+  [InventoryBucket.Gauntlet]: 3551918588,
+  [InventoryBucket.ChestArmour]: 14239492,
+  [InventoryBucket.LegArmour]: 20886954,
+  [InventoryBucket.ClassItem]: 1585787867
 };
 
-export const BucketLabels: Record<CharacterInventoryBuckets, string> = {
-  [CharacterInventoryBuckets.KineticWeapon]: "Kinetic Weapon",
-  [CharacterInventoryBuckets.EnergyWeapon]: "Energy Weapon",
-  [CharacterInventoryBuckets.PowerWeapon]: "Power Weapon",
-  [CharacterInventoryBuckets.Ghost]: "Ghost",
-  [CharacterInventoryBuckets.Vehicle]: "Vehicle",
-  [CharacterInventoryBuckets.Ship]: "Ship",
-  [CharacterInventoryBuckets.Helmet]: "Helmet",
-  [CharacterInventoryBuckets.Gauntlet]: "Gauntlet",
-  [CharacterInventoryBuckets.ChestArmour]: "Chest Armour",
-  [CharacterInventoryBuckets.LegArmour]: "Leg Armour",
-  [CharacterInventoryBuckets.ClassItem]: "Class Item"
+export const InventoryBucketLabels: Record<InventoryBucket, string> = {
+  [InventoryBucket.Subclass]: "Subclass",
+  [InventoryBucket.KineticWeapon]: "Kinetic Weapon",
+  [InventoryBucket.EnergyWeapon]: "Energy Weapon",
+  [InventoryBucket.PowerWeapon]: "Power Weapon",
+  [InventoryBucket.Ghost]: "Ghost",
+  [InventoryBucket.Vehicle]: "Vehicle",
+  [InventoryBucket.Ship]: "Ship",
+  [InventoryBucket.Helmet]: "Helmet",
+  [InventoryBucket.Gauntlet]: "Gauntlet",
+  [InventoryBucket.ChestArmour]: "Chest Armour",
+  [InventoryBucket.LegArmour]: "Leg Armour",
+  [InventoryBucket.ClassItem]: "Class Item"
 };
 
-export const BucketOrder = [
-  CharacterInventoryBuckets.KineticWeapon,
-  CharacterInventoryBuckets.EnergyWeapon,
-  CharacterInventoryBuckets.PowerWeapon,
-  CharacterInventoryBuckets.Helmet,
-  CharacterInventoryBuckets.Gauntlet,
-  CharacterInventoryBuckets.ChestArmour,
-  CharacterInventoryBuckets.LegArmour,
-  CharacterInventoryBuckets.ClassItem,
-  CharacterInventoryBuckets.Ghost,
-  CharacterInventoryBuckets.Vehicle,
-  CharacterInventoryBuckets.Ship
+export const WeaponBuckets = [
+  InventoryBucket.KineticWeapon,
+  InventoryBucket.EnergyWeapon,
+  InventoryBucket.PowerWeapon
 ];
 
-export const ArmourInventoryBuckets = [
-  CharacterInventoryBuckets.Helmet,
-  CharacterInventoryBuckets.Gauntlet,
-  CharacterInventoryBuckets.ChestArmour,
-  CharacterInventoryBuckets.LegArmour,
-  CharacterInventoryBuckets.ClassItem
+export const ArmourBuckets = [
+  InventoryBucket.Helmet,
+  InventoryBucket.Gauntlet,
+  InventoryBucket.ChestArmour,
+  InventoryBucket.LegArmour,
+  InventoryBucket.ClassItem
 ];
 
-export const ArmourInventoryBucketHashes = ArmourInventoryBuckets.map(
-  (bucket) => CharacterInventoryBucketHashes[bucket]
-);
+export const EquipmentBuckets = [
+  ...WeaponBuckets,
+  ...ArmourBuckets,
+  InventoryBucket.Ghost,
+  InventoryBucket.Vehicle,
+  InventoryBucket.Ship
+];
 
-export const groupInventoryItems = (
+export const WeaponBucketHashes = WeaponBuckets.map((bucket) => InventoryBucketHashes[bucket]);
+
+export const ArmourBucketHashes = ArmourBuckets.map((bucket) => InventoryBucketHashes[bucket]);
+
+export const getSubclassItems = (items: DestinyItemComponent[]): DestinyItemComponent[] => {
+  return items.filter((item) => {
+    return item.bucketHash === InventoryBucketHashes[InventoryBucket.Subclass];
+  });
+};
+
+export const groupEquipmentItems = (
   items: DestinyItemComponent[]
-): Record<CharacterInventoryBuckets, DestinyItemComponent[]> => {
+): Record<string, DestinyItemComponent[]> => {
   return items.reduce(
     (acc, item) => {
       switch (item.bucketHash) {
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.KineticWeapon]:
+        case InventoryBucketHashes[InventoryBucket.KineticWeapon]:
           acc.kineticWeapon.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.EnergyWeapon]:
+        case InventoryBucketHashes[InventoryBucket.EnergyWeapon]:
           acc.energyWeapon.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.PowerWeapon]:
+        case InventoryBucketHashes[InventoryBucket.PowerWeapon]:
           acc.powerWeapon.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.Ghost]:
+        case InventoryBucketHashes[InventoryBucket.Ghost]:
           acc.ghost.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.Vehicle]:
+        case InventoryBucketHashes[InventoryBucket.Vehicle]:
           acc.vehicle.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.Ship]:
+        case InventoryBucketHashes[InventoryBucket.Ship]:
           acc.ship.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.Helmet]:
+        case InventoryBucketHashes[InventoryBucket.Helmet]:
           acc.helmet.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.Gauntlet]:
+        case InventoryBucketHashes[InventoryBucket.Gauntlet]:
           acc.gauntlet.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.ChestArmour]:
+        case InventoryBucketHashes[InventoryBucket.ChestArmour]:
           acc.chestArmour.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.LegArmour]:
+        case InventoryBucketHashes[InventoryBucket.LegArmour]:
           acc.legArmour.push(item);
           break;
-        case CharacterInventoryBucketHashes[CharacterInventoryBuckets.ClassItem]:
+        case InventoryBucketHashes[InventoryBucket.ClassItem]:
           acc.classItem.push(item);
           break;
       }
       return acc;
     },
     {
-      [CharacterInventoryBuckets.KineticWeapon]: [],
-      [CharacterInventoryBuckets.EnergyWeapon]: [],
-      [CharacterInventoryBuckets.PowerWeapon]: [],
-      [CharacterInventoryBuckets.Ghost]: [],
-      [CharacterInventoryBuckets.Vehicle]: [],
-      [CharacterInventoryBuckets.Ship]: [],
-      [CharacterInventoryBuckets.Helmet]: [],
-      [CharacterInventoryBuckets.Gauntlet]: [],
-      [CharacterInventoryBuckets.ChestArmour]: [],
-      [CharacterInventoryBuckets.LegArmour]: [],
-      [CharacterInventoryBuckets.ClassItem]: []
-    } as Record<CharacterInventoryBuckets, DestinyItemComponent[]>
+      [InventoryBucket.KineticWeapon]: [],
+      [InventoryBucket.EnergyWeapon]: [],
+      [InventoryBucket.PowerWeapon]: [],
+      [InventoryBucket.Ghost]: [],
+      [InventoryBucket.Vehicle]: [],
+      [InventoryBucket.Ship]: [],
+      [InventoryBucket.Helmet]: [],
+      [InventoryBucket.Gauntlet]: [],
+      [InventoryBucket.ChestArmour]: [],
+      [InventoryBucket.LegArmour]: [],
+      [InventoryBucket.ClassItem]: []
+    } as Record<string, DestinyItemComponent[]>
   );
 };

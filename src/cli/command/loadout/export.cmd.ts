@@ -8,8 +8,8 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
-import { groupInventoryItems } from "~src/helper/inventory-bucket.helper";
-import { ArmourInventoryBucketHashes } from "~src/helper/inventory-bucket.helper";
+import { groupEquipmentItems } from "~src/helper/inventory-bucket.helper";
+import { ArmourBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { LoadoutInventoryBuckets } from "~src/helper/loadout.helper";
 import { serializeItem } from "~src/helper/loadout.helper";
 import { serializeItemPlugs } from "~src/helper/loadout.helper";
@@ -137,19 +137,19 @@ const cmd: CommandDefinition = {
       );
     }
 
-    const equipmentsByBucket = groupInventoryItems(allItems);
+    const equipmentsByBucket = groupEquipmentItems(allItems);
     const equipments = LoadoutInventoryBuckets.reduce(
       (acc, bucket) => [...acc, ...equipmentsByBucket[bucket]],
       [] as DestinyItemComponent[]
     );
 
-    const equipmentsPlugRecords: Record<number, LoadoutPlugRecord[]> = {};
+    const equipmentsPlugRecords: Record<string, LoadoutPlugRecord[]> = {};
 
     for (let equipmentIndex = 0; equipmentIndex < equipments.length; equipmentIndex++) {
       const equipment = equipments[equipmentIndex];
       const equipmentDefinition = itemDefinitions[equipment.itemHash];
 
-      if (ArmourInventoryBucketHashes.includes(equipment.bucketHash)) {
+      if (ArmourBucketHashes.includes(equipment.bucketHash)) {
         const [equipmentPlugRecordsErr, equipmentPlugRecords] = await getLoadoutPlugRecords(
           logger,
           itemDefinitions,
@@ -173,7 +173,8 @@ const cmd: CommandDefinition = {
           );
         }
 
-        equipmentsPlugRecords[equipment.itemHash] = equipmentPlugRecords;
+        equipmentsPlugRecords[`${equipment.itemHash}:${equipment.itemInstanceId}`] =
+          equipmentPlugRecords;
       }
     }
 
@@ -206,7 +207,7 @@ const cmd: CommandDefinition = {
         serializeItemPlugs(
           itemDefinitions,
           equipment,
-          equipmentsPlugRecords[equipment.itemHash] || []
+          equipmentsPlugRecords[`${equipment.itemHash}:${equipment.itemInstanceId}`] || []
         ).forEach((serialized) => {
           exportLines.push(serialized);
         });

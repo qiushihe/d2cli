@@ -5,10 +5,9 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
-import { BucketLabels } from "~src/helper/inventory-bucket.helper";
-import { BucketOrder } from "~src/helper/inventory-bucket.helper";
-import { groupInventoryItems } from "~src/helper/inventory-bucket.helper";
-import { CharacterInventoryBuckets } from "~src/helper/inventory-bucket.helper";
+import { InventoryBucketLabels } from "~src/helper/inventory-bucket.helper";
+import { EquipmentBuckets } from "~src/helper/inventory-bucket.helper";
+import { groupEquipmentItems } from "~src/helper/inventory-bucket.helper";
 import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
@@ -75,7 +74,7 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to retrieve equipment items: ${equipmentItemsErr.message}`);
     }
 
-    const equippedItems = groupInventoryItems(equipmentItems);
+    const equippedItems = groupEquipmentItems(equipmentItems);
 
     const tableData: string[][] = [];
 
@@ -86,13 +85,9 @@ const cmd: CommandDefinition = {
       tableData.push(basicHeaders);
     }
 
-    const buckets = Object.values(CharacterInventoryBuckets).sort(
-      (a, b) => BucketOrder.indexOf(a) - BucketOrder.indexOf(b)
-    );
-
-    for (let bucketNameIndex = 0; bucketNameIndex < buckets.length; bucketNameIndex++) {
-      const bucket = buckets[bucketNameIndex];
-      const bucketLabel = BucketLabels[bucket];
+    for (let bucketNameIndex = 0; bucketNameIndex < EquipmentBuckets.length; bucketNameIndex++) {
+      const bucket = EquipmentBuckets[bucketNameIndex];
+      const bucketLabel = InventoryBucketLabels[bucket];
       const bucketItems = equippedItems[bucket];
 
       const equippedItem = bucketItems[0];
