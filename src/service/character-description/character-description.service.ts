@@ -1,4 +1,5 @@
 import { AppModule } from "~src/module/app.module";
+import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2ManifestClassDefinition } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestGenderDefinition } from "~type/bungie-asset/destiny2.types";
@@ -16,10 +17,39 @@ type CharacterDescribableAttributes = {
 
 export class CharacterDescriptionService {
   private readonly destiny2ManifestService: Destiny2ManifestService;
+  private readonly destiny2CharacterService: Destiny2CharacterService;
 
   constructor() {
     this.destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+
+    this.destiny2CharacterService =
+      AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
+  }
+
+  async getDescriptions(
+    sessionId: string
+  ): Promise<[Error, null] | [null, Record<string, CharacterDescription>]> {
+    const characterDescriptions: Record<string, CharacterDescription> = {};
+
+    const [charactersErr, characters] = await this.destiny2CharacterService.getCharacters(
+      sessionId
+    );
+    if (charactersErr) {
+      return [charactersErr, null];
+    }
+
+    for (let characterIndex = 0; characterIndex < characters.length; characterIndex++) {
+      const character = characters[characterIndex];
+      const [characterDescriptionErr, characterDescription] = await this.getDescription(character);
+      if (characterDescriptionErr) {
+        return [characterDescriptionErr, null];
+      }
+
+      characterDescriptions[character.characterId] = characterDescription;
+    }
+
+    return [null, characterDescriptions];
   }
 
   async getDescription(
@@ -52,12 +82,17 @@ export class CharacterDescriptionService {
       return [classDefinitionErr, null];
     }
 
+    const genderName = genderDefinition[character.genderHash].displayProperties.name;
+    const raceName = raceDefinition[character.raceHash].displayProperties.name;
+    const className = classDefinition[character.classHash].displayProperties.name;
+
     return [
       null,
       {
-        gender: genderDefinition[character.genderHash].displayProperties.name,
-        race: raceDefinition[character.raceHash].displayProperties.name,
-        class: classDefinition[character.classHash].displayProperties.name
+        gender: genderName,
+        race: raceName,
+        class: className,
+        asString: `${genderName} ${raceName} ${className}`
       }
     ];
   }
