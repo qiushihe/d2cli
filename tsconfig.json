@@ -1,7 +1,6 @@
 {
   "include": [
     "**/*.ts",
-    "**/*.tsx",
 
     // Including this file makes the root of `dist` no longer "only contains other directories",
     // and that would prevent `tsc` from flattening the `dist` directory down to the `src`
@@ -13,7 +12,7 @@
     // It just is.
     "tsconfig.json"
   ],
-  "exclude": ["test", "build", "node_modules"],
+  "exclude": ["test", "dist", "node_modules"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,

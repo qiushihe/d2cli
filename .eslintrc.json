@@ -17,7 +17,7 @@
   },
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx"],
+      "files": ["*.ts"],
       "rules": {
         "simple-import-sort/imports": [
           "error",
