@@ -1,6 +1,5 @@
 import { CommandDefinitions } from "~src/cli/d2cli.types";
 
-import agenda from "./agenda.cmd";
 import auth from "./auth.cmd";
 import character from "./character.cmd";
 import config from "./config.cmd";
@@ -14,7 +13,6 @@ import vault from "./vault.cmd";
 import vendor from "./vendor.cmd";
 
 export const commands: CommandDefinitions = {
-  agenda,
   auth,
   character,
   config,
