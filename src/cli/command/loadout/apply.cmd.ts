@@ -308,21 +308,27 @@ const cmd: CommandDefinition = {
         (equipped) => equipped.itemInstanceId === exoticWeapon.itemInstanceId
       );
 
+      const alreadyUnEquipped = !!allItemsInfo.currentCharacter.unequipped.find(
+        (equipped) => equipped.itemInstanceId === exoticWeapon.itemInstanceId
+      );
+
       if (!alreadyEquipped) {
-        const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
-          characterDescriptions,
-          characterInfo.characterId,
-          loadoutExtraEquipments,
-          allItemsInfo.otherCharacter,
-          allItemsInfo.vault,
-          exoticWeapon
-        );
-        if (deExoticActionsErr) {
-          return logger.loggedError(
-            `Unable to resolve de-exotic weapon actions: ${deExoticActionsErr.message}`
+        if (!alreadyUnEquipped) {
+          const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
+            characterDescriptions,
+            characterInfo.characterId,
+            loadoutExtraEquipments,
+            allItemsInfo.otherCharacter,
+            allItemsInfo.vault,
+            exoticWeapon
           );
+          if (deExoticActionsErr) {
+            return logger.loggedError(
+              `Unable to resolve de-exotic weapon actions: ${deExoticActionsErr.message}`
+            );
+          }
+          deExoticActions.forEach((action) => loadoutActions.push(action));
         }
-        deExoticActions.forEach((action) => loadoutActions.push(action));
         reEquipExoticWeapon = true;
       }
     }
@@ -335,21 +341,27 @@ const cmd: CommandDefinition = {
         (equipped) => equipped.itemInstanceId === exoticArmour.itemInstanceId
       );
 
+      const alreadyUnEquipped = !!allItemsInfo.currentCharacter.unequipped.find(
+        (equipped) => equipped.itemInstanceId === exoticArmour.itemInstanceId
+      );
+
       if (!alreadyEquipped) {
-        const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
-          characterDescriptions,
-          characterInfo.characterId,
-          loadoutExtraEquipments,
-          allItemsInfo.otherCharacter,
-          allItemsInfo.vault,
-          exoticArmour
-        );
-        if (deExoticActionsErr) {
-          return logger.loggedError(
-            `Unable to resolve de-exotic armour actions: ${deExoticActionsErr.message}`
+        if (!alreadyUnEquipped) {
+          const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
+            characterDescriptions,
+            characterInfo.characterId,
+            loadoutExtraEquipments,
+            allItemsInfo.otherCharacter,
+            allItemsInfo.vault,
+            exoticArmour
           );
+          if (deExoticActionsErr) {
+            return logger.loggedError(
+              `Unable to resolve de-exotic armour actions: ${deExoticActionsErr.message}`
+            );
+          }
+          deExoticActions.forEach((action) => loadoutActions.push(action));
         }
-        deExoticActions.forEach((action) => loadoutActions.push(action));
         reEquipExoticArmour = true;
       }
     }
