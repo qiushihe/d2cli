@@ -91,6 +91,8 @@ const cmd: CommandDefinition = {
     const destiny2PlugService =
       AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
 
+    const loadoutFilePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
+
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
@@ -109,8 +111,6 @@ const cmd: CommandDefinition = {
         `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
       );
     }
-
-    const loadoutFilePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
 
     const [fileContentErr, fileContent] = await fnWithSpinner("Reading loadout file ...", () =>
       promisedFn(

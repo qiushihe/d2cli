@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { loadoutNameOption } from "~src/cli/command-option/loadout.option";
@@ -13,6 +16,7 @@ import { ArmourBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { LoadoutInventoryBuckets } from "~src/helper/loadout.helper";
 import { serializeItem } from "~src/helper/loadout.helper";
 import { serializeItemPlugs } from "~src/helper/loadout.helper";
+import { promisedFn } from "~src/helper/promise.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { getLoadoutPlugRecords } from "~src/helper/subclass.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
@@ -29,17 +33,26 @@ import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/des
 
 type CmdOptions = SessionIdCommandOptions &
   LoadoutNameCommandOptions &
-  IncludeUnequippedCommandOptions;
+  IncludeUnequippedCommandOptions & { file: string };
 
 const cmd: CommandDefinition = {
   description: "Export the currently equipped loadout",
-  options: [sessionIdOption, loadoutNameOption, includeUnequippedOption],
+  options: [
+    sessionIdOption,
+    loadoutNameOption,
+    includeUnequippedOption,
+    {
+      flags: ["f", "file <loadout-file>"],
+      description: "Path to the loadout file to write",
+      defaultValue: ""
+    }
+  ],
   action: async (_, opts) => {
     const logger = AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
       .getLogger("cmd:loadout:export");
 
-    const { session: sessionId, loadoutName, includeUnequipped } = opts as CmdOptions;
+    const { session: sessionId, loadoutName, includeUnequipped, file } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
     const destiny2ManifestService =
@@ -214,7 +227,26 @@ const cmd: CommandDefinition = {
       });
     });
 
-    console.log(exportLines.join("\n"));
+    if (file) {
+      const loadoutFilePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
+
+      const [writeErr] = await fnWithSpinner("Writing to loadout file ...", () =>
+        promisedFn(
+          () =>
+            new Promise<void>((resolve, reject) => {
+              fs.writeFile(loadoutFilePath, exportLines.join("\n"), "utf8", (err) => {
+                err ? reject(err) : resolve();
+              });
+            })
+        )
+      );
+      if (writeErr) {
+        return logger.loggedError(`Unable to write loadout file: ${writeErr.message}`);
+      }
+      logger.log(`Loadout exported to: ${loadoutFilePath}`);
+    } else {
+      console.log(exportLines.join("\n"));
+    }
   }
 };
 
