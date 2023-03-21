@@ -1,4 +1,3 @@
-import { AgendaService } from "~src/service/agenda/agenda.service";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { CacheService } from "~src/service/cache/cache.service";
@@ -21,7 +20,6 @@ import { FsStorageService } from "~src/service/storage/fs-storage.service";
 import { AppModule } from "./app.module";
 
 const MODULE: Record<string, new () => any> = {
-  AgendaService,
   BungieApiService,
   BungieOauthService,
   CacheService,

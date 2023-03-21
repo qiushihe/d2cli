@@ -24,6 +24,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
+    "importHelpers": true,
     "inlineSources": false,
     "isolatedModules": true,
     "jsx": "react",
