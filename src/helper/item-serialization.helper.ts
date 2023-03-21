@@ -33,9 +33,13 @@ export type SerializedItem = {
 
 export type SerializedPlug = {
   label: string;
+  itemType: SerializedItemType;
+  itemBucket: SerializedItemBucket;
+  itemName: string;
   itemHash: number;
   itemInstanceId: string;
   socketIndex: number;
+  plugItemName: string;
   plugItemHash: number;
 };
 

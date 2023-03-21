@@ -1,7 +1,5 @@
 import { SerializedItem } from "~src/helper/item-serialization.helper";
 import { SerializedPlug } from "~src/helper/item-serialization.helper";
-import { SerializedItemType } from "~src/helper/item-serialization.helper";
-import { SerializedItemBucket } from "~src/helper/item-serialization.helper";
 import { CharacterDescription } from "~src/service/character-description/character-description.types";
 import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
 import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
@@ -133,21 +131,22 @@ export const resolveTransferActions = (
   return [null, actions];
 };
 
-// TODO: Do not generate action is the target item is already equipped.
 export const resolveDeExoticActions = (
   characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
   extraEquipmentsItems: SerializedItem[],
   otherCharacterItems: Record<string, { equipped: SerializedItem[]; unequipped: SerializedItem[] }>,
   vaultItems: SerializedItem[],
-  itemType: SerializedItemType,
-  itemBucket: SerializedItemBucket
+  exoticItem: SerializedItem
 ): [Error, null] | [null, LoadoutAction[]] => {
   const actions: LoadoutAction[] = [];
 
   const extraNonExoticItem =
     extraEquipmentsItems.find(
-      (item) => item.itemType === itemType && item.itemBucket === itemBucket && !item.isItemExotic
+      (item) =>
+        item.itemType === exoticItem.itemType &&
+        item.itemBucket === exoticItem.itemBucket &&
+        !item.isItemExotic
     ) || null;
   if (extraNonExoticItem) {
     actions.push({
@@ -164,7 +163,10 @@ export const resolveDeExoticActions = (
   } else {
     const vaultNonExoticItem =
       vaultItems.find(
-        (item) => item.itemType === itemType && item.itemBucket === itemBucket && !item.isItemExotic
+        (item) =>
+          item.itemType === exoticItem.itemType &&
+          item.itemBucket === exoticItem.itemBucket &&
+          !item.isItemExotic
       ) || null;
     if (vaultNonExoticItem) {
       actions.push({
@@ -205,7 +207,9 @@ export const resolveDeExoticActions = (
         const otherCharacterUnequippedNonExoticItem =
           itemsInfo.unequipped.find(
             (item) =>
-              item.itemType === itemType && item.itemBucket === itemBucket && !item.isItemExotic
+              item.itemType === exoticItem.itemType &&
+              item.itemBucket === exoticItem.itemBucket &&
+              !item.isItemExotic
           ) || null;
         if (otherCharacterUnequippedNonExoticItem) {
           actions.push({
@@ -250,7 +254,9 @@ export const resolveDeExoticActions = (
           const otherCharacterEquippedNonExoticItem =
             itemsInfo.equipped.find(
               (item) =>
-                item.itemType === itemType && item.itemBucket === itemBucket && !item.isItemExotic
+                item.itemType === exoticItem.itemType &&
+                item.itemBucket === exoticItem.itemBucket &&
+                !item.isItemExotic
             ) || null;
           if (otherCharacterEquippedNonExoticItem) {
             // TODO: Need to equip a different item in a way that doesn't conflict with this
@@ -296,27 +302,37 @@ export const resolveEquipActions = (
 
 // TODO: Only generate action if the plug isn't already in the socket.
 export const resolveSocketActions = (
-  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
   characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
+  socketIndicesByItemHash: Record<number, number[]>,
+  equippedPlugHashesByItemInstanceId: Record<string, number[]>,
   plugs: SerializedPlug[]
 ): LoadoutAction[] => {
-  return plugs.map((loadoutSocket) => {
-    const itemDefinition = itemDefinitions[loadoutSocket.itemHash];
-    const plugItemDefinition = itemDefinitions[loadoutSocket.plugItemHash];
+  const loadoutActions: LoadoutAction[] = [];
 
-    return {
-      type: "SOCKET",
-      characterName: characterDescriptions[characterId].asString,
-      characterId,
-      itemName: itemDefinition?.displayProperties.name || "UNKNOWN ITEM",
-      itemHash: loadoutSocket.itemHash,
-      itemInstanceId: loadoutSocket.itemInstanceId,
-      socketIndex: loadoutSocket.socketIndex,
-      plugItemName: plugItemDefinition?.displayProperties.name || "UNKNOWN PLUG",
-      plugItemHash: loadoutSocket.plugItemHash
-    };
+  plugs.forEach((plug) => {
+    const socketIndices = socketIndicesByItemHash[plug.itemHash];
+    const normalizedSocketIndex = socketIndices.indexOf(plug.socketIndex);
+
+    const equippedPlugHash =
+      equippedPlugHashesByItemInstanceId[plug.itemInstanceId][normalizedSocketIndex];
+
+    if (plug.plugItemHash !== equippedPlugHash) {
+      loadoutActions.push({
+        type: "SOCKET",
+        characterName: characterDescriptions[characterId].asString,
+        characterId,
+        itemName: plug.itemName,
+        itemHash: plug.itemHash,
+        itemInstanceId: plug.itemInstanceId,
+        socketIndex: plug.socketIndex,
+        plugItemName: plug.plugItemName,
+        plugItemHash: plug.plugItemHash
+      });
+    }
   });
+
+  return loadoutActions;
 };
 
 export const describeLoadoutAction = (loadoutAction: LoadoutAction) => {

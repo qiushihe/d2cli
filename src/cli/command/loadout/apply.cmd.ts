@@ -21,14 +21,17 @@ import { resolveEquipActions } from "~src/helper/loadout-action.helper";
 import { resolveSocketActions } from "~src/helper/loadout-action.helper";
 import { applyLoadoutAction } from "~src/helper/loadout-action.helper";
 import { promisedFn } from "~src/helper/promise.helper";
+import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
 import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
+import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
+import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
 import { LogService } from "~src/service/log/log.service";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
@@ -81,6 +84,9 @@ const cmd: CommandDefinition = {
       AppModule.getDefaultInstance().resolve<Destiny2InventoryEquipmentService>(
         "Destiny2InventoryEquipmentService"
       );
+
+    const destiny2ItemService =
+      AppModule.getDefaultInstance().resolve<Destiny2ItemService>("Destiny2ItemService");
 
     const destiny2PlugService =
       AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
@@ -147,8 +153,8 @@ const cmd: CommandDefinition = {
             const dataParts = dataValue.split(":", 2);
             const itemHash = parseInt(`${dataParts[0]}`.trim(), 10);
             const itemInstanceId = `${dataParts[1]}`.trim().replace(/\D/gi, "");
-            const itemDefinition = itemDefinitions[itemHash];
 
+            const itemDefinition = itemDefinitions[itemHash];
             if (!itemDefinition) {
               return logger.loggedError(`Unable to find item definition for: ${itemHash}`);
             }
@@ -167,8 +173,8 @@ const cmd: CommandDefinition = {
             const dataParts = dataValue.split(":", 2);
             const itemHash = parseInt(`${dataParts[0]}`.trim(), 10);
             const itemInstanceId = `${dataParts[1]}`.trim().replace(/\D/gi, "");
-            const itemDefinition = itemDefinitions[itemHash];
 
+            const itemDefinition = itemDefinitions[itemHash];
             if (!itemDefinition) {
               return logger.loggedError(`Unable to find extra item definition for: ${itemHash}`);
             }
@@ -195,17 +201,44 @@ const cmd: CommandDefinition = {
             const socketIndex = parseInt(`${indexParts[1]}`.trim(), 10);
             const plugItemHash = parseInt(`${plugParts[1]}`.trim(), 10);
 
+            const plugItemDefinition = itemDefinitions[plugItemHash];
+            if (!plugItemDefinition) {
+              return logger.loggedError(`Unable to find item definition for: ${plugItemHash}`);
+            }
+
+            const itemDefinition = itemDefinitions[itemHash];
+            if (!itemDefinition) {
+              return logger.loggedError(`Unable to find item definition for: ${itemHash}`);
+            }
+
+            const [serializeItemErr, serializedItem] = serializeItem(
+              itemDefinition,
+              itemHash,
+              itemInstanceId
+            );
+            if (serializeItemErr) {
+              return logger.loggedError(
+                `Unable to serialize plug item: ${serializeItemErr.message}`
+              );
+            }
+
             loadoutPlugs.push({
               label: dataLabel,
+              itemType: serializedItem.itemType,
+              itemBucket: serializedItem.itemBucket,
+              itemName: serializedItem.itemName,
               itemHash,
               itemInstanceId,
               socketIndex,
+              plugItemName: plugItemDefinition.displayProperties.name || "UNKNOWN PLUG",
               plugItemHash
             });
           }
         }
       }
     }
+
+    logger.debug(`Loadout name: ${loadoutName}`);
 
     const [characterDescriptionsErr, characterDescriptions] = await fnWithSpinner(
       "Retrieving character descriptions ...",
@@ -269,42 +302,56 @@ const cmd: CommandDefinition = {
 
     const exoticWeapon =
       loadoutEquipments.find((item) => item.itemType === "WEAPON" && item.isItemExotic) || null;
+    let reEquipExoticWeapon = false;
     if (exoticWeapon) {
-      const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
-        characterDescriptions,
-        characterInfo.characterId,
-        loadoutExtraEquipments,
-        allItemsInfo.otherCharacter,
-        allItemsInfo.vault,
-        "WEAPON",
-        exoticWeapon.itemBucket
+      const alreadyEquipped = !!allItemsInfo.currentCharacter.equipped.find(
+        (equipped) => equipped.itemInstanceId === exoticWeapon.itemInstanceId
       );
-      if (deExoticActionsErr) {
-        return logger.loggedError(
-          `Unable to resolve de-exotic weapon actions: ${deExoticActionsErr.message}`
+
+      if (!alreadyEquipped) {
+        const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
+          characterDescriptions,
+          characterInfo.characterId,
+          loadoutExtraEquipments,
+          allItemsInfo.otherCharacter,
+          allItemsInfo.vault,
+          exoticWeapon
         );
+        if (deExoticActionsErr) {
+          return logger.loggedError(
+            `Unable to resolve de-exotic weapon actions: ${deExoticActionsErr.message}`
+          );
+        }
+        deExoticActions.forEach((action) => loadoutActions.push(action));
+        reEquipExoticWeapon = true;
       }
-      deExoticActions.forEach((action) => loadoutActions.push(action));
     }
 
     const exoticArmour =
       loadoutEquipments.find((item) => item.itemType === "ARMOUR" && item.isItemExotic) || null;
+    let reEquipExoticArmour = false;
     if (exoticArmour) {
-      const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
-        characterDescriptions,
-        characterInfo.characterId,
-        loadoutExtraEquipments,
-        allItemsInfo.otherCharacter,
-        allItemsInfo.vault,
-        "ARMOUR",
-        exoticArmour.itemBucket
+      const alreadyEquipped = !!allItemsInfo.currentCharacter.equipped.find(
+        (equipped) => equipped.itemInstanceId === exoticArmour.itemInstanceId
       );
-      if (deExoticActionsErr) {
-        return logger.loggedError(
-          `Unable to resolve de-exotic armour actions: ${deExoticActionsErr.message}`
+
+      if (!alreadyEquipped) {
+        const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
+          characterDescriptions,
+          characterInfo.characterId,
+          loadoutExtraEquipments,
+          allItemsInfo.otherCharacter,
+          allItemsInfo.vault,
+          exoticArmour
         );
+        if (deExoticActionsErr) {
+          return logger.loggedError(
+            `Unable to resolve de-exotic armour actions: ${deExoticActionsErr.message}`
+          );
+        }
+        deExoticActions.forEach((action) => loadoutActions.push(action));
+        reEquipExoticArmour = true;
       }
-      deExoticActions.forEach((action) => loadoutActions.push(action));
     }
 
     resolveEquipActions(
@@ -314,32 +361,145 @@ const cmd: CommandDefinition = {
       allItemsInfo.currentCharacter.equipped
     ).forEach((loadoutAction) => loadoutActions.push(loadoutAction));
 
-    // The de-exotic resolver does not check if the target item is already equipped and thus would
-    // not need the de-exotic action. So for now, we still just have to re-equip the exotic items.
-    loadoutEquipments
-      .filter((item) => item.isItemExotic)
-      .forEach((item) => {
-        loadoutActions.push({
-          type: "EQUIP",
-          characterName: characterDescriptions[characterInfo.characterId].asString,
-          characterId: characterInfo.characterId,
-          itemName: item.itemName,
-          itemHash: item.itemHash,
-          itemInstanceId: item.itemInstanceId,
-          socketIndex: null,
-          plugItemName: null,
-          plugItemHash: null
-        });
+    if (exoticWeapon && reEquipExoticWeapon) {
+      loadoutActions.push({
+        type: "EQUIP",
+        characterName: characterDescriptions[characterInfo.characterId].asString,
+        characterId: characterInfo.characterId,
+        itemName: exoticWeapon.itemName,
+        itemHash: exoticWeapon.itemHash,
+        itemInstanceId: exoticWeapon.itemInstanceId,
+        socketIndex: null,
+        plugItemName: null,
+        plugItemHash: null
       });
+    }
+
+    if (exoticArmour && reEquipExoticArmour) {
+      loadoutActions.push({
+        type: "EQUIP",
+        characterName: characterDescriptions[characterInfo.characterId].asString,
+        characterId: characterInfo.characterId,
+        itemName: exoticArmour.itemName,
+        itemHash: exoticArmour.itemHash,
+        itemInstanceId: exoticArmour.itemInstanceId,
+        socketIndex: null,
+        plugItemName: null,
+        plugItemHash: null
+      });
+    }
+
+    const socketIndicesByItemHash: Record<number, number[]> = {};
+    const plugItemHashesAndTypes = Object.entries(
+      loadoutPlugs.reduce(
+        (acc, plug) => ({ ...acc, [plug.itemHash]: plug.itemType }),
+        {} as Record<number, string>
+      )
+    );
+    for (let plugItemIndex = 0; plugItemIndex < plugItemHashesAndTypes.length; plugItemIndex++) {
+      const [itemHashStr, itemType] = plugItemHashesAndTypes[plugItemIndex];
+      const itemHash = parseInt(itemHashStr, 10);
+
+      if (itemType === "ARMOUR") {
+        const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] = await fnWithSpinner(
+          "Retrieving armour mod socket indices ...",
+          () =>
+            destiny2PlugService.getSocketIndices(
+              sessionId,
+              characterInfo.membershipType,
+              characterInfo.membershipId,
+              characterInfo.characterId,
+              itemHash,
+              "ARMOR MODS"
+            )
+        );
+        if (armourPlugItemSocketIndicesErr) {
+          return logger.loggedError(
+            `Unable to retrieve armour mod socket indices: ${armourPlugItemSocketIndicesErr.message}`
+          );
+        }
+        socketIndicesByItemHash[itemHash] = armourPlugItemSocketIndices;
+      } else if (itemType === "SUBCLASS") {
+        socketIndicesByItemHash[itemHash] = [];
+
+        for (
+          let socketNameIndex = 0;
+          socketNameIndex < SUBCLASS_SOCKET_NAMES.length;
+          socketNameIndex++
+        ) {
+          const socketName = SUBCLASS_SOCKET_NAMES[socketNameIndex] as SocketName;
+
+          const [socketIndicesErr, socketIndices] = await fnWithSpinner(
+            `Fetching ${socketName.toLocaleLowerCase()} socket indices ...`,
+            () =>
+              destiny2PlugService.getSocketIndices(
+                sessionId,
+                characterInfo.membershipType,
+                characterInfo.membershipId,
+                characterInfo.characterId,
+                itemHash,
+                socketName
+              )
+          );
+          if (socketIndicesErr) {
+            return logger.loggedError(
+              `Unable to fetch ${socketName.toLocaleLowerCase()} socket indices: ${
+                socketIndicesErr.message
+              }`
+            );
+          }
+
+          socketIndices.forEach((socketIndex) =>
+            socketIndicesByItemHash[itemHash].push(socketIndex)
+          );
+        }
+      }
+    }
+
+    const equippedPlugHashesByItemInstanceId: Record<string, number[]> = {};
+    const plugItemInstanceIdsAndHashes = Object.entries(
+      loadoutPlugs.reduce(
+        (acc, plug) => ({ ...acc, [plug.itemInstanceId]: plug.itemHash }),
+        {} as Record<string, number>
+      )
+    );
+    for (
+      let plugItemIndex = 0;
+      plugItemIndex < plugItemInstanceIdsAndHashes.length;
+      plugItemIndex++
+    ) {
+      const [itemInstanceId, itemHash] = plugItemInstanceIdsAndHashes[plugItemIndex];
+      const itemDefinition = itemDefinitions[itemHash];
+      const itemName = itemDefinition?.displayProperties.name || "UNKNOWN ITEM";
+
+      const [equippedPlugHashesErr, _equippedPlugHashes] = await fnWithSpinner(
+        `Fetching equipped plugs for ${itemName} ...`,
+        () =>
+          destiny2ItemService.getItemEquippedPlugHashes(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            itemInstanceId
+          )
+      );
+      if (equippedPlugHashesErr) {
+        return logger.loggedError(
+          `Unable to fetch equipped plugs for ${itemName}: ${equippedPlugHashesErr.message}`
+        );
+      }
+
+      equippedPlugHashesByItemInstanceId[itemInstanceId] = socketIndicesByItemHash[itemHash].map(
+        (index) => _equippedPlugHashes[index]
+      );
+    }
 
     resolveSocketActions(
-      itemDefinitions,
       characterDescriptions,
       characterInfo.characterId,
+      socketIndicesByItemHash,
+      equippedPlugHashesByItemInstanceId,
       loadoutPlugs
     ).forEach((loadoutAction) => loadoutActions.push(loadoutAction));
-
-    logger.log(`Loadout: ${loadoutName}`);
 
     const tableData: string[][] = [];
 
