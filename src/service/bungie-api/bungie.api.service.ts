@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import fetch, { Response } from "node-fetch";
 
 import { AppModule } from "~src/module/app.module";
@@ -131,13 +130,9 @@ export class BungieApiService {
 
     try {
       const reqDescription = `${options.method} ${url} ${JSON.stringify(options.body)}`;
-      logger.debug(`${chalk.bgMagenta(`Req`)} => ${reqDescription} ...`);
+      logger.debug(`Req => ${reqDescription} ...`);
       const response = await this.fetch(url, options);
-      logger.debug(
-        `${chalk.magenta(`Res`)} => ${reqDescription} => ${response.status} (${
-          response.statusText
-        })`
-      );
+      logger.debug(`Res => ${reqDescription} => ${response.status} (${response.statusText})`);
       return [null, response];
     } catch (err) {
       return [err as Error, null];
@@ -156,7 +151,7 @@ export class BungieApiService {
 
       logger.debug(
         [
-          `${chalk.red("Rate limit exceeded")} (${timeSinceLastRequest} < ${rateLimitTimeout}).`,
+          `Rate limit exceeded (${timeSinceLastRequest} < ${rateLimitTimeout}).`,
           `Waiting for ${waitTime}ms ...`
         ].join(" ")
       );

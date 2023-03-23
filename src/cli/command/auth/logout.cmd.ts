@@ -4,6 +4,7 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
 import { OAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
+import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
@@ -23,12 +24,19 @@ const cmd: CommandDefinition = {
 
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-    const clearTokenErr = await fnWithSpinner("Clearing Bungie.net access token ...", () =>
-      sessionService.setData<OAuthAccessToken | null>(
+    const clearCharactersErr = await fnWithSpinner("Clearing characters info ...", () =>
+      sessionService.setData<CharacterReference>(
         sessionId,
-        SessionDataName.BungieAccessToken,
+        SessionDataName.CurrentCharacterInfo,
         null
       )
+    );
+    if (clearCharactersErr) {
+      return logger.loggedError(`Unable to clear characters info: ${clearCharactersErr.message}`);
+    }
+
+    const clearTokenErr = await fnWithSpinner("Clearing Bungie.net access token ...", () =>
+      sessionService.setData<OAuthAccessToken>(sessionId, SessionDataName.BungieAccessToken, null)
     );
     if (clearTokenErr) {
       return logger.loggedError(

@@ -1,5 +1,3 @@
-import chalk from "chalk";
-
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
@@ -142,15 +140,15 @@ const cmd: CommandDefinition = {
       if (pullItemErr) {
         failedToPullCount = failedToPullCount + 1;
         if (verbose) {
-          tableData.push([...itemCells, chalk.bgRed("No"), pullItemErr.message]);
+          tableData.push([...itemCells, "No", pullItemErr.message]);
         } else {
-          tableData.push([...itemCells, chalk.bgRed("No")]);
+          tableData.push([...itemCells, "No"]);
         }
       } else {
         if (verbose) {
-          tableData.push([...itemCells, chalk.bgGreen("Yes"), ""]);
+          tableData.push([...itemCells, "Yes", ""]);
         } else {
-          tableData.push([...itemCells, chalk.bgGreen("Yes")]);
+          tableData.push([...itemCells, "Yes"]);
         }
       }
     }

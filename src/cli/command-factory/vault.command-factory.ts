@@ -1,5 +1,3 @@
-import chalk from "chalk";
-
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
@@ -163,15 +161,15 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
             if (transferFromVaultErr) {
               failedToTransferCount = failedToTransferCount + 1;
               if (verbose) {
-                tableData.push([...itemCells, chalk.bgRed("No"), transferFromVaultErr.message]);
+                tableData.push([...itemCells, "No", transferFromVaultErr.message]);
               } else {
-                tableData.push([...itemCells, chalk.bgRed("No")]);
+                tableData.push([...itemCells, "No"]);
               }
             } else {
               if (verbose) {
-                tableData.push([...itemCells, chalk.bgGreen("Yes"), ""]);
+                tableData.push([...itemCells, "Yes", ""]);
               } else {
-                tableData.push([...itemCells, chalk.bgGreen("Yes")]);
+                tableData.push([...itemCells, "Yes"]);
               }
             }
           } else {
@@ -179,11 +177,11 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
             if (verbose) {
               tableData.push([
                 itemInstanceId,
-                chalk.bgRed("No"),
+                "No",
                 `Unable to find item in ${options.toVault ? "inventory" : "vault"}`
               ]);
             } else {
-              tableData.push([itemInstanceId, chalk.bgRed("No")]);
+              tableData.push([itemInstanceId, "No"]);
             }
           }
         }

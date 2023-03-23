@@ -6,7 +6,6 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { hasSelectedCharacter } from "~src/helper/current-character.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
-import { formatAlignedDateString } from "~src/helper/date-string.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
@@ -89,7 +88,7 @@ const cmd: CommandDefinition = {
       if (verbose) {
         tableData.push([
           ...basicCells,
-          formatAlignedDateString(character.dateLastPlayed),
+          character.dateLastPlayed,
           character.characterId,
           `${character.membershipId} / ${character.membershipType}`
         ]);

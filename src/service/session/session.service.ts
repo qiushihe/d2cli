@@ -169,7 +169,11 @@ export class SessionService {
     return [null, sessionFile.content[name] as T | null];
   }
 
-  async setData<T>(sessionId: string, name: SessionDataName, data: T): Promise<Error | null> {
+  async setData<T>(
+    sessionId: string,
+    name: SessionDataName,
+    data: T | null
+  ): Promise<Error | null> {
     const [reloadErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadErr) {
       return reloadErr;

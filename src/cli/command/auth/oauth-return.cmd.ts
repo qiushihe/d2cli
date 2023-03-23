@@ -1,6 +1,7 @@
+import * as Base64 from "base64-js";
+
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
-import { base42DecodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { OAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
@@ -33,7 +34,11 @@ const cmd: CommandDefinition = {
     logger.debug(`Authorization Code: ${authorizationCode}`);
     logger.debug(`Encoded State: ${encodedState}`);
 
-    const state = JSON.parse(base42DecodeString(encodedState)) as OAuthState;
+    const state = JSON.parse(
+      new TextDecoder().decode(Base64.toByteArray(encodedState))
+    ) as OAuthState;
+    logger.debug(`Decoded State: ${JSON.stringify(state)}`);
+
     const { t: timestamp, s: sessionId } = state;
 
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");

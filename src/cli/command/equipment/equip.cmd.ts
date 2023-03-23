@@ -1,5 +1,3 @@
-import chalk from "chalk";
-
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
@@ -120,23 +118,23 @@ const cmd: CommandDefinition = {
           if (equipErr) {
             failedToEquipCount = failedToEquipCount + 1;
             if (verbose) {
-              tableData.push([...itemCells, chalk.bgRed("No"), equipErr.message]);
+              tableData.push([...itemCells, "No", equipErr.message]);
             } else {
-              tableData.push([...itemCells, chalk.bgRed("No")]);
+              tableData.push([...itemCells, "No"]);
             }
           } else {
             if (verbose) {
-              tableData.push([...itemCells, chalk.bgGreen("Yes"), ""]);
+              tableData.push([...itemCells, "Yes", ""]);
             } else {
-              tableData.push([...itemCells, chalk.bgGreen("Yes")]);
+              tableData.push([...itemCells, "Yes"]);
             }
           }
         } else {
           failedToEquipCount = failedToEquipCount + 1;
           if (verbose) {
-            tableData.push([itemInstanceId, chalk.bgRed("No"), "Unable to find item in inventory"]);
+            tableData.push([itemInstanceId, "No", "Unable to find item in inventory"]);
           } else {
-            tableData.push([itemInstanceId, chalk.bgRed("No")]);
+            tableData.push([itemInstanceId, "No"]);
           }
         }
       }

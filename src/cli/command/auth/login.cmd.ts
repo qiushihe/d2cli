@@ -1,3 +1,4 @@
+import * as Base64 from "base64-js";
 import opener from "opener";
 import * as path from "path";
 import * as ProtocolRegistry from "protocol-registry";
@@ -7,7 +8,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getRepoRootPath } from "~src/helper/path.helper";
-import { base42EncodeString } from "~src/helper/string.helper";
 import { AppModule } from "~src/module/app.module";
 import { OAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
@@ -39,7 +39,7 @@ const cmd: CommandDefinition = {
     }
 
     const state: OAuthState = { t: new Date().getTime(), s: sessionId };
-    const encodedState = base42EncodeString(JSON.stringify(state));
+    const encodedState = Base64.fromByteArray(new TextEncoder().encode(JSON.stringify(state)));
     logger.debug("Done state encoding");
 
     const oauthUrl = new URL(oauthRoot);

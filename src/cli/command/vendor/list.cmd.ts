@@ -5,7 +5,6 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
-import { formatAlignedDateString } from "~src/helper/date-string.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
@@ -152,7 +151,7 @@ const cmd: CommandDefinition = {
 
         if (vendor) {
           if (!EXCLUDE_REFRESH_VENDOR_HASHES.includes(vendorHash)) {
-            vendorRefresh = formatAlignedDateString(vendor.nextRefreshDate);
+            vendorRefresh = vendor.nextRefreshDate;
           } else {
             vendorRefresh = "N/A";
           }

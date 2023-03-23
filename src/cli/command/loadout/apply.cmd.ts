@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import fs from "fs";
 import path from "path";
 
@@ -568,7 +567,7 @@ const cmd: CommandDefinition = {
 
       const tableRow = [];
       if (!dryRun) {
-        tableRow.push(actionSuccess ? chalk.bgGreen(" Yes ") : chalk.bgRed(" No "));
+        tableRow.push(actionSuccess ? "Yes" : "No");
       }
       tableRow.push(loadoutAction.characterName);
       tableRow.push(loadoutAction.type);
