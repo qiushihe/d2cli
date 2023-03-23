@@ -5,6 +5,7 @@
 .DS_Store
 .idea
 .rollup.cache
+.bin
 
 *.log*
 *.tsbuildinfo
