@@ -10,12 +10,9 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemInstanceIdsCommandOptions;
 
@@ -39,8 +36,8 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
       } = opts as CmdOptions;
       logger.debug(`Session ID: ${sessionId}`);
 
-      const destiny2ManifestService =
-        AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+      const itemDefinitionService =
+        AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
       const destiny2InventoryService =
         AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
@@ -55,18 +52,6 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
       const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
       if (characterInfoErr) {
         return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-      }
-
-      logger.info("Retrieving inventory item definitions ...");
-      const [itemDefinitionsErr, itemDefinitions] =
-        await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.InventoryItemDefinition
-        );
-      if (itemDefinitionsErr) {
-        return logger.loggedError(
-          `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
-        );
       }
 
       const itemInstanceIds = (itemInstanceIdsStr || "").trim().split(",");
@@ -119,7 +104,12 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           const item = sourceItems.find((item) => item.itemInstanceId === itemInstanceId) || null;
 
           if (item) {
-            const itemDefinition = itemDefinitions[item.itemHash] || null;
+            logger.info(`Fetching item definition for ${item.itemHash} ...`);
+            const [itemDefinitionErr, itemDefinition] =
+              await itemDefinitionService.getItemDefinition(item.itemHash);
+            if (itemDefinitionErr) {
+              return logger.loggedError(`Unable to fetch item definition for ${item.itemHash}`);
+            }
 
             let itemDescription: string;
             if (!itemDefinition) {

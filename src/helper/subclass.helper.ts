@@ -1,8 +1,8 @@
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { Logger } from "~src/service/log/log.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 export const SUBCLASS_SOCKET_NAMES = ["ABILITIES", "SUPER", "ASPECTS", "FRAGMENTS"];
 
@@ -13,7 +13,7 @@ export type LoadoutPlugRecord = {
 
 export const getLoadoutPlugRecords = async (
   logger: Logger,
-  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
+  itemDefinitionService: ItemDefinitionService,
   destiny2ItemService: Destiny2ItemService,
   destiny2PlugService: Destiny2PlugService,
   sessionId: string,
@@ -24,7 +24,20 @@ export const getLoadoutPlugRecords = async (
   itemInstanceId: string,
   socketNames: string[]
 ): Promise<[Error, null] | [null, LoadoutPlugRecord[]]> => {
-  const itemName = itemDefinitions[itemHash]?.displayProperties.name || "UNKNOWN ITEM";
+  logger.info(`Retrieving item definition for ${itemHash} ...`);
+  const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+    itemHash
+  );
+  if (itemDefinitionErr) {
+    return [
+      logger.loggedError(
+        `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
+      ),
+      null
+    ];
+  }
+
+  const itemName = itemDefinition?.displayProperties.name || "UNKNOWN ITEM";
   const plugRecords: LoadoutPlugRecord[] = [];
 
   logger.info(`Retrieving ${itemName} equipped plug hashes ...`);

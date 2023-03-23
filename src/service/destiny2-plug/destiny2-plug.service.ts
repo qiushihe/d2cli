@@ -1,6 +1,7 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { DestinyComponentType } from "~type/bungie-api/destiny.types";
@@ -19,6 +20,7 @@ import { GetProfileCharacterPlugItemHashesOptions } from "./destiny2-plug.servic
 export class Destiny2PlugService {
   private readonly bungieApiService: BungieApiService;
   private readonly destiny2ManifestService: Destiny2ManifestService;
+  private readonly itemDefinitionService: ItemDefinitionService;
 
   constructor() {
     this.bungieApiService =
@@ -26,6 +28,9 @@ export class Destiny2PlugService {
 
     this.destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+
+    this.itemDefinitionService =
+      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
   }
 
   async insert(
@@ -69,16 +74,6 @@ export class Destiny2PlugService {
   ): Promise<[Error, null] | [null, number[]]> {
     const logger = this.getLogger();
 
-    logger.debug(`Getting item definitions ...`);
-    const [itemDefinitionsErr, itemDefinitions] =
-      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
-      return [itemDefinitionsErr, null];
-    }
-
     logger.debug(`Getting socket category definitions ...`);
     const [socketCategoryDefinitionsErr, socketCategoryDefinitions] =
       await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
@@ -89,7 +84,13 @@ export class Destiny2PlugService {
       return [socketCategoryDefinitionsErr, null];
     }
 
-    const itemDefinition = itemDefinitions[itemHash];
+    logger.debug(`Fetching item definition for ${itemHash} ...`);
+    const [itemDefinitionErr, itemDefinition] = await this.itemDefinitionService.getItemDefinition(
+      itemHash
+    );
+    if (itemDefinitionErr) {
+      return [itemDefinitionErr, null];
+    }
     if (!itemDefinition) {
       return [new Error(`Invalid item hash: ${itemHash}`), null];
     }
@@ -122,17 +123,13 @@ export class Destiny2PlugService {
   ): Promise<[Error, null] | [null, number[][]]> {
     const logger = this.getLogger();
 
-    logger.debug(`Getting item definitions ...`);
-    const [itemDefinitionsErr, itemDefinitions] =
-      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
-      return [itemDefinitionsErr, null];
+    logger.debug(`Fetching item definition for ${itemHash} ...`);
+    const [itemDefinitionErr, itemDefinition] = await this.itemDefinitionService.getItemDefinition(
+      itemHash
+    );
+    if (itemDefinitionErr) {
+      return [itemDefinitionErr, null];
     }
-
-    const itemDefinition = itemDefinitions[itemHash];
     if (!itemDefinition) {
       return [new Error(`Invalid item hash: ${itemHash}`), null];
     }

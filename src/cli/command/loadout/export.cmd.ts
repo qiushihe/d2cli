@@ -22,13 +22,10 @@ import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions &
   LoadoutNameCommandOptions &
@@ -54,8 +51,8 @@ const cmd: CommandDefinition = {
     const { session: sessionId, loadoutName, includeUnequipped, file } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const itemDefinitionService =
+      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
     const destiny2InventoryService =
       AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
@@ -69,18 +66,6 @@ const cmd: CommandDefinition = {
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-    }
-
-    logger.info("Retrieving inventory item definitions ...");
-    const [itemDefinitionsErr, itemDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
-      return logger.loggedError(
-        `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
-      );
     }
 
     const allItems: DestinyItemComponent[] = [];
@@ -124,7 +109,7 @@ const cmd: CommandDefinition = {
 
     const [subclassPlugRecordsErr, subclassPlugRecords] = await getLoadoutPlugRecords(
       logger,
-      itemDefinitions,
+      itemDefinitionService,
       destiny2ItemService,
       destiny2PlugService,
       sessionId,
@@ -151,12 +136,20 @@ const cmd: CommandDefinition = {
 
     for (let equipmentIndex = 0; equipmentIndex < equipments.length; equipmentIndex++) {
       const equipment = equipments[equipmentIndex];
-      const equipmentDefinition = itemDefinitions[equipment.itemHash];
+
+      logger.info(`Fetching item definition for ${equipment.itemHash} ...`);
+      const [equipmentDefinitionErr, equipmentDefinition] =
+        await itemDefinitionService.getItemDefinition(equipment.itemHash);
+      if (equipmentDefinitionErr) {
+        return logger.loggedError(
+          `Unable to fetch item definition for ${equipment.itemHash}: ${equipmentDefinitionErr.message}`
+        );
+      }
 
       if (ArmourBucketHashes.includes(equipment.bucketHash)) {
         const [equipmentPlugRecordsErr, equipmentPlugRecords] = await getLoadoutPlugRecords(
           logger,
-          itemDefinitions,
+          itemDefinitionService,
           destiny2ItemService,
           destiny2PlugService,
           sessionId,
@@ -184,39 +177,82 @@ const cmd: CommandDefinition = {
 
     const exportLines: string[] = [];
 
+    logger.info(`Fetching item definition for ${subclass.itemHash} ...`);
+    const [subclassDefinitionErr, subclassDefinition] =
+      await itemDefinitionService.getItemDefinition(subclass.itemHash);
+    if (subclassDefinitionErr) {
+      return logger.loggedError(
+        `Unable to fetch item definition for ${subclass.itemHash}: ${subclassDefinitionErr.message}`
+      );
+    }
+
     exportLines.push(
       `LOADOUT // ${
-        loadoutName ||
-        `${
-          itemDefinitions[subclass.itemHash]?.displayProperties.name || "UNKNOWN SUBCLASS"
-        } Loadout`
+        loadoutName || `${subclassDefinition?.displayProperties.name || "UNKNOWN SUBCLASS"} Loadout`
       }`
     );
 
-    exportLines.push(serializeItem(itemDefinitions, subclass, true));
+    const [serializeSubclassErr, serializedSubclass] = await serializeItem(
+      itemDefinitionService,
+      subclass,
+      true
+    );
+    if (serializeSubclassErr) {
+      return logger.loggedError(`Unable to serialize subclass: ${serializeSubclassErr.message}`);
+    }
+    exportLines.push(serializedSubclass);
 
-    serializeItemPlugs(itemDefinitions, subclass, subclassPlugRecords).forEach((serialized) => {
+    const [serializeSubclassPlugsErr, serializedSubclassPlugs] = await serializeItemPlugs(
+      itemDefinitionService,
+      subclass,
+      subclassPlugRecords
+    );
+    if (serializeSubclassPlugsErr) {
+      return logger.loggedError(
+        `Unable to serialize subclass plugs: ${serializeSubclassPlugsErr.message}`
+      );
+    }
+    serializedSubclassPlugs.forEach((serialized) => {
       exportLines.push(serialized);
     });
 
-    (
-      [
-        [equipments.filter((equipment) => !extraItemHashes.includes(equipment.itemHash)), true],
-        [equipments.filter((equipment) => extraItemHashes.includes(equipment.itemHash)), false]
-      ] as [DestinyItemComponent[], boolean][]
-    ).forEach(([_equipments, equip]) => {
-      _equipments.forEach((equipment) => {
-        exportLines.push(serializeItem(itemDefinitions, equipment, equip));
+    const orderedEquipments = [
+      [equipments.filter((equipment) => !extraItemHashes.includes(equipment.itemHash)), true],
+      [equipments.filter((equipment) => extraItemHashes.includes(equipment.itemHash)), false]
+    ] as [DestinyItemComponent[], boolean][];
+    for (let equipmentsIndex = 0; equipmentsIndex < orderedEquipments.length; equipmentsIndex++) {
+      const [_equipments, equip] = orderedEquipments[equipmentsIndex];
 
-        serializeItemPlugs(
-          itemDefinitions,
+      for (let equipmentIndex = 0; equipmentIndex < _equipments.length; equipmentIndex++) {
+        const equipment = _equipments[equipmentIndex];
+
+        const [serializeEquipmentErr, serializedEquipment] = await serializeItem(
+          itemDefinitionService,
+          equipment,
+          equip
+        );
+        if (serializeEquipmentErr) {
+          return logger.loggedError(
+            `Unable to serialize equipment: ${serializeEquipmentErr.message}`
+          );
+        }
+        exportLines.push(serializedEquipment);
+
+        const [serializeEquipmentPlugsErr, serializedEquipmentPlugs] = await serializeItemPlugs(
+          itemDefinitionService,
           equipment,
           equipmentsPlugRecords[`${equipment.itemHash}:${equipment.itemInstanceId}`] || []
-        ).forEach((serialized) => {
+        );
+        if (serializeEquipmentPlugsErr) {
+          return logger.loggedError(
+            `Unable to serialize equipment plugs: ${serializeEquipmentPlugsErr.message}`
+          );
+        }
+        serializedEquipmentPlugs.forEach((serialized) => {
           exportLines.push(serialized);
         });
-      });
-    });
+      }
+    }
 
     if (file) {
       const loadoutFilePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);

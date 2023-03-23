@@ -12,11 +12,8 @@ import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -31,8 +28,8 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const itemDefinitionService =
+      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
     const destiny2InventoryService =
       AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
@@ -40,18 +37,6 @@ const cmd: CommandDefinition = {
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-    }
-
-    logger.info("Retrieving inventory item definitions ...");
-    const [itemDefinitionsErr, itemDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
-      return logger.loggedError(
-        `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
-      );
     }
 
     logger.info("Retrieving equipment items ...");
@@ -86,9 +71,19 @@ const cmd: CommandDefinition = {
       const bucketItems = equippedItems[bucket];
 
       const equippedItem = bucketItems[0];
+
+      logger.info(`Fetching item definition for ${equippedItem.itemHash} ...`);
+      const [equippedItemDefinitionErr, equippedItemDefinition] =
+        await itemDefinitionService.getItemDefinition(equippedItem.itemHash);
+      if (equippedItemDefinitionErr) {
+        return logger.loggedError(
+          `Unable to fetch item definition for ${equippedItem.itemHash}: ${equippedItemDefinitionErr.message}`
+        );
+      }
+
       const equippedItemInfo: ItemNameAndPowerLevel = equippedItem
         ? getItemNameAndPowerLevel(
-            itemDefinitions[equippedItem.itemHash] || null,
+            equippedItemDefinition || null,
             equippedItemInstances[equippedItem.itemInstanceId] || null
           )
         : { label: "UNKNOWN", powerLevel: "N/A" };

@@ -12,12 +12,9 @@ import { parseItemIdentifier } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions &
   VerboseCommandOptions &
@@ -43,8 +40,8 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Missing item hash`);
     }
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const itemDefinitionService =
+      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
     const destiny2PlugService =
       AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
@@ -55,18 +52,6 @@ const cmd: CommandDefinition = {
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-    }
-
-    logger.info("Retrieving inventory item definitions ...");
-    const [itemDefinitionsErr, itemDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
-      return logger.loggedError(
-        `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
-      );
     }
 
     logger.info("Retrieving armour mod socket indices ...");
@@ -119,22 +104,33 @@ const cmd: CommandDefinition = {
       equippedPlugHashes = armourPlugItemSocketIndices.map((index) => _equippedPlugHashes[index]);
     }
 
-    const plugsBySlotIndex = armourPlugItemHashes.map((plugItemHashes, slotIndex) => {
-      return plugItemHashes.map((plugItemHash) => {
-        const isEquipped = equippedPlugHashes[slotIndex] === plugItemHash;
-        const plugItemDefinition = itemDefinitions[plugItemHash];
+    const plugsBySlotIndex: { isEquipped: boolean; hash: number; label: string }[][] = [];
+    for (let slotIndex = 0; slotIndex < armourPlugItemHashes.length; slotIndex++) {
+      const plugItemHashes = armourPlugItemHashes[slotIndex];
 
-        if (plugItemDefinition) {
-          return {
-            isEquipped,
-            hash: plugItemHash,
-            label: plugItemDefinition ? plugItemDefinition.displayProperties.name : ""
-          };
-        } else {
-          return { isEquipped, hash: plugItemHash, label: "" };
+      const plugs: { isEquipped: boolean; hash: number; label: string }[] = [];
+      for (let plugIndex = 0; plugIndex < plugItemHashes.length; plugIndex++) {
+        const plugItemHash = plugItemHashes[plugIndex];
+        const isEquipped = equippedPlugHashes[slotIndex] === plugItemHash;
+
+        logger.info(`Retrieving plug item definition for ${plugItemHash} ...`);
+        const [plugItemDefinitionErr, plugItemDefinition] =
+          await itemDefinitionService.getItemDefinition(plugItemHash);
+        if (plugItemDefinitionErr) {
+          return logger.loggedError(
+            `Unable to retrieve plug item definition: ${plugItemDefinitionErr.message}`
+          );
         }
-      });
-    });
+
+        plugs.push({
+          isEquipped,
+          hash: plugItemHash,
+          label: plugItemDefinition?.displayProperties.name || "UNKNOWN PLUG"
+        });
+      }
+
+      plugsBySlotIndex.push(plugs);
+    }
 
     const tableData: string[][] = [];
 

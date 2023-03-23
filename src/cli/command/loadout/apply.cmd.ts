@@ -27,13 +27,10 @@ import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destin
 import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
 import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions &
   VerboseCommandOptions & { file: string; dryRun: boolean };
@@ -62,8 +59,8 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose, file, dryRun } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const itemDefinitionService =
+      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
     const destiny2InventoryService =
       AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
@@ -94,18 +91,6 @@ const cmd: CommandDefinition = {
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-    }
-
-    logger.info("Retrieving inventory item definitions ...");
-    const [itemDefinitionsErr, itemDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
-      return logger.loggedError(
-        `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
-      );
     }
 
     logger.info("Reading loadout file ...");
@@ -149,7 +134,14 @@ const cmd: CommandDefinition = {
             const itemHash = parseInt(`${dataParts[0]}`.trim(), 10);
             const itemInstanceId = `${dataParts[1]}`.trim().replace(/\D/gi, "");
 
-            const itemDefinition = itemDefinitions[itemHash];
+            logger.info(`Fetching item definition for ${itemHash} ...`);
+            const [itemDefinitionErr, itemDefinition] =
+              await itemDefinitionService.getItemDefinition(itemHash);
+            if (itemDefinitionErr) {
+              return logger.loggedError(
+                `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
+              );
+            }
             if (!itemDefinition) {
               return logger.loggedError(`Unable to find item definition for: ${itemHash}`);
             }
@@ -169,7 +161,14 @@ const cmd: CommandDefinition = {
             const itemHash = parseInt(`${dataParts[0]}`.trim(), 10);
             const itemInstanceId = `${dataParts[1]}`.trim().replace(/\D/gi, "");
 
-            const itemDefinition = itemDefinitions[itemHash];
+            logger.info(`Fetching item definition for ${itemHash} ...`);
+            const [itemDefinitionErr, itemDefinition] =
+              await itemDefinitionService.getItemDefinition(itemHash);
+            if (itemDefinitionErr) {
+              return logger.loggedError(
+                `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
+              );
+            }
             if (!itemDefinition) {
               return logger.loggedError(`Unable to find extra item definition for: ${itemHash}`);
             }
@@ -196,14 +195,28 @@ const cmd: CommandDefinition = {
             const socketIndex = parseInt(`${indexParts[1]}`.trim(), 10);
             const plugItemHash = parseInt(`${plugParts[1]}`.trim(), 10);
 
-            const plugItemDefinition = itemDefinitions[plugItemHash];
-            if (!plugItemDefinition) {
-              return logger.loggedError(`Unable to find item definition for: ${plugItemHash}`);
+            logger.info(`Fetching item definition for ${itemHash} ...`);
+            const [itemDefinitionErr, itemDefinition] =
+              await itemDefinitionService.getItemDefinition(itemHash);
+            if (itemDefinitionErr) {
+              return logger.loggedError(
+                `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
+              );
             }
-
-            const itemDefinition = itemDefinitions[itemHash];
             if (!itemDefinition) {
               return logger.loggedError(`Unable to find item definition for: ${itemHash}`);
+            }
+
+            logger.info(`Fetching item definition for ${plugItemHash} ...`);
+            const [plugItemDefinitionErr, plugItemDefinition] =
+              await itemDefinitionService.getItemDefinition(itemHash);
+            if (plugItemDefinitionErr) {
+              return logger.loggedError(
+                `Unable to fetch item definition for ${plugItemHash}: ${plugItemDefinitionErr.message}`
+              );
+            }
+            if (!plugItemDefinition) {
+              return logger.loggedError(`Unable to find item definition for: ${plugItemHash}`);
             }
 
             const [serializeItemErr, serializedItem] = serializeItem(
@@ -246,8 +259,8 @@ const cmd: CommandDefinition = {
 
     logger.info("Indexing existing items ...");
     const [allItemsInfoErr, allItemsInfo] = await serializeAllItems(
+      itemDefinitionService,
       destiny2InventoryService,
-      itemDefinitions,
       characterDescriptions,
       sessionId,
       characterInfo.membershipType,
@@ -260,8 +273,8 @@ const cmd: CommandDefinition = {
 
     const loadoutActions: LoadoutAction[] = [];
 
-    const [equipmentTransferActionsErr, equipmentTransferActions] = resolveTransferActions(
-      itemDefinitions,
+    const [equipmentTransferActionsErr, equipmentTransferActions] = await resolveTransferActions(
+      itemDefinitionService,
       characterDescriptions,
       characterInfo.characterId,
       loadoutEquipments,
@@ -277,8 +290,8 @@ const cmd: CommandDefinition = {
     equipmentTransferActions.forEach((action) => loadoutActions.push(action));
 
     const [extraEquipmentTransferActionsErr, extraEquipmentTransferActions] =
-      resolveTransferActions(
-        itemDefinitions,
+      await resolveTransferActions(
+        itemDefinitionService,
         characterDescriptions,
         characterInfo.characterId,
         loadoutExtraEquipments,
@@ -469,7 +482,17 @@ const cmd: CommandDefinition = {
       plugItemIndex++
     ) {
       const [itemInstanceId, itemHash] = plugItemInstanceIdsAndHashes[plugItemIndex];
-      const itemDefinition = itemDefinitions[itemHash];
+
+      logger.info(`Fetching item definition for ${itemHash} ...`);
+      const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+        itemHash
+      );
+      if (itemDefinitionErr) {
+        return logger.loggedError(
+          `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
+        );
+      }
+
       const itemName = itemDefinition?.displayProperties.name || "UNKNOWN ITEM";
 
       logger.info(`Fetching equipped plugs for ${itemName} ...`);

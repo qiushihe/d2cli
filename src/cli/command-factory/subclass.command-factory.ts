@@ -12,14 +12,11 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ShowAllCommandOptions;
 
@@ -56,8 +53,8 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       const { session: sessionId, verbose, showAll } = opts as CmdOptions;
       logger.debug(`Session ID: ${sessionId}`);
 
-      const destiny2ManifestService =
-        AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+      const itemDefinitionService =
+        AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
       const destiny2InventoryService =
         AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
@@ -73,18 +70,6 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
       if (characterInfoErr) {
         return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-      }
-
-      logger.info("Retrieving inventory item definitions ...");
-      const [itemDefinitionsErr, itemDefinitions] =
-        await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.InventoryItemDefinition
-        );
-      if (itemDefinitionsErr) {
-        return logger.loggedError(
-          `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
-        );
       }
 
       const subclassRecords: SubclassRecord[] = [];
@@ -125,7 +110,15 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       for (let subClassIndex = 0; subClassIndex < allSubclasses.length; subClassIndex++) {
         const subclass = allSubclasses[subClassIndex];
 
-        const subclassDefinition = itemDefinitions[subclass.itemHash];
+        logger.info(`Retrieving subclass definitions for ${subclass.itemHash} ...`);
+        const [subclassDefinitionErr, subclassDefinition] =
+          await itemDefinitionService.getItemDefinition(subclass.itemHash);
+        if (subclassDefinitionErr) {
+          return logger.loggedError(
+            `Unable to retrieve subclass definitions for ${subclass.itemHash}`
+          );
+        }
+
         const subclassName = subclassDefinition ? subclassDefinition.displayProperties.name : "N/A";
 
         const subclassRecord: SubclassRecord = {
@@ -208,7 +201,15 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
               plugItemIndex++
             ) {
               const plugItemHash = slotPlugItemHashes[plugItemIndex];
-              const plugItemDefinition = itemDefinitions[plugItemHash];
+
+              logger.info(`Retrieving plug item definitions for ${plugItemHash} ...`);
+              const [plugItemDefinitionErr, plugItemDefinition] =
+                await itemDefinitionService.getItemDefinition(plugItemHash);
+              if (plugItemDefinitionErr) {
+                return logger.loggedError(
+                  `Unable to retrieve plug item definitions for ${plugItemHash}`
+                );
+              }
 
               const plugRecord: SubclassPlugRecord = {
                 name: plugItemDefinition

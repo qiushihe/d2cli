@@ -10,11 +10,8 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemInstanceIdsCommandOptions;
 
@@ -29,8 +26,8 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose, itemInstanceIds: itemInstanceIdsStr } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const itemDefinitionService =
+      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
     const destiny2InventoryService =
       AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
@@ -43,18 +40,6 @@ const cmd: CommandDefinition = {
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-    }
-
-    logger.info("Retrieving inventory item definitions ...");
-    const [itemDefinitionsErr, itemDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
-      return logger.loggedError(
-        `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
-      );
     }
 
     const itemInstanceIds = (itemInstanceIdsStr || "").trim().split(",");
@@ -90,7 +75,15 @@ const cmd: CommandDefinition = {
         const item = inventoryItems.find((item) => item.itemInstanceId === itemInstanceId) || null;
 
         if (item) {
-          const itemDefinition = itemDefinitions[item.itemHash] || null;
+          logger.info(`Fetching item definition for ${item.itemHash} ...`);
+          const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+            item.itemHash
+          );
+          if (itemDefinitionErr) {
+            return logger.loggedError(
+              `Unable to fetch item definition for ${item.itemHash}: ${itemDefinitionErr.message}`
+            );
+          }
 
           let itemDescription: string;
           if (!itemDefinition) {

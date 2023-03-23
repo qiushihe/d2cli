@@ -7,13 +7,10 @@ import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getPostmasterItems } from "~src/helper/postmaster.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PostmasterService } from "~src/service/destiny2-postmaster/destiny2-postmaster.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & { itemNumber: string };
 
@@ -42,8 +39,8 @@ const cmd: CommandDefinition = {
       logger.debug(`Should pull all items`);
     }
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const itemDefinitionService =
+      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
     const destiny2PostmasterService =
       AppModule.getDefaultInstance().resolve<Destiny2PostmasterService>(
@@ -53,18 +50,6 @@ const cmd: CommandDefinition = {
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
-    }
-
-    logger.info("Retrieving inventory item definitions ...");
-    const [itemDefinitionsErr, itemDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
-      return logger.loggedError(
-        `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
-      );
     }
 
     logger.info("Retrieving postmaster items ...");
@@ -105,7 +90,16 @@ const cmd: CommandDefinition = {
     let failedToPullCount = 0;
     for (let itemIndex = 0; itemIndex < itemsToPull.length; itemIndex++) {
       const { itemNumber, item } = itemsToPull[itemIndex];
-      const itemDefinition = itemDefinitions[item.itemHash] || null;
+
+      logger.info(`Fetching item definition for ${item.itemHash} ...`);
+      const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+        item.itemHash
+      );
+      if (itemDefinitionErr) {
+        return logger.loggedError(
+          `Unable to fetch item definition for ${item.itemHash}: ${itemDefinitionErr.message}`
+        );
+      }
 
       let itemDescription: string;
       if (!itemDefinition) {

@@ -1,7 +1,7 @@
 import { InventoryBucket } from "~src/helper/inventory-bucket.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 export const LoadoutInventoryBuckets = [
   InventoryBucket.KineticWeapon,
@@ -14,28 +14,49 @@ export const LoadoutInventoryBuckets = [
   InventoryBucket.ClassItem
 ];
 
-export const serializeItem = (
-  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
+export const serializeItem = async (
+  itemDefinitionService: ItemDefinitionService,
   item: DestinyItemComponent,
   equip: boolean
-): string => {
-  const itemName = itemDefinitions[item.itemHash]?.displayProperties.name || "UNKNOWN ITEM";
+): Promise<[Error, null] | [null, string]> => {
+  const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+    item.itemHash
+  );
+  if (itemDefinitionErr) {
+    return [itemDefinitionErr, null];
+  }
+
+  const itemName = itemDefinition?.displayProperties.name || "UNKNOWN ITEM";
   const itemInfo = [`${item.itemHash}:${item.itemInstanceId}`].join("::");
-  return `${equip ? "EQUIP" : "EXTRA"} // ${itemInfo} // ${itemName}`;
+
+  return [null, `${equip ? "EQUIP" : "EXTRA"} // ${itemInfo} // ${itemName}`];
 };
 
-export const serializeItemPlugs = (
-  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
+export const serializeItemPlugs = async (
+  itemDefinitionService: ItemDefinitionService,
   item: DestinyItemComponent,
   plugs: LoadoutPlugRecord[]
-): string[] => {
-  return plugs.map((plug) => {
-    const plugName = itemDefinitions[plug.itemHash]?.displayProperties.name || "UNKNOWN ITEM";
+): Promise<[Error, null] | [null, string[]]> => {
+  const serializedPlugs: string[] = [];
+
+  for (let plugIndex = 0; plugIndex < plugs.length; plugIndex++) {
+    const plug = plugs[plugIndex];
+
+    const [plugItemDefinitionErr, plugItemDefinition] =
+      await itemDefinitionService.getItemDefinition(plug.itemHash);
+    if (plugItemDefinitionErr) {
+      return [plugItemDefinitionErr, null];
+    }
+
+    const plugName = plugItemDefinition?.displayProperties.name || "UNKNOWN ITEM";
     const plugInfo = [
       `${item.itemHash}:${item.itemInstanceId}`,
       `index:${plug.socketIndex}`,
       `plug:${plug.itemHash}`
     ].join("::");
-    return `SOCKET // ${plugInfo} // ${plugName}`;
-  });
+
+    serializedPlugs.push(`SOCKET // ${plugInfo} // ${plugName}`);
+  }
+
+  return [null, serializedPlugs];
 };

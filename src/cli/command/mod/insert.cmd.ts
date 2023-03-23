@@ -10,12 +10,9 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 type CmdOptions = SessionIdCommandOptions &
   ItemIdentifierCommandOptions &
@@ -47,8 +44,8 @@ const cmd: CommandDefinition = {
     const socketIndex = (parseInt(socket, 10) || 0) - 1;
     const plugItemHash = parseInt(plugHash, 10) || 0;
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const itemDefinitionService =
+      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
 
     const destiny2PlugService =
       AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
@@ -58,20 +55,24 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    logger.info("Retrieving inventory item definitions ...");
-    const [itemDefinitionsErr, itemDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.InventoryItemDefinition
-      );
-    if (itemDefinitionsErr) {
+    logger.info(`Fetching item definition for ${itemIdentifier.itemHash} ...`);
+    const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+      itemIdentifier.itemHash
+    );
+    if (itemDefinitionErr) {
       return logger.loggedError(
-        `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
+        `Unable to fetch item definition for ${itemIdentifier.itemHash}: ${itemDefinitionErr.message}`
       );
     }
 
-    const itemDefinition = itemDefinitions[itemIdentifier.itemHash];
-    const plugItemDefinition = itemDefinitions[plugItemHash];
+    logger.info(`Fetching item definition for ${plugItemHash} ...`);
+    const [plugItemDefinitionErr, plugItemDefinition] =
+      await itemDefinitionService.getItemDefinition(plugItemHash);
+    if (plugItemDefinitionErr) {
+      return logger.loggedError(
+        `Unable to fetch item definition for ${plugItemHash}: ${plugItemDefinitionErr.message}`
+      );
+    }
 
     const itemDescription = itemDefinition.displayProperties.name;
     const plugItemDescription = plugItemDefinition.displayProperties.name;

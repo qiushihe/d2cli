@@ -4,7 +4,7 @@ import { CharacterDescription } from "~src/service/character-description/charact
 import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
 import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 
 export type LoadoutAction = {
   type: "DEPOSIT" | "WITHDRAW" | "EQUIP" | "SOCKET";
@@ -18,19 +18,25 @@ export type LoadoutAction = {
   plugItemHash: number | null;
 };
 
-export const resolveTransferActions = (
-  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
+export const resolveTransferActions = async (
+  itemDefinitionService: ItemDefinitionService,
   characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
   equipmentItems: SerializedItem[],
   characterItems: { equipped: SerializedItem[]; unequipped: SerializedItem[] },
   otherCharacterItems: Record<string, { equipped: SerializedItem[]; unequipped: SerializedItem[] }>,
   vaultItemsInfo: SerializedItem[]
-): [Error, null] | [null, LoadoutAction[]] => {
+): Promise<[Error, null] | [null, LoadoutAction[]]> => {
   const actions: LoadoutAction[] = [];
 
   for (let equipmentIndex = 0; equipmentIndex < equipmentItems.length; equipmentIndex++) {
     const equipment = equipmentItems[equipmentIndex];
+
+    const [equipmentItemDefinitionErr, equipmentItemDefinition] =
+      await itemDefinitionService.getItemDefinition(equipment.itemHash);
+    if (equipmentItemDefinitionErr) {
+      return [equipmentItemDefinitionErr, null];
+    }
 
     if (
       !characterItems.equipped.find(
@@ -52,7 +58,7 @@ export const resolveTransferActions = (
           type: "WITHDRAW",
           characterName: characterDescriptions[characterId].asString,
           characterId: characterId,
-          itemName: itemDefinitions[equipment.itemHash]?.displayProperties.name,
+          itemName: equipmentItemDefinition?.displayProperties.name,
           itemHash: equipment.itemHash,
           itemInstanceId: equipment.itemInstanceId,
           socketIndex: null,
@@ -73,7 +79,7 @@ export const resolveTransferActions = (
             type: "DEPOSIT",
             characterName: characterDescriptions[unequippedOtherCharacterId].asString,
             characterId: unequippedOtherCharacterId,
-            itemName: itemDefinitions[equipment.itemHash]?.displayProperties.name,
+            itemName: equipmentItemDefinition?.displayProperties.name,
             itemHash: equipment.itemHash,
             itemInstanceId: equipment.itemInstanceId,
             socketIndex: null,
@@ -84,7 +90,7 @@ export const resolveTransferActions = (
             type: "WITHDRAW",
             characterName: characterDescriptions[characterId].asString,
             characterId: characterId,
-            itemName: itemDefinitions[equipment.itemHash]?.displayProperties.name,
+            itemName: equipmentItemDefinition?.displayProperties.name,
             itemHash: equipment.itemHash,
             itemInstanceId: equipment.itemInstanceId,
             socketIndex: null,
@@ -105,20 +111,14 @@ export const resolveTransferActions = (
             //       character. Then move to vault. Then move to current character.
             return [
               new Error(
-                `Unable to resolve transfer for: ${equipment.itemHash}:${
-                  equipment.itemInstanceId
-                } (${
-                  itemDefinitions[equipment.itemHash]?.displayProperties.name
-                }) from character: ${equippedOtherCharacterId}`
+                `Unable to resolve transfer for: ${equipment.itemHash}:${equipment.itemInstanceId} (${equipmentItemDefinition?.displayProperties.name}) from character: ${equippedOtherCharacterId}`
               ),
               null
             ];
           } else {
             return [
               new Error(
-                `Unable to find: ${equipment.itemHash}:${equipment.itemInstanceId} (${
-                  itemDefinitions[equipment.itemHash]?.displayProperties.name
-                })`
+                `Unable to find: ${equipment.itemHash}:${equipment.itemInstanceId} (${equipmentItemDefinition?.displayProperties.name})`
               ),
               null
             ];

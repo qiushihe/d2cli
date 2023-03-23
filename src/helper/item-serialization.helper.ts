@@ -4,6 +4,7 @@ import { WeaponBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { InventoryBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { CharacterDescription } from "~src/service/character-description/character-description.types";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
+import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { DestinyInventoryItemDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
@@ -99,16 +100,21 @@ export const serializeItem = (
   ];
 };
 
-export const serializeItems = (
-  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
+export const serializeItems = async (
+  itemDefinitionService: ItemDefinitionService,
   items: DestinyItemComponent[]
-): [Error, null] | [null, SerializedItem[]] => {
+): Promise<[Error, null] | [null, SerializedItem[]]> => {
   const serializedItems: SerializedItem[] = [];
 
   for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
     const item = items[itemIndex];
-    const itemDefinition = itemDefinitions[item.itemHash];
 
+    const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+      item.itemHash
+    );
+    if (itemDefinitionErr) {
+      return [new Error(`Unable to fetch item definition for: ${item.itemHash}`), null];
+    }
     if (!itemDefinition) {
       return [new Error(`Unable to find item definition for: ${item.itemHash}`), null];
     }
@@ -132,7 +138,7 @@ export const serializeItems = (
 };
 
 export const serializeCharacterItems = async (
-  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
+  itemDefinitionService: ItemDefinitionService,
   destiny2InventoryService: Destiny2InventoryService,
   sessionId: string,
   membershipType: number,
@@ -159,16 +165,16 @@ export const serializeCharacterItems = async (
     return [inventoryItemsErr, null, null];
   }
 
-  const [serializeEquippedItemsErr, serializedEquippedItems] = serializeItems(
-    itemDefinitions,
+  const [serializeEquippedItemsErr, serializedEquippedItems] = await serializeItems(
+    itemDefinitionService,
     equipmentItems
   );
   if (serializeEquippedItemsErr) {
     return [serializeEquippedItemsErr, null, null];
   }
 
-  const [serializeUnequippedItemsErr, serializedUnequippedItems] = serializeItems(
-    itemDefinitions,
+  const [serializeUnequippedItemsErr, serializedUnequippedItems] = await serializeItems(
+    itemDefinitionService,
     inventoryItems
   );
   if (serializeUnequippedItemsErr) {
@@ -179,8 +185,8 @@ export const serializeCharacterItems = async (
 };
 
 export const serializeAllItems = async (
+  itemDefinitionService: ItemDefinitionService,
   destiny2InventoryService: Destiny2InventoryService,
-  itemDefinitions: Destiny2ManifestInventoryItemDefinitions,
   characterDescriptions: Record<string, CharacterDescription>,
   sessionId: string,
   membershipType: number,
@@ -207,7 +213,7 @@ export const serializeAllItems = async (
 > => {
   const [serializeOwnItemsErr, serializedOwnEquippedItems, serializedOwnUnequippedItems] =
     await serializeCharacterItems(
-      itemDefinitions,
+      itemDefinitionService,
       destiny2InventoryService,
       sessionId,
       membershipType,
@@ -237,7 +243,7 @@ export const serializeAllItems = async (
       serializedOthersEquippedItems,
       serializedOthersUnequippedItems
     ] = await serializeCharacterItems(
-      itemDefinitions,
+      itemDefinitionService,
       destiny2InventoryService,
       sessionId,
       membershipType,
@@ -263,8 +269,8 @@ export const serializeAllItems = async (
     return [vaultItemsErr, null];
   }
 
-  const [serializeVaultItemsErr, serializedVaultItems] = serializeItems(
-    itemDefinitions,
+  const [serializeVaultItemsErr, serializedVaultItems] = await serializeItems(
+    itemDefinitionService,
     vaultItems
   );
   if (serializeVaultItemsErr) {
