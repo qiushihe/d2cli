@@ -2,7 +2,6 @@ import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import typescript from "@rollup/plugin-typescript";
-import copy from "rollup-plugin-copy";
 
 export default {
   input: "src/cli/d2cli.ts",
@@ -24,14 +23,6 @@ export default {
         declarationMap: false,
         sourceMap: false
       }
-    }),
-    copy({
-      targets: [
-        {
-          src: "node_modules/protocol-registry/src/macos/defaultAppExist.sh",
-          dest: "dist"
-        }
-      ]
     })
   ]
 };
