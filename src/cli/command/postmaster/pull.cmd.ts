@@ -3,7 +3,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getPostmasterItems } from "~src/helper/postmaster.helper";
 import { stringifyTable } from "~src/helper/table.helper";
@@ -56,29 +55,24 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
     }
 
-    const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
-      "Retrieving inventory item definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.InventoryItemDefinition
-        )
-    );
+    logger.info("Retrieving inventory item definitions ...");
+    const [itemDefinitionsErr, itemDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.InventoryItemDefinition
+      );
     if (itemDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
       );
     }
 
-    const [postmasterItemsErr, postmasterItems] = await fnWithSpinner(
-      "Retrieving postmaster items ...",
-      () =>
-        getPostmasterItems(
-          sessionId,
-          characterInfo.membershipType,
-          characterInfo.membershipId,
-          characterInfo.characterId
-        )
+    logger.info("Retrieving postmaster items ...");
+    const [postmasterItemsErr, postmasterItems] = await getPostmasterItems(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId
     );
     if (postmasterItemsErr) {
       return logger.loggedError(
@@ -122,20 +116,19 @@ const cmd: CommandDefinition = {
 
       const itemCells = [`${itemNumber}`, itemDescription];
 
-      const pullItemErr = await fnWithSpinner(
+      logger.info(
         itemsToPull.length <= 1
           ? `Pulling item from postmaster: ${itemDescription} ...`
           : `Pulling item ${itemIndex + 1} of ${
               itemsToPull.length
-            } from postmaster: ${itemDescription} ...`,
-        () =>
-          destiny2PostmasterService.pullItem(
-            sessionId,
-            characterInfo.membershipType,
-            characterInfo.characterId,
-            item.itemHash,
-            item.itemInstanceId || null
-          )
+            } from postmaster: ${itemDescription} ...`
+      );
+      const pullItemErr = await destiny2PostmasterService.pullItem(
+        sessionId,
+        characterInfo.membershipType,
+        characterInfo.characterId,
+        item.itemHash,
+        item.itemInstanceId || null
       );
       if (pullItemErr) {
         failedToPullCount = failedToPullCount + 1;

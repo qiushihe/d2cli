@@ -1,7 +1,6 @@
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
@@ -54,9 +53,8 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Character number must be between 1 and 3`);
     }
 
-    const [charactersErr, characters] = await fnWithSpinner("Retrieving characters ...", () =>
-      destiny2CharacterService.getCharacters(sessionId)
-    );
+    logger.info("Retrieving characters ...");
+    const [charactersErr, characters] = await destiny2CharacterService.getCharacters(sessionId);
     if (charactersErr) {
       return logger.loggedError(`Unable to retrieve characters: ${charactersErr.message}`);
     }
@@ -66,22 +64,24 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Character #${characterNumber} not found`);
     }
 
-    const [characterDescriptionErr, characterDescription] = await fnWithSpinner(
-      "Retrieving character description ...",
-      () => characterDescriptionService.getDescription(character)
-    );
+    logger.info("Retrieving character description ...");
+    const [characterDescriptionErr, characterDescription] =
+      await characterDescriptionService.getDescription(character);
     if (characterDescriptionErr) {
       return logger.loggedError(
         `Unable to retrieve character description: ${characterDescriptionErr.message}`
       );
     }
 
-    const setDataErr = await fnWithSpinner("Storing current character selection ...", () =>
-      sessionService.setData<CharacterReference>(sessionId, SessionDataName.CurrentCharacterInfo, {
+    logger.info("Storing current character selection ...");
+    const setDataErr = await sessionService.setData<CharacterReference>(
+      sessionId,
+      SessionDataName.CurrentCharacterInfo,
+      {
         membershipType: character.membershipType,
         membershipId: character.membershipId,
         characterId: character.characterId
-      })
+      }
     );
     if (setDataErr) {
       return logger.loggedError(`Unable to store character selection: ${setDataErr.message}`);

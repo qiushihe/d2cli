@@ -5,7 +5,6 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { itemInstanceIdsOption } from "~src/cli/command-option/item.option";
 import { ItemInstanceIdsCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
@@ -58,14 +57,12 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
         return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
       }
 
-      const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
-        "Retrieving inventory item definitions ...",
-        () =>
-          destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-            Destiny2ManifestLanguage.English,
-            Destiny2ManifestComponent.InventoryItemDefinition
-          )
-      );
+      logger.info("Retrieving inventory item definitions ...");
+      const [itemDefinitionsErr, itemDefinitions] =
+        await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
+          Destiny2ManifestLanguage.English,
+          Destiny2ManifestComponent.InventoryItemDefinition
+        );
       if (itemDefinitionsErr) {
         return logger.loggedError(
           `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
@@ -133,31 +130,30 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
 
             const itemCells = [itemDescription];
 
-            const transferFromVaultErr = await fnWithSpinner(
+            logger.info(
               itemInstanceIds.length <= 1
                 ? `Transferring item ${
                     options.toVault ? "to" : "from"
                   } vault: ${itemDescription} ...`
                 : `Transferring item ${itemInstanceIdIndex + 1} of ${itemInstanceIds.length} ${
                     options.toVault ? "to" : "from"
-                  } vault: ${itemDescription} ...`,
-              () =>
-                options.toVault
-                  ? destiny2InventoryTransferService.transferToVault(
-                      sessionId,
-                      characterInfo.membershipType,
-                      characterInfo.characterId,
-                      item.itemHash,
-                      item.itemInstanceId
-                    )
-                  : destiny2InventoryTransferService.transferFromVault(
-                      sessionId,
-                      characterInfo.membershipType,
-                      characterInfo.characterId,
-                      item.itemHash,
-                      item.itemInstanceId
-                    )
+                  } vault: ${itemDescription} ...`
             );
+            const transferFromVaultErr = await (options.toVault
+              ? destiny2InventoryTransferService.transferToVault(
+                  sessionId,
+                  characterInfo.membershipType,
+                  characterInfo.characterId,
+                  item.itemHash,
+                  item.itemInstanceId
+                )
+              : destiny2InventoryTransferService.transferFromVault(
+                  sessionId,
+                  characterInfo.membershipType,
+                  characterInfo.characterId,
+                  item.itemHash,
+                  item.itemInstanceId
+                ));
             if (transferFromVaultErr) {
               failedToTransferCount = failedToTransferCount + 1;
               if (verbose) {

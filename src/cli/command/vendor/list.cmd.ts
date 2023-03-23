@@ -3,7 +3,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
@@ -74,55 +73,48 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    const [vendorDefinitionsErr, vendorDefinitions] = await fnWithSpinner(
-      "Retrieving vendor definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestVendorDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.VendorDefinition
-        )
-    );
+    logger.info("Retrieving vendor definitions ...");
+    const [vendorDefinitionsErr, vendorDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestVendorDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.VendorDefinition
+      );
     if (vendorDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve vendor definitions: ${vendorDefinitionsErr.message}`
       );
     }
 
-    const [destinationDefinitionsErr, destinationDefinitions] = await fnWithSpinner(
-      "Retrieving destination definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestDestinationDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.DestinationDefinition
-        )
-    );
+    logger.info("Retrieving destination definitions ...");
+    const [destinationDefinitionsErr, destinationDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestDestinationDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.DestinationDefinition
+      );
     if (destinationDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve destination definitions: ${destinationDefinitionsErr.message}`
       );
     }
 
-    const [placeDefinitionsErr, placeDefinitions] = await fnWithSpinner(
-      "Retrieving place definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestPlaceDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.PlaceDefinition
-        )
-    );
+    logger.info("Retrieving place definitions ...");
+    const [placeDefinitionsErr, placeDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestPlaceDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.PlaceDefinition
+      );
     if (placeDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve place definitions: ${placeDefinitionsErr.message}`
       );
     }
 
-    const [vendorsErr, vendors] = await fnWithSpinner("Retrieving vendors ...", () =>
-      destiny2VendorService.getVendors(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId
-      )
+    logger.info("Retrieving vendors ...");
+    const [vendorsErr, vendors] = await destiny2VendorService.getVendors(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId
     );
     if (vendorsErr) {
       return logger.loggedError(`Unable to retrieve vendors: ${vendorsErr.message}`);

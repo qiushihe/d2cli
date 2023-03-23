@@ -3,7 +3,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
@@ -50,30 +49,26 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    const [progressionDefinitionsErr, progressionDefinitions] = await fnWithSpinner(
-      "Retrieving progression definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestProgressionDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.ProgressionDefinition
-        )
-    );
+    logger.info("Retrieving progression definitions ...");
+    const [progressionDefinitionsErr, progressionDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestProgressionDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.ProgressionDefinition
+      );
     if (progressionDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve progression definitions: ${progressionDefinitionsErr.message}`
       );
     }
 
-    const [characterProgressionErr, characterProgression] = await fnWithSpinner(
-      "Retrieving character progression ...",
-      () =>
-        destiny2CharacterService.getCharacterProgressions(
-          sessionId,
-          characterInfo.membershipType,
-          characterInfo.membershipId,
-          characterInfo.characterId
-        )
-    );
+    logger.info("Retrieving character progression ...");
+    const [characterProgressionErr, characterProgression] =
+      await destiny2CharacterService.getCharacterProgressions(
+        sessionId,
+        characterInfo.membershipType,
+        characterInfo.membershipId,
+        characterInfo.characterId
+      );
     if (characterProgressionErr) {
       return logger.loggedError(
         `Unable to retrieve character progressions: ${characterProgressionErr.message}`

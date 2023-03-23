@@ -1,4 +1,3 @@
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
 import { Logger } from "~src/service/log/log.types";
@@ -11,10 +10,10 @@ export const getCharacterSelectionInfo = async (
 ): Promise<[Error, null] | [null, CharacterReference | null]> => {
   const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-  const [characterInfoErr, characterInfo] = await fnWithSpinner(
-    "Retrieving current character selection ...",
-    () =>
-      sessionService.getData<CharacterReference>(sessionId, SessionDataName.CurrentCharacterInfo)
+  logger.info("Retrieving current character selection ...");
+  const [characterInfoErr, characterInfo] = await sessionService.getData<CharacterReference>(
+    sessionId,
+    SessionDataName.CurrentCharacterInfo
   );
   if (characterInfoErr) {
     return [

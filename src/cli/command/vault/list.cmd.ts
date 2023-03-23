@@ -3,7 +3,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
@@ -40,32 +39,28 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
-      "Retrieving inventory item definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.InventoryItemDefinition
-        )
-    );
+    logger.info("Retrieving inventory item definitions ...");
+    const [itemDefinitionsErr, itemDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.InventoryItemDefinition
+      );
     if (itemDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
       );
     }
 
-    const [vaultItemsErr, vaultItems, vaultItemInstances] = await fnWithSpinner(
-      "Retrieving vault items ...",
-      () =>
-        destiny2InventoryService.getVaultItems(
-          sessionId,
-          characterInfo.membershipType,
-          characterInfo.membershipId,
-          {
-            includeItemInstances: verbose
-          }
-        )
-    );
+    logger.info("Retrieving vault items ...");
+    const [vaultItemsErr, vaultItems, vaultItemInstances] =
+      await destiny2InventoryService.getVaultItems(
+        sessionId,
+        characterInfo.membershipType,
+        characterInfo.membershipId,
+        {
+          includeItemInstances: verbose
+        }
+      );
     if (vaultItemsErr) {
       return logger.loggedError(
         `Unable to retrieve profile inventory items: ${vaultItemsErr.message}`

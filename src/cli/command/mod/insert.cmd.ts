@@ -7,7 +7,6 @@ import { SocketNumberCommandOptions } from "~src/cli/command-option/socket.optio
 import { plugIHashOption } from "~src/cli/command-option/socket.option";
 import { PlugHashCommandOptions } from "~src/cli/command-option/socket.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { AppModule } from "~src/module/app.module";
@@ -59,14 +58,12 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
-      "Retrieving inventory item definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.InventoryItemDefinition
-        )
-    );
+    logger.info("Retrieving inventory item definitions ...");
+    const [itemDefinitionsErr, itemDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.InventoryItemDefinition
+      );
     if (itemDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
@@ -79,17 +76,16 @@ const cmd: CommandDefinition = {
     const itemDescription = itemDefinition.displayProperties.name;
     const plugItemDescription = plugItemDefinition.displayProperties.name;
 
-    const insertErr = await fnWithSpinner(
-      `Inserting ${plugItemDescription} into slot #${socketIndex + 1} of ${itemDescription} ...`,
-      () =>
-        destiny2PlugService.insert(
-          sessionId,
-          characterInfo.membershipType,
-          characterInfo.characterId,
-          itemIdentifier.itemInstanceId,
-          socketIndex,
-          plugItemHash
-        )
+    logger.info(
+      `Inserting ${plugItemDescription} into slot #${socketIndex + 1} of ${itemDescription} ...`
+    );
+    const insertErr = await destiny2PlugService.insert(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.characterId,
+      itemIdentifier.itemInstanceId,
+      socketIndex,
+      plugItemHash
     );
     if (insertErr) {
       return logger.loggedError(

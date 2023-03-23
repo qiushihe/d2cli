@@ -3,7 +3,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { hasSelectedCharacter } from "~src/helper/current-character.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
@@ -49,9 +48,8 @@ const cmd: CommandDefinition = {
       characterInfo = _characterInfo;
     }
 
-    const [charactersErr, characters] = await fnWithSpinner("Retrieving characters ...", () =>
-      destiny2CharacterService.getCharacters(sessionId)
-    );
+    logger.info("Retrieving characters ...");
+    const [charactersErr, characters] = await destiny2CharacterService.getCharacters(sessionId);
     if (charactersErr) {
       return logger.loggedError(`Unable to retrieve characters: ${charactersErr.message}`);
     }
@@ -75,10 +73,9 @@ const cmd: CommandDefinition = {
 
       const basicCells = [isSelected ? "✓" : "", `${characterIndex + 1}`, "", `${character.light}`];
 
-      const [characterDescriptionErr, characterDescription] = await fnWithSpinner(
-        "Retrieving character description ...",
-        () => characterDescriptionService.getDescription(character)
-      );
+      logger.info("Retrieving character description ...");
+      const [characterDescriptionErr, characterDescription] =
+        await characterDescriptionService.getDescription(character);
       if (characterDescriptionErr) {
         basicCells[2] = `Error: ${characterDescriptionErr.message}`;
       } else {

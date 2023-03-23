@@ -3,7 +3,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { InventoryBucketLabels } from "~src/helper/inventory-bucket.helper";
 import { EquipmentBuckets } from "~src/helper/inventory-bucket.helper";
@@ -43,33 +42,29 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
-      "Retrieving inventory item definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.InventoryItemDefinition
-        )
-    );
+    logger.info("Retrieving inventory item definitions ...");
+    const [itemDefinitionsErr, itemDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.InventoryItemDefinition
+      );
     if (itemDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
       );
     }
 
-    const [inventoryItemsErr, inventoryItems, inventoryItemInstances] = await fnWithSpinner(
-      "Retrieving inventory items ...",
-      () =>
-        destiny2InventoryService.getInventoryItems(
-          sessionId,
-          characterInfo.membershipType,
-          characterInfo.membershipId,
-          characterInfo.characterId,
-          {
-            includeItemInstances: verbose
-          }
-        )
-    );
+    logger.info("Retrieving inventory items ...");
+    const [inventoryItemsErr, inventoryItems, inventoryItemInstances] =
+      await destiny2InventoryService.getInventoryItems(
+        sessionId,
+        characterInfo.membershipType,
+        characterInfo.membershipId,
+        characterInfo.characterId,
+        {
+          includeItemInstances: verbose
+        }
+      );
     if (inventoryItemsErr) {
       return logger.loggedError(`Unable to retrieve inventory items: ${inventoryItemsErr.message}`);
     }

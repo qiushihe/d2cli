@@ -4,7 +4,6 @@ import opener from "opener";
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { AppModule } from "~src/module/app.module";
 import { OAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
@@ -47,9 +46,8 @@ const cmd: CommandDefinition = {
     oauthUrl.searchParams.set("state", encodedState);
     logger.debug("Done URL construction");
 
-    await fnWithSpinner("Starting OAuth return handler server ...", () =>
-      startOAuthReturnHandlerServer("0.0.0.0", 2371)
-    );
+    logger.info("Starting OAuth return handler server ...");
+    await startOAuthReturnHandlerServer("0.0.0.0", 2371);
     logger.debug("Started OAuth return handler server");
 
     const oauthUrlString = oauthUrl.toString();

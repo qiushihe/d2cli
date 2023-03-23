@@ -4,7 +4,6 @@ import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { sortedStats } from "~src/helper/character.helper";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
@@ -40,14 +39,12 @@ const cmd: CommandDefinition = {
         "CharacterDescriptionService"
       );
 
-    const [statDefinitionsErr, statDefinitions] = await fnWithSpinner(
-      "Retrieving stat definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestStatDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.StatDefinition
-        )
-    );
+    logger.info("Retrieving stat definitions ...");
+    const [statDefinitionsErr, statDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestStatDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.StatDefinition
+      );
     if (statDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve stat definitions: ${statDefinitionsErr.message}`
@@ -59,22 +56,20 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to character info: ${characterInfoErr.message}`);
     }
 
-    const [characterErr, character] = await fnWithSpinner("Retrieving character ...", () =>
-      destiny2CharacterService.getCharacter(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId
-      )
+    logger.info("Retrieving character ...");
+    const [characterErr, character] = await destiny2CharacterService.getCharacter(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId
     );
     if (characterErr) {
       return logger.loggedError(`Unable to retrieve character: ${characterErr.message}`);
     }
 
-    const [characterDescriptionErr, characterDescription] = await fnWithSpinner(
-      "Retrieving character description ...",
-      () => characterDescriptionService.getDescription(character)
-    );
+    logger.info("Retrieving character description ...");
+    const [characterDescriptionErr, characterDescription] =
+      await characterDescriptionService.getDescription(character);
     if (characterDescriptionErr) {
       return logger.loggedError(
         `Unable to retrieve character description: ${characterDescriptionErr.message}`

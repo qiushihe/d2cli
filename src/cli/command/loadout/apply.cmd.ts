@@ -6,7 +6,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { SerializedItem } from "~src/helper/item-serialization.helper";
 import { SerializedPlug } from "~src/helper/item-serialization.helper";
@@ -97,29 +96,26 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
-      "Retrieving inventory item definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.InventoryItemDefinition
-        )
-    );
+    logger.info("Retrieving inventory item definitions ...");
+    const [itemDefinitionsErr, itemDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.InventoryItemDefinition
+      );
     if (itemDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
       );
     }
 
-    const [fileContentErr, fileContent] = await fnWithSpinner("Reading loadout file ...", () =>
-      promisedFn(
-        () =>
-          new Promise<string>((resolve, reject) => {
-            fs.readFile(loadoutFilePath, "utf8", (err, data) => {
-              err ? reject(err) : resolve(data);
-            });
-          })
-      )
+    logger.info("Reading loadout file ...");
+    const [fileContentErr, fileContent] = await promisedFn(
+      () =>
+        new Promise<string>((resolve, reject) => {
+          fs.readFile(loadoutFilePath, "utf8", (err, data) => {
+            err ? reject(err) : resolve(data);
+          });
+        })
     );
     if (fileContentErr) {
       return logger.loggedError(`Unable to read loadout file: ${fileContentErr.message}`);
@@ -239,26 +235,24 @@ const cmd: CommandDefinition = {
 
     logger.debug(`Loadout name: ${loadoutName}`);
 
-    const [characterDescriptionsErr, characterDescriptions] = await fnWithSpinner(
-      "Retrieving character descriptions ...",
-      () => characterDescriptionService.getDescriptions(sessionId)
-    );
+    logger.info("Retrieving character descriptions ...");
+    const [characterDescriptionsErr, characterDescriptions] =
+      await characterDescriptionService.getDescriptions(sessionId);
     if (characterDescriptionsErr) {
       return logger.loggedError(
         `Unable to retrieve character descriptions: ${characterDescriptionsErr.message}`
       );
     }
 
-    const [allItemsInfoErr, allItemsInfo] = await fnWithSpinner("Indexing existing items ...", () =>
-      serializeAllItems(
-        destiny2InventoryService,
-        itemDefinitions,
-        characterDescriptions,
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId
-      )
+    logger.info("Indexing existing items ...");
+    const [allItemsInfoErr, allItemsInfo] = await serializeAllItems(
+      destiny2InventoryService,
+      itemDefinitions,
+      characterDescriptions,
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId
     );
     if (allItemsInfoErr) {
       return logger.loggedError(`Unable to index existing items: ${allItemsInfoErr.message}`);
@@ -412,18 +406,16 @@ const cmd: CommandDefinition = {
       const itemHash = parseInt(itemHashStr, 10);
 
       if (itemType === "ARMOUR") {
-        const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] = await fnWithSpinner(
-          "Retrieving armour mod socket indices ...",
-          () =>
-            destiny2PlugService.getSocketIndices(
-              sessionId,
-              characterInfo.membershipType,
-              characterInfo.membershipId,
-              characterInfo.characterId,
-              itemHash,
-              "ARMOR MODS"
-            )
-        );
+        logger.info("Retrieving armour mod socket indices ...");
+        const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] =
+          await destiny2PlugService.getSocketIndices(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId,
+            itemHash,
+            "ARMOR MODS"
+          );
         if (armourPlugItemSocketIndicesErr) {
           return logger.loggedError(
             `Unable to retrieve armour mod socket indices: ${armourPlugItemSocketIndicesErr.message}`
@@ -440,17 +432,14 @@ const cmd: CommandDefinition = {
         ) {
           const socketName = SUBCLASS_SOCKET_NAMES[socketNameIndex] as SocketName;
 
-          const [socketIndicesErr, socketIndices] = await fnWithSpinner(
-            `Fetching ${socketName.toLocaleLowerCase()} socket indices ...`,
-            () =>
-              destiny2PlugService.getSocketIndices(
-                sessionId,
-                characterInfo.membershipType,
-                characterInfo.membershipId,
-                characterInfo.characterId,
-                itemHash,
-                socketName
-              )
+          logger.info(`Fetching ${socketName.toLocaleLowerCase()} socket indices ...`);
+          const [socketIndicesErr, socketIndices] = await destiny2PlugService.getSocketIndices(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId,
+            itemHash,
+            socketName
           );
           if (socketIndicesErr) {
             return logger.loggedError(
@@ -483,16 +472,14 @@ const cmd: CommandDefinition = {
       const itemDefinition = itemDefinitions[itemHash];
       const itemName = itemDefinition?.displayProperties.name || "UNKNOWN ITEM";
 
-      const [equippedPlugHashesErr, _equippedPlugHashes] = await fnWithSpinner(
-        `Fetching equipped plugs for ${itemName} ...`,
-        () =>
-          destiny2ItemService.getItemEquippedPlugHashes(
-            sessionId,
-            characterInfo.membershipType,
-            characterInfo.membershipId,
-            itemInstanceId
-          )
-      );
+      logger.info(`Fetching equipped plugs for ${itemName} ...`);
+      const [equippedPlugHashesErr, _equippedPlugHashes] =
+        await destiny2ItemService.getItemEquippedPlugHashes(
+          sessionId,
+          characterInfo.membershipType,
+          characterInfo.membershipId,
+          itemInstanceId
+        );
       if (equippedPlugHashesErr) {
         return logger.loggedError(
           `Unable to fetch equipped plugs for ${itemName}: ${equippedPlugHashesErr.message}`
@@ -541,17 +528,15 @@ const cmd: CommandDefinition = {
 
       if (!dryRun) {
         const loadoutActionDescription = describeLoadoutAction(loadoutAction);
-        const loadoutActionErr = await fnWithSpinner(
-          `Applying loadout action: ${loadoutActionDescription} ...`,
-          () =>
-            applyLoadoutAction(
-              destiny2InventoryTransferService,
-              destiny2InventoryEquipmentService,
-              destiny2PlugService,
-              loadoutAction,
-              sessionId,
-              characterInfo.membershipType
-            )
+
+        logger.info(`Applying loadout action: ${loadoutActionDescription} ...`);
+        const loadoutActionErr = await applyLoadoutAction(
+          destiny2InventoryTransferService,
+          destiny2InventoryEquipmentService,
+          destiny2PlugService,
+          loadoutAction,
+          sessionId,
+          characterInfo.membershipType
         );
         if (loadoutActionErr) {
           actionSuccess = false;

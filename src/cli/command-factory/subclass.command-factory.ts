@@ -5,7 +5,6 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { showAllOption } from "~src/cli/command-option/cli.option";
 import { ShowAllCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
@@ -76,14 +75,12 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
         return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
       }
 
-      const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
-        "Retrieving inventory item definitions ...",
-        () =>
-          destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-            Destiny2ManifestLanguage.English,
-            Destiny2ManifestComponent.InventoryItemDefinition
-          )
-      );
+      logger.info("Retrieving inventory item definitions ...");
+      const [itemDefinitionsErr, itemDefinitions] =
+        await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
+          Destiny2ManifestLanguage.English,
+          Destiny2ManifestComponent.InventoryItemDefinition
+        );
       if (itemDefinitionsErr) {
         return logger.loggedError(
           `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
@@ -94,16 +91,14 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       const allSubclasses: DestinyItemComponent[] = [];
 
       if (options.listEquipped) {
-        const [equipmentItemsErr, equipmentItems] = await fnWithSpinner(
-          "Retrieving equipment items ...",
-          () =>
-            destiny2InventoryService.getEquipmentItems(
-              sessionId,
-              characterInfo.membershipType,
-              characterInfo.membershipId,
-              characterInfo.characterId
-            )
-        );
+        logger.info("Retrieving equipment items ...");
+        const [equipmentItemsErr, equipmentItems] =
+          await destiny2InventoryService.getEquipmentItems(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId
+          );
         if (equipmentItemsErr) {
           return logger.loggedError(
             `Unable to retrieve equipment items: ${equipmentItemsErr.message}`
@@ -111,16 +106,14 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
         }
         getSubclassItems(equipmentItems).forEach((subclass) => allSubclasses.push(subclass));
       } else {
-        const [inventoryItemsErr, inventoryItems] = await fnWithSpinner(
-          "Retrieving inventory items ...",
-          () =>
-            destiny2InventoryService.getInventoryItems(
-              sessionId,
-              characterInfo.membershipType,
-              characterInfo.membershipId,
-              characterInfo.characterId
-            )
-        );
+        logger.info("Retrieving inventory items ...");
+        const [inventoryItemsErr, inventoryItems] =
+          await destiny2InventoryService.getInventoryItems(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId
+          );
         if (inventoryItemsErr) {
           return logger.loggedError(
             `Unable to retrieve inventory items: ${inventoryItemsErr.message}`
@@ -142,16 +135,14 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           sockets: {}
         };
 
-        const [equippedPlugHashesErr, equippedPlugHashes] = await fnWithSpinner(
-          `Retrieving ${subclassName} equipped plug hashes ...`,
-          () =>
-            destiny2ItemService.getItemEquippedPlugHashes(
-              sessionId,
-              characterInfo.membershipType,
-              characterInfo.membershipId,
-              subclass.itemInstanceId
-            )
-        );
+        logger.info(`Retrieving ${subclassName} equipped plug hashes ...`);
+        const [equippedPlugHashesErr, equippedPlugHashes] =
+          await destiny2ItemService.getItemEquippedPlugHashes(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            subclass.itemInstanceId
+          );
         if (equippedPlugHashesErr) {
           return logger.loggedError(
             `Unable to retrieve ${subclassName} equipped plug hashes: ${equippedPlugHashesErr.message}`
@@ -165,17 +156,16 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
         ) {
           const socketName = SUBCLASS_SOCKET_NAMES[socketNameIndex] as SocketName;
 
-          const [socketIndicesErr, socketIndices] = await fnWithSpinner(
-            `Fetching ${subclassName} ${socketName.toLocaleLowerCase()} socket indices ...`,
-            () =>
-              destiny2PlugService.getSocketIndices(
-                sessionId,
-                characterInfo.membershipType,
-                characterInfo.membershipId,
-                characterInfo.characterId,
-                subclass.itemHash,
-                socketName
-              )
+          logger.info(
+            `Fetching ${subclassName} ${socketName.toLocaleLowerCase()} socket indices ...`
+          );
+          const [socketIndicesErr, socketIndices] = await destiny2PlugService.getSocketIndices(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId,
+            subclass.itemHash,
+            socketName
           );
           if (socketIndicesErr) {
             return logger.loggedError(
@@ -185,17 +175,16 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
             );
           }
 
-          const [plugItemHashesErr, plugItemHashes] = await fnWithSpinner(
-            `Retrieving ${subclassName} available ${socketName.toLocaleLowerCase()} items ...`,
-            () =>
-              destiny2PlugService.getPlugItemHashes(
-                sessionId,
-                characterInfo.membershipType,
-                characterInfo.membershipId,
-                characterInfo.characterId,
-                subclass.itemHash,
-                socketName
-              )
+          logger.info(
+            `Retrieving ${subclassName} available ${socketName.toLocaleLowerCase()} items ...`
+          );
+          const [plugItemHashesErr, plugItemHashes] = await destiny2PlugService.getPlugItemHashes(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId,
+            subclass.itemHash,
+            socketName
           );
           if (plugItemHashesErr) {
             return logger.loggedError(

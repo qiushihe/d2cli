@@ -1,4 +1,3 @@
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
@@ -28,16 +27,14 @@ export const getLoadoutPlugRecords = async (
   const itemName = itemDefinitions[itemHash]?.displayProperties.name || "UNKNOWN ITEM";
   const plugRecords: LoadoutPlugRecord[] = [];
 
-  const [equippedPlugHashesErr, equippedPlugHashes] = await fnWithSpinner(
-    `Retrieving ${itemName} equipped plug hashes ...`,
-    () =>
-      destiny2ItemService.getItemEquippedPlugHashes(
-        sessionId,
-        membershipType,
-        membershipId,
-        itemInstanceId
-      )
-  );
+  logger.info(`Retrieving ${itemName} equipped plug hashes ...`);
+  const [equippedPlugHashesErr, equippedPlugHashes] =
+    await destiny2ItemService.getItemEquippedPlugHashes(
+      sessionId,
+      membershipType,
+      membershipId,
+      itemInstanceId
+    );
   if (equippedPlugHashesErr) {
     return [
       logger.loggedError(
@@ -50,17 +47,14 @@ export const getLoadoutPlugRecords = async (
   for (let socketNameIndex = 0; socketNameIndex < socketNames.length; socketNameIndex++) {
     const socketName = socketNames[socketNameIndex] as SocketName;
 
-    const [socketIndicesErr, socketIndices] = await fnWithSpinner(
-      `Fetching ${itemName} ${socketName.toLocaleLowerCase()} socket indices ...`,
-      () =>
-        destiny2PlugService.getSocketIndices(
-          sessionId,
-          membershipType,
-          membershipId,
-          characterId,
-          itemHash,
-          socketName
-        )
+    logger.info(`Fetching ${itemName} ${socketName.toLocaleLowerCase()} socket indices ...`);
+    const [socketIndicesErr, socketIndices] = await destiny2PlugService.getSocketIndices(
+      sessionId,
+      membershipType,
+      membershipId,
+      characterId,
+      itemHash,
+      socketName
     );
     if (socketIndicesErr) {
       return [

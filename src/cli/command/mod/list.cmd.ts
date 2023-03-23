@@ -7,7 +7,6 @@ import { ShowAllCommandOptions } from "~src/cli/command-option/cli.option";
 import { itemIdentifierOption } from "~src/cli/command-option/item.option";
 import { ItemIdentifierCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { fnWithSpinner } from "~src/helper/cli-promise.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
@@ -58,50 +57,44 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    const [itemDefinitionsErr, itemDefinitions] = await fnWithSpinner(
-      "Retrieving inventory item definitions ...",
-      () =>
-        destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-          Destiny2ManifestLanguage.English,
-          Destiny2ManifestComponent.InventoryItemDefinition
-        )
-    );
+    logger.info("Retrieving inventory item definitions ...");
+    const [itemDefinitionsErr, itemDefinitions] =
+      await destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
+        Destiny2ManifestLanguage.English,
+        Destiny2ManifestComponent.InventoryItemDefinition
+      );
     if (itemDefinitionsErr) {
       return logger.loggedError(
         `Unable to retrieve inventory item definitions: ${itemDefinitionsErr.message}`
       );
     }
 
-    const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] = await fnWithSpinner(
-      "Retrieving armour mod socket indices ...",
-      () =>
-        destiny2PlugService.getSocketIndices(
-          sessionId,
-          characterInfo.membershipType,
-          characterInfo.membershipId,
-          characterInfo.characterId,
-          itemIdentifier.itemHash,
-          "ARMOR MODS"
-        )
-    );
+    logger.info("Retrieving armour mod socket indices ...");
+    const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] =
+      await destiny2PlugService.getSocketIndices(
+        sessionId,
+        characterInfo.membershipType,
+        characterInfo.membershipId,
+        characterInfo.characterId,
+        itemIdentifier.itemHash,
+        "ARMOR MODS"
+      );
     if (armourPlugItemSocketIndicesErr) {
       return logger.loggedError(
         `Unable to retrieve armour mod socket indices: ${armourPlugItemSocketIndicesErr.message}`
       );
     }
 
-    const [armourPlugItemHashesErr, armourPlugItemHashes] = await fnWithSpinner(
-      "Retrieving available armour mods ...",
-      () =>
-        destiny2PlugService.getPlugItemHashes(
-          sessionId,
-          characterInfo.membershipType,
-          characterInfo.membershipId,
-          characterInfo.characterId,
-          itemIdentifier.itemHash,
-          "ARMOR MODS"
-        )
-    );
+    logger.info("Retrieving available armour mods ...");
+    const [armourPlugItemHashesErr, armourPlugItemHashes] =
+      await destiny2PlugService.getPlugItemHashes(
+        sessionId,
+        characterInfo.membershipType,
+        characterInfo.membershipId,
+        characterInfo.characterId,
+        itemIdentifier.itemHash,
+        "ARMOR MODS"
+      );
     if (armourPlugItemHashesErr) {
       return logger.loggedError(
         `Unable to retrieve available armour mods: ${armourPlugItemHashesErr.message}`
