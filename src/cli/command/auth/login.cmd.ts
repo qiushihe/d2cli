@@ -1,18 +1,17 @@
 import * as Base64 from "base64-js";
 import opener from "opener";
-import * as path from "path";
-import * as ProtocolRegistry from "protocol-registry";
 
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { fnWithSpinner } from "~src/helper/cli-promise.helper";
-import { getRepoRootPath } from "~src/helper/path.helper";
 import { AppModule } from "~src/module/app.module";
 import { OAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { LogService } from "~src/service/log/log.service";
+
+import { startOAuthReturnHandlerServer } from "./oauth-return.handler";
 
 type CmdOptions = SessionIdCommandOptions & { _: never };
 
@@ -48,19 +47,10 @@ const cmd: CommandDefinition = {
     oauthUrl.searchParams.set("state", encodedState);
     logger.debug("Done URL construction");
 
-    const handlerPath = path.join(getRepoRootPath(), "dist/src/cli/d2cli.js");
-    logger.debug(`OAuth return handler path: ${handlerPath}`);
-
-    await fnWithSpinner("Registering OAuth return custom URL protocol ...", () =>
-      ProtocolRegistry.register({
-        protocol: "dtwoqdb",
-        command: `node ${handlerPath} auth oauth-return $_URL_`,
-        override: true,
-        terminal: true,
-        script: true
-      })
+    await fnWithSpinner("Starting OAuth return handler server ...", () =>
+      startOAuthReturnHandlerServer("0.0.0.0", 2371)
     );
-    logger.debug("Done protocol registration");
+    logger.debug("Started OAuth return handler server");
 
     const oauthUrlString = oauthUrl.toString();
     logger.info(`Bungie.net login URL: ${oauthUrlString}`);

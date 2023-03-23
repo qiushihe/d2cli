@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang=en>
+<head>
+  <meta charset=utf-8>
+  <title>Bungie OAuth Return De-HTTPS Redirecter</title>
+</head>
+<body>
+<h1>It Worked</h1>
+<div id="iframe-root"></div>
+<script>
+  (() => {
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("src", "http://localhost:2371?originalOAuthReturnUrl=" + encodeURIComponent(location.href))
+    iframe.style.display = "block";
+    iframe.style.width = "100%";
+    iframe.style.height = "20em";
+    iframe.style.overflow = "auto";
+    document.getElementById("iframe-root").appendChild(iframe);
+  })();
+</script>
+</body>
+</html>
