@@ -1,5 +1,6 @@
 import * as Base64 from "base64-js";
 import http from "http";
+import { Socket } from "net";
 
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
@@ -95,6 +96,8 @@ export const startOAuthReturnHandlerServer = async (host: string, port: number) 
     .resolve<LogService>("LogService")
     .getLogger("cmd:auth:login:oauth-return");
 
+  const sockets: Socket[] = [];
+
   const server = http.createServer(async (req, res) => {
     if (req.url?.match(/service-worker\.js$/)) {
       res.writeHead(404);
@@ -120,9 +123,17 @@ export const startOAuthReturnHandlerServer = async (host: string, port: number) 
     if (oauthSuccess) {
       logger.info("OAuth return handled successfully; Stopping OAuth Return Handler server ...");
       server.close();
+      sockets.forEach((socket) => socket.destroy());
     } else {
       logger.info(`Invalid OAuth return request: ${req.url}`);
     }
+  });
+
+  server.on("connection", (socket) => {
+    sockets.push(socket);
+    socket.on("close", () => {
+      delete sockets[sockets.indexOf(socket)];
+    });
   });
 
   return new Promise<void>((resolve) => server.listen(port, host, resolve));
