@@ -3,17 +3,14 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { sortedStats } from "~src/helper/character.helper";
+import { sortStats } from "~src/helper/character.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { LogService } from "~src/service/log/log.service";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestStatDefinitions } from "~type/bungie-asset/destiny2.types";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -28,8 +25,10 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
     const destiny2CharacterService =
       AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
@@ -38,18 +37,6 @@ const cmd: CommandDefinition = {
       AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
         "CharacterDescriptionService"
       );
-
-    logger.info("Retrieving stat definitions ...");
-    const [statDefinitionsErr, statDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestStatDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.StatDefinition
-      );
-    if (statDefinitionsErr) {
-      return logger.loggedError(
-        `Unable to retrieve stat definitions: ${statDefinitionsErr.message}`
-      );
-    }
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -76,6 +63,14 @@ const cmd: CommandDefinition = {
       );
     }
 
+    logger.info("Retrieving sorted character stats ...");
+    const [sortedStatsErr, sortedStats] = await sortStats(manifestDefinitionService, character);
+    if (sortedStatsErr) {
+      return logger.loggedError(
+        `Unable to retrieve sorted character stats: ${sortedStatsErr.message}`
+      );
+    }
+
     const tableData: string[][] = [];
 
     tableData.push(["Stat", "Value", ...(verbose ? ["Description"] : [])]);
@@ -84,7 +79,7 @@ const cmd: CommandDefinition = {
     tableData.push(["Physique", characterDescription.gender, ...(verbose ? [""] : [])]);
     tableData.push(["Race", characterDescription.race, ...(verbose ? [""] : [])]);
 
-    sortedStats(character, statDefinitions).forEach(([, value, name, description]) => {
+    sortedStats.forEach(([, value, name, description]) => {
       tableData.push([name, `${value}`, ...(verbose ? [description] : [])]);
     });
 

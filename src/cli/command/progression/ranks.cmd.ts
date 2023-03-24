@@ -7,11 +7,8 @@ import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { LogService } from "~src/service/log/log.service";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestProgressionDefinitions } from "~type/bungie-asset/destiny2.types";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -38,8 +35,10 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    const manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
     const destiny2CharacterService =
       AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
@@ -47,18 +46,6 @@ const cmd: CommandDefinition = {
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-    }
-
-    logger.info("Retrieving progression definitions ...");
-    const [progressionDefinitionsErr, progressionDefinitions] =
-      await destiny2ManifestService.getManifestComponent<Destiny2ManifestProgressionDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.ProgressionDefinition
-      );
-    if (progressionDefinitionsErr) {
-      return logger.loggedError(
-        `Unable to retrieve progression definitions: ${progressionDefinitionsErr.message}`
-      );
     }
 
     logger.info("Retrieving character progression ...");
@@ -102,10 +89,18 @@ const cmd: CommandDefinition = {
       progressionIndex++
     ) {
       const progression = displayProgressions[progressionIndex];
-      const definition = progressionDefinitions[progression.progressionHash];
+
+      logger.info(`Fetching progression definition for ${progression.progressionHash} ...`);
+      const [progressionDefinitionErr, progressionDefinition] =
+        await manifestDefinitionService.getProgressionDefinition(progression.progressionHash);
+      if (progressionDefinitionErr) {
+        return logger.loggedError(
+          `Unable to fetch progression definition for ${progression.progressionHash}: ${progressionDefinitionErr.message}`
+        );
+      }
 
       const basicCells = [
-        definition.displayProperties.name,
+        progressionDefinition?.displayProperties.name || "UNKNOWN PROGRESSION",
         `${progression.level + 1}`,
         `${Math.round((progression.progressToNextLevel / progression.nextLevelAt) * 100)}%`
       ];

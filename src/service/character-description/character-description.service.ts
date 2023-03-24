@@ -1,11 +1,6 @@
 import { AppModule } from "~src/module/app.module";
 import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
-import { Destiny2ManifestClassDefinition } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestGenderDefinition } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestRaceDefinition } from "~type/bungie-asset/destiny2.types";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 import { CharacterDescription } from "./character-description.types";
 
@@ -16,15 +11,17 @@ type CharacterDescribableAttributes = {
 };
 
 export class CharacterDescriptionService {
-  private readonly destiny2ManifestService: Destiny2ManifestService;
   private readonly destiny2CharacterService: Destiny2CharacterService;
+  private readonly manifestDefinitionService: ManifestDefinitionService;
 
   constructor() {
-    this.destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
-
     this.destiny2CharacterService =
       AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
+
+    this.manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
   }
 
   async getDescriptions(
@@ -56,35 +53,26 @@ export class CharacterDescriptionService {
     character: CharacterDescribableAttributes
   ): Promise<[Error, null] | [null, CharacterDescription]> {
     const [genderDefinitionErr, genderDefinition] =
-      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestGenderDefinition>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.GenderDefinition
-      );
+      await this.manifestDefinitionService.getGenderDefinition(character.genderHash);
     if (genderDefinitionErr) {
       return [genderDefinitionErr, null];
     }
 
     const [raceDefinitionErr, raceDefinition] =
-      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestRaceDefinition>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.RaceDefinition
-      );
+      await this.manifestDefinitionService.getRaceDefinition(character.raceHash);
     if (raceDefinitionErr) {
       return [raceDefinitionErr, null];
     }
 
     const [classDefinitionErr, classDefinition] =
-      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestClassDefinition>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.ClassDefinition
-      );
+      await this.manifestDefinitionService.getClassDefinition(character.classHash);
     if (classDefinitionErr) {
       return [classDefinitionErr, null];
     }
 
-    const genderName = genderDefinition[character.genderHash].displayProperties.name;
-    const raceName = raceDefinition[character.raceHash].displayProperties.name;
-    const className = classDefinition[character.classHash].displayProperties.name;
+    const genderName = genderDefinition?.displayProperties.name || "UNKNOWN GENDER";
+    const raceName = raceDefinition?.displayProperties.name || "UNKNOWN RACE";
+    const className = classDefinition?.displayProperties.name || "UNKNOWN CLASS";
 
     return [
       null,

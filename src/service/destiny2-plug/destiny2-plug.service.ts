@@ -1,36 +1,31 @@
 import { AppModule } from "~src/module/app.module";
 import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
-import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { DestinyComponentType } from "~type/bungie-api/destiny.types";
 import { SocketPlugSources } from "~type/bungie-api/destiny.types";
+import { DestinyItemSocketCategoryDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyInsertPlugsFreeActionRequest } from "~type/bungie-api/destiny/requests/actions";
 import { DestinySocketArrayType } from "~type/bungie-api/destiny/requests/actions";
 import { DestinyProfileResponse } from "~type/bungie-api/destiny/responses";
 import { DestinyItemChangeResponse } from "~type/bungie-api/destiny/responses";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
-import { Destiny2ManifestInventoryItemDefinitions } from "~type/bungie-asset/destiny2.types";
 
 import { SocketName } from "./destiny2-plug.service.types";
 import { GetProfileCharacterPlugItemHashesOptions } from "./destiny2-plug.service.types";
 
 export class Destiny2PlugService {
   private readonly bungieApiService: BungieApiService;
-  private readonly destiny2ManifestService: Destiny2ManifestService;
-  private readonly itemDefinitionService: ItemDefinitionService;
+  private readonly manifestDefinitionService: ManifestDefinitionService;
 
   constructor() {
     this.bungieApiService =
       AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
 
-    this.destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
-
-    this.itemDefinitionService =
-      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+    this.manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
   }
 
   async insert(
@@ -74,20 +69,9 @@ export class Destiny2PlugService {
   ): Promise<[Error, null] | [null, number[]]> {
     const logger = this.getLogger();
 
-    logger.debug(`Getting socket category definitions ...`);
-    const [socketCategoryDefinitionsErr, socketCategoryDefinitions] =
-      await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryItemDefinitions>(
-        Destiny2ManifestLanguage.English,
-        Destiny2ManifestComponent.SocketCategoryDefinition
-      );
-    if (socketCategoryDefinitionsErr) {
-      return [socketCategoryDefinitionsErr, null];
-    }
-
     logger.debug(`Fetching item definition for ${itemHash} ...`);
-    const [itemDefinitionErr, itemDefinition] = await this.itemDefinitionService.getItemDefinition(
-      itemHash
-    );
+    const [itemDefinitionErr, itemDefinition] =
+      await this.manifestDefinitionService.getItemDefinition(itemHash);
     if (itemDefinitionErr) {
       return [itemDefinitionErr, null];
     }
@@ -100,17 +84,33 @@ export class Destiny2PlugService {
 
     const itemDefinitionSocketCategories = itemDefinition.sockets.socketCategories;
 
-    const socketCategory =
-      itemDefinitionSocketCategories.find((socketCategory) => {
-        const socketCategoryDefinition =
-          socketCategoryDefinitions[socketCategory.socketCategoryHash];
-        return socketCategoryDefinition?.displayProperties.name === socketName;
-      }) || null;
-    if (!socketCategory) {
+    let matchingSocketCategory: DestinyItemSocketCategoryDefinition | null = null;
+    for (
+      let socketCategoryIndex = 0;
+      socketCategoryIndex < itemDefinitionSocketCategories.length;
+      socketCategoryIndex++
+    ) {
+      const socketCategory = itemDefinitionSocketCategories[socketCategoryIndex];
+
+      logger.debug(`Fetching socket category definition for ${itemHash} ...`);
+      const [socketCategoryDefinitionErr, socketCategoryDefinition] =
+        await this.manifestDefinitionService.getSocketCategoryDefinition(
+          socketCategory.socketCategoryHash
+        );
+      if (socketCategoryDefinitionErr) {
+        return [socketCategoryDefinitionErr, null];
+      }
+
+      if (socketCategoryDefinition?.displayProperties.name === socketName) {
+        matchingSocketCategory = socketCategory;
+      }
+    }
+
+    if (!matchingSocketCategory) {
       return [new Error(`Item has no matching sockets`), null];
     }
 
-    return [null, socketCategory.socketIndexes];
+    return [null, matchingSocketCategory.socketIndexes];
   }
 
   async getPlugItemHashes(
@@ -124,9 +124,8 @@ export class Destiny2PlugService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching item definition for ${itemHash} ...`);
-    const [itemDefinitionErr, itemDefinition] = await this.itemDefinitionService.getItemDefinition(
-      itemHash
-    );
+    const [itemDefinitionErr, itemDefinition] =
+      await this.manifestDefinitionService.getItemDefinition(itemHash);
     if (itemDefinitionErr) {
       return [itemDefinitionErr, null];
     }

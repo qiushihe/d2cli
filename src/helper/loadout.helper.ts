@@ -1,6 +1,6 @@
 import { InventoryBucket } from "~src/helper/inventory-bucket.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 export const LoadoutInventoryBuckets = [
@@ -15,7 +15,7 @@ export const LoadoutInventoryBuckets = [
 ];
 
 export const serializeItem = async (
-  itemDefinitionService: ItemDefinitionService,
+  itemDefinitionService: ManifestDefinitionService,
   item: DestinyItemComponent,
   equip: boolean
 ): Promise<[Error, null] | [null, string]> => {
@@ -33,7 +33,7 @@ export const serializeItem = async (
 };
 
 export const serializeItemPlugs = async (
-  itemDefinitionService: ItemDefinitionService,
+  itemDefinitionService: ManifestDefinitionService,
   item: DestinyItemComponent,
   plugs: LoadoutPlugRecord[]
 ): Promise<[Error, null] | [null, string[]]> => {

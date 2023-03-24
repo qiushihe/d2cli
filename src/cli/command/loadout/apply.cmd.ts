@@ -29,8 +29,8 @@ import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventor
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 type CmdOptions = SessionIdCommandOptions &
   VerboseCommandOptions & { file: string; dryRun: boolean };
@@ -59,8 +59,10 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose, file, dryRun } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const itemDefinitionService =
-      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+    const manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
     const destiny2InventoryService =
       AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
@@ -136,7 +138,7 @@ const cmd: CommandDefinition = {
 
             logger.info(`Fetching item definition for ${itemHash} ...`);
             const [itemDefinitionErr, itemDefinition] =
-              await itemDefinitionService.getItemDefinition(itemHash);
+              await manifestDefinitionService.getItemDefinition(itemHash);
             if (itemDefinitionErr) {
               return logger.loggedError(
                 `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
@@ -163,7 +165,7 @@ const cmd: CommandDefinition = {
 
             logger.info(`Fetching item definition for ${itemHash} ...`);
             const [itemDefinitionErr, itemDefinition] =
-              await itemDefinitionService.getItemDefinition(itemHash);
+              await manifestDefinitionService.getItemDefinition(itemHash);
             if (itemDefinitionErr) {
               return logger.loggedError(
                 `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
@@ -197,7 +199,7 @@ const cmd: CommandDefinition = {
 
             logger.info(`Fetching item definition for ${itemHash} ...`);
             const [itemDefinitionErr, itemDefinition] =
-              await itemDefinitionService.getItemDefinition(itemHash);
+              await manifestDefinitionService.getItemDefinition(itemHash);
             if (itemDefinitionErr) {
               return logger.loggedError(
                 `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
@@ -209,7 +211,7 @@ const cmd: CommandDefinition = {
 
             logger.info(`Fetching item definition for ${plugItemHash} ...`);
             const [plugItemDefinitionErr, plugItemDefinition] =
-              await itemDefinitionService.getItemDefinition(itemHash);
+              await manifestDefinitionService.getItemDefinition(itemHash);
             if (plugItemDefinitionErr) {
               return logger.loggedError(
                 `Unable to fetch item definition for ${plugItemHash}: ${plugItemDefinitionErr.message}`
@@ -259,7 +261,7 @@ const cmd: CommandDefinition = {
 
     logger.info("Indexing existing items ...");
     const [allItemsInfoErr, allItemsInfo] = await serializeAllItems(
-      itemDefinitionService,
+      manifestDefinitionService,
       destiny2InventoryService,
       characterDescriptions,
       sessionId,
@@ -274,7 +276,7 @@ const cmd: CommandDefinition = {
     const loadoutActions: LoadoutAction[] = [];
 
     const [equipmentTransferActionsErr, equipmentTransferActions] = await resolveTransferActions(
-      itemDefinitionService,
+      manifestDefinitionService,
       characterDescriptions,
       characterInfo.characterId,
       loadoutEquipments,
@@ -291,7 +293,7 @@ const cmd: CommandDefinition = {
 
     const [extraEquipmentTransferActionsErr, extraEquipmentTransferActions] =
       await resolveTransferActions(
-        itemDefinitionService,
+        manifestDefinitionService,
         characterDescriptions,
         characterInfo.characterId,
         loadoutExtraEquipments,
@@ -484,7 +486,7 @@ const cmd: CommandDefinition = {
       const [itemInstanceId, itemHash] = plugItemInstanceIdsAndHashes[plugItemIndex];
 
       logger.info(`Fetching item definition for ${itemHash} ...`);
-      const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+      const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
         itemHash
       );
       if (itemDefinitionErr) {

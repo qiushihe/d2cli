@@ -11,8 +11,8 @@ import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 type CmdOptions = SessionIdCommandOptions &
   ItemIdentifierCommandOptions &
@@ -44,8 +44,10 @@ const cmd: CommandDefinition = {
     const socketIndex = (parseInt(socket, 10) || 0) - 1;
     const plugItemHash = parseInt(plugHash, 10) || 0;
 
-    const itemDefinitionService =
-      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+    const manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
     const destiny2PlugService =
       AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
@@ -56,7 +58,7 @@ const cmd: CommandDefinition = {
     }
 
     logger.info(`Fetching item definition for ${itemIdentifier.itemHash} ...`);
-    const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+    const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
       itemIdentifier.itemHash
     );
     if (itemDefinitionErr) {
@@ -67,7 +69,7 @@ const cmd: CommandDefinition = {
 
     logger.info(`Fetching item definition for ${plugItemHash} ...`);
     const [plugItemDefinitionErr, plugItemDefinition] =
-      await itemDefinitionService.getItemDefinition(plugItemHash);
+      await manifestDefinitionService.getItemDefinition(plugItemHash);
     if (plugItemDefinitionErr) {
       return logger.loggedError(
         `Unable to fetch item definition for ${plugItemHash}: ${plugItemDefinitionErr.message}`

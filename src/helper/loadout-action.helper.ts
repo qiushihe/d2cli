@@ -4,7 +4,7 @@ import { CharacterDescription } from "~src/service/character-description/charact
 import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
 import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 export type LoadoutAction = {
   type: "DEPOSIT" | "WITHDRAW" | "EQUIP" | "SOCKET";
@@ -19,7 +19,7 @@ export type LoadoutAction = {
 };
 
 export const resolveTransferActions = async (
-  itemDefinitionService: ItemDefinitionService,
+  itemDefinitionService: ManifestDefinitionService,
   characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
   equipmentItems: SerializedItem[],

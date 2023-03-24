@@ -7,8 +7,8 @@ import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getPostmasterItems } from "~src/helper/postmaster.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -23,8 +23,10 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const itemDefinitionService =
-      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+    const manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -62,7 +64,7 @@ const cmd: CommandDefinition = {
 
       logger.info(`Fetching item definition for ${postmasterItem.itemHash} ...`);
       const [postmasterItemDefinitionErr, postmasterItemDefinition] =
-        await itemDefinitionService.getItemDefinition(postmasterItem.itemHash);
+        await manifestDefinitionService.getItemDefinition(postmasterItem.itemHash);
       if (postmasterItemDefinitionErr) {
         return logger.loggedError(
           `Unable to fetch item definition for ${postmasterItem.itemHash}: ${postmasterItemDefinitionErr.message}`

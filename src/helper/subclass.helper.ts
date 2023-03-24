@@ -1,8 +1,8 @@
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { Logger } from "~src/service/log/log.types";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 export const SUBCLASS_SOCKET_NAMES = ["ABILITIES", "SUPER", "ASPECTS", "FRAGMENTS"];
 
@@ -13,7 +13,7 @@ export type LoadoutPlugRecord = {
 
 export const getLoadoutPlugRecords = async (
   logger: Logger,
-  itemDefinitionService: ItemDefinitionService,
+  itemDefinitionService: ManifestDefinitionService,
   destiny2ItemService: Destiny2ItemService,
   destiny2PlugService: Destiny2PlugService,
   sessionId: string,

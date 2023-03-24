@@ -10,8 +10,8 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemInstanceIdsCommandOptions;
 
@@ -26,8 +26,10 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose, itemInstanceIds: itemInstanceIdsStr } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const itemDefinitionService =
-      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+    const manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
     const destiny2InventoryService =
       AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
@@ -76,9 +78,8 @@ const cmd: CommandDefinition = {
 
         if (item) {
           logger.info(`Fetching item definition for ${item.itemHash} ...`);
-          const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
-            item.itemHash
-          );
+          const [itemDefinitionErr, itemDefinition] =
+            await manifestDefinitionService.getItemDefinition(item.itemHash);
           if (itemDefinitionErr) {
             return logger.loggedError(
               `Unable to fetch item definition for ${item.itemHash}: ${itemDefinitionErr.message}`

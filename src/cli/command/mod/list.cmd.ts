@@ -13,8 +13,8 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 type CmdOptions = SessionIdCommandOptions &
   VerboseCommandOptions &
@@ -40,8 +40,10 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Missing item hash`);
     }
 
-    const itemDefinitionService =
-      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+    const manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
     const destiny2PlugService =
       AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
@@ -115,7 +117,7 @@ const cmd: CommandDefinition = {
 
         logger.info(`Retrieving plug item definition for ${plugItemHash} ...`);
         const [plugItemDefinitionErr, plugItemDefinition] =
-          await itemDefinitionService.getItemDefinition(plugItemHash);
+          await manifestDefinitionService.getItemDefinition(plugItemHash);
         if (plugItemDefinitionErr) {
           return logger.loggedError(
             `Unable to retrieve plug item definition: ${plugItemDefinitionErr.message}`

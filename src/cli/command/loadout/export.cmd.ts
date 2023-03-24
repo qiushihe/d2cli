@@ -23,8 +23,8 @@ import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions &
@@ -51,8 +51,10 @@ const cmd: CommandDefinition = {
     const { session: sessionId, loadoutName, includeUnequipped, file } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const itemDefinitionService =
-      AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+    const manifestDefinitionService =
+      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
     const destiny2InventoryService =
       AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
@@ -109,7 +111,7 @@ const cmd: CommandDefinition = {
 
     const [subclassPlugRecordsErr, subclassPlugRecords] = await getLoadoutPlugRecords(
       logger,
-      itemDefinitionService,
+      manifestDefinitionService,
       destiny2ItemService,
       destiny2PlugService,
       sessionId,
@@ -139,7 +141,7 @@ const cmd: CommandDefinition = {
 
       logger.info(`Fetching item definition for ${equipment.itemHash} ...`);
       const [equipmentDefinitionErr, equipmentDefinition] =
-        await itemDefinitionService.getItemDefinition(equipment.itemHash);
+        await manifestDefinitionService.getItemDefinition(equipment.itemHash);
       if (equipmentDefinitionErr) {
         return logger.loggedError(
           `Unable to fetch item definition for ${equipment.itemHash}: ${equipmentDefinitionErr.message}`
@@ -149,7 +151,7 @@ const cmd: CommandDefinition = {
       if (ArmourBucketHashes.includes(equipment.bucketHash)) {
         const [equipmentPlugRecordsErr, equipmentPlugRecords] = await getLoadoutPlugRecords(
           logger,
-          itemDefinitionService,
+          manifestDefinitionService,
           destiny2ItemService,
           destiny2PlugService,
           sessionId,
@@ -179,7 +181,7 @@ const cmd: CommandDefinition = {
 
     logger.info(`Fetching item definition for ${subclass.itemHash} ...`);
     const [subclassDefinitionErr, subclassDefinition] =
-      await itemDefinitionService.getItemDefinition(subclass.itemHash);
+      await manifestDefinitionService.getItemDefinition(subclass.itemHash);
     if (subclassDefinitionErr) {
       return logger.loggedError(
         `Unable to fetch item definition for ${subclass.itemHash}: ${subclassDefinitionErr.message}`
@@ -193,7 +195,7 @@ const cmd: CommandDefinition = {
     );
 
     const [serializeSubclassErr, serializedSubclass] = await serializeItem(
-      itemDefinitionService,
+      manifestDefinitionService,
       subclass,
       true
     );
@@ -203,7 +205,7 @@ const cmd: CommandDefinition = {
     exportLines.push(serializedSubclass);
 
     const [serializeSubclassPlugsErr, serializedSubclassPlugs] = await serializeItemPlugs(
-      itemDefinitionService,
+      manifestDefinitionService,
       subclass,
       subclassPlugRecords
     );
@@ -227,7 +229,7 @@ const cmd: CommandDefinition = {
         const equipment = _equipments[equipmentIndex];
 
         const [serializeEquipmentErr, serializedEquipment] = await serializeItem(
-          itemDefinitionService,
+          manifestDefinitionService,
           equipment,
           equip
         );
@@ -239,7 +241,7 @@ const cmd: CommandDefinition = {
         exportLines.push(serializedEquipment);
 
         const [serializeEquipmentPlugsErr, serializedEquipmentPlugs] = await serializeItemPlugs(
-          itemDefinitionService,
+          manifestDefinitionService,
           equipment,
           equipmentsPlugRecords[`${equipment.itemHash}:${equipment.itemInstanceId}`] || []
         );

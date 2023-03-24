@@ -14,8 +14,8 @@ import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destin
 import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ShowAllCommandOptions;
@@ -53,8 +53,10 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       const { session: sessionId, verbose, showAll } = opts as CmdOptions;
       logger.debug(`Session ID: ${sessionId}`);
 
-      const itemDefinitionService =
-        AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+      const manifestDefinitionService =
+        AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+          "ManifestDefinitionService"
+        );
 
       const destiny2InventoryService =
         AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
@@ -112,7 +114,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
 
         logger.info(`Retrieving subclass definitions for ${subclass.itemHash} ...`);
         const [subclassDefinitionErr, subclassDefinition] =
-          await itemDefinitionService.getItemDefinition(subclass.itemHash);
+          await manifestDefinitionService.getItemDefinition(subclass.itemHash);
         if (subclassDefinitionErr) {
           return logger.loggedError(
             `Unable to retrieve subclass definitions for ${subclass.itemHash}`
@@ -204,7 +206,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
 
               logger.info(`Retrieving plug item definitions for ${plugItemHash} ...`);
               const [plugItemDefinitionErr, plugItemDefinition] =
-                await itemDefinitionService.getItemDefinition(plugItemHash);
+                await manifestDefinitionService.getItemDefinition(plugItemHash);
               if (plugItemDefinitionErr) {
                 return logger.loggedError(
                   `Unable to retrieve plug item definitions for ${plugItemHash}`

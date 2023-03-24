@@ -13,8 +13,8 @@ import { Destiny2MembershipService } from "~src/service/destiny2-membership/dest
 import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { Destiny2PostmasterService } from "~src/service/destiny2-postmaster/destiny2-postmaster.service";
 import { Destiny2VendorService } from "~src/service/destiny2-vendor/destiny2-vendor.service";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { SessionService } from "~src/service/session/session.service";
 import { FsStorageService } from "~src/service/storage/fs-storage.service";
 
@@ -36,8 +36,8 @@ const MODULE: Record<string, new () => any> = {
   Destiny2PlugService,
   Destiny2PostmasterService,
   Destiny2VendorService,
-  ItemDefinitionService,
   LogService,
+  ManifestDefinitionService,
   SessionService,
   FsStorageService
 };

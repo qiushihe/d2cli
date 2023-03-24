@@ -10,8 +10,8 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
 import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
-import { ItemDefinitionService } from "~src/service/item-definition/item-definition.service";
 import { LogService } from "~src/service/log/log.service";
+import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemInstanceIdsCommandOptions;
@@ -36,8 +36,10 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
       } = opts as CmdOptions;
       logger.debug(`Session ID: ${sessionId}`);
 
-      const itemDefinitionService =
-        AppModule.getDefaultInstance().resolve<ItemDefinitionService>("ItemDefinitionService");
+      const manifestDefinitionService =
+        AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
+          "ManifestDefinitionService"
+        );
 
       const destiny2InventoryService =
         AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
@@ -106,7 +108,7 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           if (item) {
             logger.info(`Fetching item definition for ${item.itemHash} ...`);
             const [itemDefinitionErr, itemDefinition] =
-              await itemDefinitionService.getItemDefinition(item.itemHash);
+              await manifestDefinitionService.getItemDefinition(item.itemHash);
             if (itemDefinitionErr) {
               return logger.loggedError(`Unable to fetch item definition for ${item.itemHash}`);
             }
