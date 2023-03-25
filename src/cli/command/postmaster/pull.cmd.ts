@@ -7,9 +7,9 @@ import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getPostmasterItems } from "~src/helper/postmaster.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2PostmasterService } from "~src/service/destiny2-postmaster/destiny2-postmaster.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PostmasterService } from "~src/service/postmaster/postmaster.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & { itemNumber: string };
@@ -45,9 +45,7 @@ const cmd: CommandDefinition = {
       );
 
     const destiny2PostmasterService =
-      AppModule.getDefaultInstance().resolve<Destiny2PostmasterService>(
-        "Destiny2PostmasterService"
-      );
+      AppModule.getDefaultInstance().resolve<PostmasterService>("PostmasterService");
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {

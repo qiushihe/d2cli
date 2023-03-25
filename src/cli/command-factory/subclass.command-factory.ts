@@ -10,12 +10,12 @@ import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
-import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
-import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
+import { InventoryService } from "~src/service/inventory/inventory.service";
+import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PlugService } from "~src/service/plug/plug.service";
+import { SocketName } from "~src/service/plug/plug.service.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ShowAllCommandOptions;
@@ -59,15 +59,12 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
         );
 
       const destiny2InventoryService =
-        AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
-          "Destiny2InventoryService"
-        );
+        AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
       const destiny2PlugService =
-        AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
+        AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
-      const destiny2ItemService =
-        AppModule.getDefaultInstance().resolve<Destiny2ItemService>("Destiny2ItemService");
+      const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
       const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
       if (characterInfoErr) {
@@ -132,7 +129,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
 
         logger.info(`Retrieving ${subclassName} equipped plug hashes ...`);
         const [equippedPlugHashesErr, equippedPlugHashes] =
-          await destiny2ItemService.getItemEquippedPlugHashes(
+          await itemService.getItemEquippedPlugHashes(
             sessionId,
             characterInfo.membershipType,
             characterInfo.membershipId,

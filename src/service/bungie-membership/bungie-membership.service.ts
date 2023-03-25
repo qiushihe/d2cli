@@ -5,12 +5,9 @@ import { Logger } from "~src/service/log/log.types";
 import { GeneralUser } from "~type/bungie-api/user.types";
 import { UserInfoCard } from "~type/bungie-api/user.types";
 
-type BungieNetDestiny2MembershipInfo = {
-  membership: UserInfoCard;
-  otherMemberships: UserInfoCard[];
-};
+import { BungieDestiny2MembershipInfo } from "./bungie-membership.types";
 
-export class Destiny2MembershipService {
+export class BungieMembershipService {
   private readonly bungieApiService: BungieApiService;
 
   constructor() {
@@ -18,15 +15,13 @@ export class Destiny2MembershipService {
       AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
   }
 
-  async getBungieNetDestiny2Membership(
+  async getDestiny2Membership(
     bungieNetMembershipId: string
-  ): Promise<[Error, null] | [null, BungieNetDestiny2MembershipInfo]> {
+  ): Promise<[Error, null] | [null, BungieDestiny2MembershipInfo]> {
     const logger = this.getLogger();
 
     logger.debug("Fetching Bungie.net Destiny 2 memberships ...");
-    const [membershipsErr, memberships] = await this.getBungieNetDestiny2Memberships(
-      bungieNetMembershipId
-    );
+    const [membershipsErr, memberships] = await this.getDestiny2Memberships(bungieNetMembershipId);
     if (membershipsErr) {
       return [membershipsErr, null];
     }
@@ -44,7 +39,7 @@ export class Destiny2MembershipService {
     return [null, { membership: memberships[0], otherMemberships: memberships.slice(1) }];
   }
 
-  async getBungieNetDestiny2Memberships(
+  async getDestiny2Memberships(
     bungieNetMembershipId: string
   ): Promise<[Error, null] | [null, UserInfoCard[]]> {
     const logger = this.getLogger();
@@ -83,6 +78,6 @@ export class Destiny2MembershipService {
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("Destiny2MembershipService");
+      .getLogger("BungieMembershipService");
   }
 }

@@ -1,62 +1,34 @@
 import { AppModule } from "~src/module/app.module";
-import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
+import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
+import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
+import { resolveProfileAllAvailableSockets } from "~src/service/destiny2-component-data/profile.resolver";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
-import { DestinyComponentType } from "~type/bungie-api/destiny.types";
 import { SocketPlugSources } from "~type/bungie-api/destiny.types";
 import { DestinyItemSocketCategoryDefinition } from "~type/bungie-api/destiny/definitions.types";
-import { DestinyInsertPlugsFreeActionRequest } from "~type/bungie-api/destiny/requests/actions";
-import { DestinySocketArrayType } from "~type/bungie-api/destiny/requests/actions";
-import { DestinyProfileResponse } from "~type/bungie-api/destiny/responses";
-import { DestinyItemChangeResponse } from "~type/bungie-api/destiny/responses";
 
-import { SocketName } from "./destiny2-plug.service.types";
-import { GetProfileCharacterPlugItemHashesOptions } from "./destiny2-plug.service.types";
+import { SocketName } from "./plug.service.types";
+import { GetProfileCharacterPlugItemHashesOptions } from "./plug.service.types";
 
-export class Destiny2PlugService {
-  private readonly bungieApiService: BungieApiService;
+export class PlugService {
+  private readonly destiny2ActionService: Destiny2ActionService;
+  private readonly destiny2ComponentDataService: Destiny2ComponentDataService;
   private readonly manifestDefinitionService: ManifestDefinitionService;
 
   constructor() {
-    this.bungieApiService =
-      AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
+    this.destiny2ActionService =
+      AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
+
+    this.destiny2ComponentDataService =
+      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
+        "Destiny2ComponentDataService"
+      );
 
     this.manifestDefinitionService =
       AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
         "ManifestDefinitionService"
       );
-  }
-
-  async insert(
-    sessionId: string,
-    membershipType: number,
-    characterId: string,
-    itemInstanceId: string,
-    socketIndex: number,
-    plugItemHash: number
-  ): Promise<Error | null> {
-    const logger = this.getLogger();
-
-    logger.debug(`Inserting plug into socket ...`);
-    const [insertErr] = await this.bungieApiService.sendApiRequest<
-      DestinyInsertPlugsFreeActionRequest,
-      DestinyItemChangeResponse
-    >(sessionId, "POST", "/Destiny2/Actions/Items/InsertSocketPlugFree", {
-      plug: {
-        socketIndex,
-        socketArrayType: DestinySocketArrayType.Default,
-        plugItemHash
-      },
-      membershipType,
-      characterId,
-      itemId: itemInstanceId
-    });
-    if (insertErr) {
-      return insertErr;
-    }
-
-    return null;
   }
 
   async getSocketIndices(
@@ -192,7 +164,7 @@ export class Destiny2PlugService {
         }
 
         const [profileCharacterPlugItemHashesErr, profileCharacterPlugItemHashes] =
-          await this.getProfileCharacterPlugItemHashes(
+          await this.getAllAvailablePlugItemHashes(
             sessionId,
             membershipType,
             membershipId,
@@ -221,7 +193,25 @@ export class Destiny2PlugService {
     return [null, plugItemHashes];
   }
 
-  async getProfileCharacterPlugItemHashes(
+  async insert(
+    sessionId: string,
+    membershipType: number,
+    characterId: string,
+    itemInstanceId: string,
+    socketIndex: number,
+    plugItemHash: number
+  ): Promise<Error | null> {
+    return await this.destiny2ActionService.insertPlug(
+      sessionId,
+      membershipType,
+      characterId,
+      itemInstanceId,
+      socketIndex,
+      plugItemHash
+    );
+  }
+
+  private async getAllAvailablePlugItemHashes(
     sessionId: string,
     membershipType: number,
     membershipId: string,
@@ -236,31 +226,23 @@ export class Destiny2PlugService {
     const logger = this.getLogger();
 
     logger.debug(`Getting profile item sockets ...`);
-    const [profileErr, profileRes] = await this.bungieApiService.sendApiRequest<
-      null,
-      DestinyProfileResponse
-    >(
-      sessionId,
-      "GET",
-      `/Destiny2/${membershipType}/Profile/${membershipId}?components=${DestinyComponentType.ItemSockets}`,
-      null
-    );
-    if (profileErr) {
-      return [profileErr, null];
+    const [charactersPlugSetsErr, charactersPlugSets] =
+      await this.destiny2ComponentDataService.getProfileComponentsData(
+        sessionId,
+        membershipType,
+        membershipId,
+        resolveProfileAllAvailableSockets
+      );
+    if (charactersPlugSetsErr) {
+      return [charactersPlugSetsErr, null];
     }
 
-    const profilePlugSets = profileRes?.profilePlugSets?.data?.plugs || {};
-    const characterPlugSets = (profileRes?.characterPlugSets?.data || {})[characterId]?.plugs || {};
-
-    const profilePlugSet = profilePlugSets[plugSetHash] || [];
-    const characterPlugSet = characterPlugSets[plugSetHash] || [];
+    const characterPlugSets = charactersPlugSets[characterId] || {};
+    const plugComponents = characterPlugSets[plugSetHash] || [];
 
     return [
       null,
-      [
-        ...(options.includeProfilePlugs ? profilePlugSet : []),
-        ...(options.includeCharacterPlugs ? characterPlugSet : [])
-      ]
+      plugComponents
         .filter((plug) => plug.enabled && plug.canInsert)
         .map((plug) => plug.plugItemHash)
     ];
@@ -269,6 +251,6 @@ export class Destiny2PlugService {
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("Destiny2PlugService");
+      .getLogger("PlugService");
   }
 }

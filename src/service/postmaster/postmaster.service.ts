@@ -1,22 +1,21 @@
 import { AppModule } from "~src/module/app.module";
-import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
+import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
+import { InventoryService } from "~src/service/inventory/inventory.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 import { ItemLocation } from "~type/bungie-api/destiny.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
-import { DestinyPostmasterTransferRequest } from "~type/bungie-api/destiny/requests/actions";
 
-export class Destiny2PostmasterService {
-  private readonly bungieApiService: BungieApiService;
-  private readonly destiny2InventoryService: Destiny2InventoryService;
+export class PostmasterService {
+  private readonly destiny2ActionService: Destiny2ActionService;
+  private readonly destiny2InventoryService: InventoryService;
 
   constructor() {
-    this.bungieApiService =
-      AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
+    this.destiny2ActionService =
+      AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
 
     this.destiny2InventoryService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
+      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
   }
 
   async getItems(
@@ -63,28 +62,18 @@ export class Destiny2PostmasterService {
     itemHash: number,
     itemInstanceId: string | null
   ): Promise<Error | null> {
-    const [pullItemErr] =
-      await this.bungieApiService.sendApiRequest<DestinyPostmasterTransferRequest>(
-        sessionId,
-        "POST",
-        "/Destiny2/Actions/Items/PullFromPostmaster",
-        {
-          itemReferenceHash: itemHash,
-          itemId: itemInstanceId,
-          characterId,
-          membershipType
-        }
-      );
-    if (pullItemErr) {
-      return pullItemErr;
-    }
-
-    return null;
+    return await this.destiny2ActionService.pullFromPostmaster(
+      sessionId,
+      membershipType,
+      characterId,
+      itemHash,
+      itemInstanceId
+    );
   }
 
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("Destiny2PostmasterService");
+      .getLogger("PostmasterService");
   }
 }

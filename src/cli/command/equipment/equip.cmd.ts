@@ -8,8 +8,8 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
-import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
+import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
+import { InventoryService } from "~src/service/inventory/inventory.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
@@ -32,12 +32,10 @@ const cmd: CommandDefinition = {
       );
 
     const destiny2InventoryService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
+      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
-    const destiny2InventoryEquipmentService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryEquipmentService>(
-        "Destiny2InventoryEquipmentService"
-      );
+    const destiny2ActionService =
+      AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -96,7 +94,7 @@ const cmd: CommandDefinition = {
           const itemCells = [itemDescription];
 
           logger.info(`Equipping item: ${itemDescription} ...`);
-          const equipErr = await destiny2InventoryEquipmentService.equip(
+          const equipErr = await destiny2ActionService.equipItem(
             sessionId,
             characterInfo.membershipType,
             characterInfo.characterId,

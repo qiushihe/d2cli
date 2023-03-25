@@ -1,5 +1,5 @@
 import { AppModule } from "~src/module/app.module";
-import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
+import { CharacterService } from "~src/service/character/character.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 import { CharacterDescription } from "./character-description.types";
@@ -11,12 +11,12 @@ type CharacterDescribableAttributes = {
 };
 
 export class CharacterDescriptionService {
-  private readonly destiny2CharacterService: Destiny2CharacterService;
+  private readonly characterService: CharacterService;
   private readonly manifestDefinitionService: ManifestDefinitionService;
 
   constructor() {
-    this.destiny2CharacterService =
-      AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
+    this.characterService =
+      AppModule.getDefaultInstance().resolve<CharacterService>("CharacterService");
 
     this.manifestDefinitionService =
       AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
@@ -29,9 +29,7 @@ export class CharacterDescriptionService {
   ): Promise<[Error, null] | [null, Record<string, CharacterDescription>]> {
     const characterDescriptions: Record<string, CharacterDescription> = {};
 
-    const [charactersErr, characters] = await this.destiny2CharacterService.getCharacters(
-      sessionId
-    );
+    const [charactersErr, characters] = await this.characterService.getCharacters(sessionId);
     if (charactersErr) {
       return [charactersErr, null];
     }

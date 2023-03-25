@@ -3,7 +3,7 @@ import { ArmourBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { WeaponBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { InventoryBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { CharacterDescription } from "~src/service/character-description/character-description.types";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
+import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { DestinyInventoryItemDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
@@ -138,7 +138,7 @@ export const serializeItems = async (
 
 export const serializeCharacterItems = async (
   itemDefinitionService: ManifestDefinitionService,
-  destiny2InventoryService: Destiny2InventoryService,
+  destiny2InventoryService: InventoryService,
   sessionId: string,
   membershipType: number,
   membershipId: string,
@@ -185,7 +185,7 @@ export const serializeCharacterItems = async (
 
 export const serializeAllItems = async (
   itemDefinitionService: ManifestDefinitionService,
-  destiny2InventoryService: Destiny2InventoryService,
+  destiny2InventoryService: InventoryService,
   characterDescriptions: Record<string, CharacterDescription>,
   sessionId: string,
   membershipType: number,

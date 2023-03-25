@@ -5,7 +5,7 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2MembershipService } from "~src/service/destiny2-membership/destiny2-membership.service";
+import { BungieMembershipService } from "~src/service/bungie-membership/bungie-membership.service";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 
@@ -23,10 +23,9 @@ const cmd: CommandDefinition = {
     logger.debug(`Session ID: ${sessionId}`);
 
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
-    const destiny2MembershipService =
-      AppModule.getDefaultInstance().resolve<Destiny2MembershipService>(
-        "Destiny2MembershipService"
-      );
+
+    const bungieNetMembershipService =
+      AppModule.getDefaultInstance().resolve<BungieMembershipService>("BungieMembershipService");
 
     logger.info("Retrieving authorization status ...");
     const [loginStatusErr, loginStatus] = await sessionService.getLoginStatus(sessionId);
@@ -60,7 +59,7 @@ const cmd: CommandDefinition = {
 
           logger.info("Retrieving Destiny 2 membership ...");
           const [membershipErr, membershipInfo] =
-            await destiny2MembershipService.getBungieNetDestiny2Membership(bungieNetMembershipId);
+            await bungieNetMembershipService.getDestiny2Membership(bungieNetMembershipId);
           if (membershipErr) {
             return logger.loggedError(
               `Unable to retrieve Destiny 2 membership: ${membershipErr.message}`

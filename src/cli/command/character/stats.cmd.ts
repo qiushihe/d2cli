@@ -8,7 +8,8 @@ import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
-import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
+import { resolveCharacters } from "~src/service/destiny2-component-data/character.resolver";
+import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
@@ -30,8 +31,10 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2CharacterService =
-      AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
+    const destiny2ComponentDataService =
+      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
+        "Destiny2ComponentDataService"
+      );
 
     const characterDescriptionService =
       AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
@@ -44,11 +47,12 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving character ...");
-    const [characterErr, character] = await destiny2CharacterService.getCharacter(
+    const [characterErr, character] = await destiny2ComponentDataService.getCharacterComponentsData(
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId,
-      characterInfo.characterId
+      characterInfo.characterId,
+      resolveCharacters
     );
     if (characterErr) {
       return logger.loggedError(`Unable to retrieve character: ${characterErr.message}`);

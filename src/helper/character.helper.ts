@@ -29,10 +29,10 @@ export const sortStats = async (
     characterStats.push({
       hash: statHash,
       value: statValue,
-      category: -1,
-      index: -1,
-      name: statDefinition?.displayProperties.name || "UNKNOWN STAT",
-      description: (statDefinition?.displayProperties?.description || "")
+      category: statDefinition.statCategory,
+      index: statDefinition.index,
+      name: statDefinition.displayProperties.name || "UNKNOWN STAT",
+      description: (statDefinition.displayProperties.description || "")
         .split("\n")
         .filter((line) => (line || "").trim().length > 0)
         .join("\n")
@@ -42,45 +42,7 @@ export const sortStats = async (
   return [
     null,
     characterStats
-      .sort((a, b) => {
-        if (a.category === b.category) {
-          return a.index - b.index;
-        } else {
-          return b.category - a.category;
-        }
-      })
-      .map(({ hash, value, name, description }) => {
-        return [hash, value, name, description];
-      })
+      .sort((a, b) => (a.category === b.category ? a.index - b.index : b.category - a.category))
+      .map(({ hash, value, name, description }) => [hash, value, name, description])
   ];
-
-  // return Object.entries(character.stats)
-  //   .sort(([a], [b]) => {
-  //     const aHash = parseInt(a);
-  //     const bHash = parseInt(b);
-  //
-  //     const aCategory = statDefinitions[aHash].statCategory;
-  //     const bCategory = statDefinitions[bHash].statCategory;
-  //
-  //     if (aCategory === bCategory) {
-  //       const aIndex = statDefinitions[aHash].index;
-  //       const bIndex = statDefinitions[bHash].index;
-  //
-  //       return aIndex - bIndex;
-  //     } else {
-  //       return bCategory - aCategory;
-  //     }
-  //   })
-  //   .map(([key, value]) => {
-  //     const name = statDefinitions[parseInt(key)]?.displayProperties?.name || `Unknown (${key})`;
-  //
-  //     const description = (statDefinitions[parseInt(key)]?.displayProperties?.description || "")
-  //       .split("\n")
-  //       .filter((line) => {
-  //         return (line || "").trim().length > 0;
-  //       })
-  //       .join("\n");
-  //
-  //     return [key, value, name, description];
-  //   });
 };

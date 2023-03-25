@@ -1,8 +1,8 @@
-import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
-import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
+import { ItemService } from "~src/service/item/item.service";
 import { Logger } from "~src/service/log/log.types";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PlugService } from "~src/service/plug/plug.service";
+import { SocketName } from "~src/service/plug/plug.service.types";
 
 export const SUBCLASS_SOCKET_NAMES = ["ABILITIES", "SUPER", "ASPECTS", "FRAGMENTS"];
 
@@ -14,8 +14,8 @@ export type LoadoutPlugRecord = {
 export const getLoadoutPlugRecords = async (
   logger: Logger,
   itemDefinitionService: ManifestDefinitionService,
-  destiny2ItemService: Destiny2ItemService,
-  destiny2PlugService: Destiny2PlugService,
+  itemService: ItemService,
+  destiny2PlugService: PlugService,
   sessionId: string,
   membershipType: number,
   membershipId: string,
@@ -41,13 +41,12 @@ export const getLoadoutPlugRecords = async (
   const plugRecords: LoadoutPlugRecord[] = [];
 
   logger.info(`Retrieving ${itemName} equipped plug hashes ...`);
-  const [equippedPlugHashesErr, equippedPlugHashes] =
-    await destiny2ItemService.getItemEquippedPlugHashes(
-      sessionId,
-      membershipType,
-      membershipId,
-      itemInstanceId
-    );
+  const [equippedPlugHashesErr, equippedPlugHashes] = await itemService.getItemEquippedPlugHashes(
+    sessionId,
+    membershipType,
+    membershipId,
+    itemInstanceId
+  );
   if (equippedPlugHashesErr) {
     return [
       logger.loggedError(

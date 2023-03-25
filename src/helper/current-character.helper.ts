@@ -1,5 +1,5 @@
 import { AppModule } from "~src/module/app.module";
-import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
+import { CharacterReference } from "~src/service/character/character.types";
 import { Logger } from "~src/service/log/log.types";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";

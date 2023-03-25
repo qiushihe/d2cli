@@ -6,9 +6,11 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2VendorService } from "~src/service/destiny2-vendor/destiny2-vendor.service";
+import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
+import { resolveVendors } from "~src/service/destiny2-component-data/vendor.resolver";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { DestinyVendorComponent } from "~type/bungie-api/destiny/entities/vendors.types";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -63,8 +65,10 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2VendorService =
-      AppModule.getDefaultInstance().resolve<Destiny2VendorService>("Destiny2VendorService");
+    const destiny2ComponentDataService =
+      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
+        "Destiny2ComponentDataService"
+      );
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -72,11 +76,14 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving vendors ...");
-    const [vendorsErr, vendors] = await destiny2VendorService.getVendors(
+    const [vendorsErr, vendors] = await destiny2ComponentDataService.getVendorComponentsData<
+      DestinyVendorComponent[]
+    >(
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId,
-      characterInfo.characterId
+      characterInfo.characterId,
+      resolveVendors
     );
     if (vendorsErr) {
       return logger.loggedError(`Unable to retrieve vendors: ${vendorsErr.message}`);

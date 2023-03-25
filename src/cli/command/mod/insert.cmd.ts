@@ -10,9 +10,9 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PlugService } from "~src/service/plug/plug.service";
 
 type CmdOptions = SessionIdCommandOptions &
   ItemIdentifierCommandOptions &
@@ -49,8 +49,7 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2PlugService =
-      AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
+    const destiny2PlugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {

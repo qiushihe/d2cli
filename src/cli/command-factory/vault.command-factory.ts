@@ -8,8 +8,8 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
-import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
+import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
+import { InventoryService } from "~src/service/inventory/inventory.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
@@ -42,14 +42,10 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
         );
 
       const destiny2InventoryService =
-        AppModule.getDefaultInstance().resolve<Destiny2InventoryService>(
-          "Destiny2InventoryService"
-        );
+        AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
-      const destiny2InventoryTransferService =
-        AppModule.getDefaultInstance().resolve<Destiny2InventoryTransferService>(
-          "Destiny2InventoryTransferService"
-        );
+      const destiny2ActionService =
+        AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
 
       const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
       if (characterInfoErr) {
@@ -132,14 +128,14 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
                   } vault: ${itemDescription} ...`
             );
             const transferFromVaultErr = await (options.toVault
-              ? destiny2InventoryTransferService.transferToVault(
+              ? destiny2ActionService.transferItemToVault(
                   sessionId,
                   characterInfo.membershipType,
                   characterInfo.characterId,
                   item.itemHash,
                   item.itemInstanceId
                 )
-              : destiny2InventoryTransferService.transferFromVault(
+              : destiny2ActionService.transferItemFromVault(
                   sessionId,
                   characterInfo.membershipType,
                   characterInfo.characterId,

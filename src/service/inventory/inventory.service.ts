@@ -1,41 +1,37 @@
 import { AppModule } from "~src/module/app.module";
-import { BungieApiService } from "~src/service/bungie-api/bungie.api.service";
+import { resolveCharacterEquipmentItemInstances } from "~src/service/destiny2-component-data/character.resolver";
+import { resolveCharacterInventoryItemInstances } from "~src/service/destiny2-component-data/character.resolver";
+import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
+import { resolveProfileInventoryItemInstances } from "~src/service/destiny2-component-data/profile.resolver";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
-import { DestinyComponentType } from "~type/bungie-api/destiny.types";
 import { ItemLocation } from "~type/bungie-api/destiny.types";
 import { DestinyInventoryBucketDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 import { DestinyItemInstanceComponent } from "~type/bungie-api/destiny/entities/items.types";
-import { DestinyProfileResponse } from "~type/bungie-api/destiny/responses";
-import { DestinyCharacterResponse } from "~type/bungie-api/destiny/responses";
 import { Destiny2ManifestInventoryBucketDefinitions } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 
-import { GetVaultItemsOptions } from "./destiny2-inventory.types";
-import { GetProfileInventoryItemsOptions } from "./destiny2-inventory.types";
-import { GetInventoryItemsOptions } from "./destiny2-inventory.types";
-import { GetEquipmentItemsOptions } from "./destiny2-inventory.types";
-
-export class Destiny2InventoryService {
-  private readonly bungieApiService: BungieApiService;
+export class InventoryService {
   private readonly destiny2ManifestService: Destiny2ManifestService;
+  private readonly destiny2ComponentDataService: Destiny2ComponentDataService;
 
   constructor() {
-    this.bungieApiService =
-      AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
-
     this.destiny2ManifestService =
       AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+
+    this.destiny2ComponentDataService =
+      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
+        "Destiny2ComponentDataService"
+      );
   }
 
   async getVaultItems(
     sessionId: string,
     membershipType: number,
-    membershipId: string,
-    options?: GetVaultItemsOptions
+    membershipId: string
   ): Promise<
     | [Error, null, null]
     | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
@@ -52,9 +48,7 @@ export class Destiny2InventoryService {
 
     logger.debug(`Getting profile inventory items ...`);
     const [profileInventoryItemsErr, profileInventoryItems, profileInventoryItemInstances] =
-      await this.getProfileInventoryItems(sessionId, membershipType, membershipId, {
-        includeItemInstances: options?.includeItemInstances
-      });
+      await this.getProfileInventoryItems(sessionId, membershipType, membershipId);
     if (profileInventoryItemsErr) {
       return [profileInventoryItemsErr, null, null];
     }
@@ -69,8 +63,7 @@ export class Destiny2InventoryService {
   async getProfileInventoryItems(
     sessionId: string,
     membershipType: number,
-    membershipId: string,
-    options?: GetProfileInventoryItemsOptions
+    membershipId: string
   ): Promise<
     | [Error, null, null]
     | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
@@ -78,35 +71,25 @@ export class Destiny2InventoryService {
     const logger = this.getLogger();
 
     logger.debug(`Fetching all profile inventory items for ${membershipType}/${membershipId} ...`);
-    const [profileInventoryErr, profileInventoryRes] = await this.bungieApiService.sendApiRequest<
-      null,
-      DestinyProfileResponse
-    >(
-      sessionId,
-      "GET",
-      `/Destiny2/${membershipType}/Profile/${membershipId}?components=${[
-        DestinyComponentType.ProfileInventories,
-        ...(options?.includeItemInstances ? [DestinyComponentType.ItemInstances] : [])
-      ].join(",")}`,
-      null
-    );
-    if (profileInventoryErr) {
-      return [profileInventoryErr, null, null];
+    const [profileInventoryItemDataErr, profileInventoryItemData] =
+      await this.destiny2ComponentDataService.getProfileComponentsData(
+        sessionId,
+        membershipType,
+        membershipId,
+        resolveProfileInventoryItemInstances
+      );
+    if (profileInventoryItemDataErr) {
+      return [profileInventoryItemDataErr, null, null];
     }
 
-    return [
-      null,
-      profileInventoryRes?.profileInventory?.data.items || [],
-      profileInventoryRes?.itemComponents?.instances?.data || {}
-    ];
+    return [null, ...profileInventoryItemData];
   }
 
   async getInventoryItems(
     sessionId: string,
     membershipType: number,
     membershipId: string,
-    characterId: string,
-    options?: GetInventoryItemsOptions
+    characterId: string
   ): Promise<
     | [Error, null, null]
     | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
@@ -116,33 +99,26 @@ export class Destiny2InventoryService {
     logger.debug(
       `Fetching all inventory items for ${membershipType}/${membershipId}/${characterId} ...`
     );
-    const [characterInventoryErr, characterInventoryRes] =
-      await this.bungieApiService.sendApiRequest<null, DestinyCharacterResponse>(
+    const [inventoryItemDataErr, inventoryItemData] =
+      await this.destiny2ComponentDataService.getCharacterComponentsData(
         sessionId,
-        "GET",
-        `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${[
-          DestinyComponentType.CharacterInventories,
-          ...(options?.includeItemInstances ? [DestinyComponentType.ItemInstances] : [])
-        ].join(",")}`,
-        null
+        membershipType,
+        membershipId,
+        characterId,
+        resolveCharacterInventoryItemInstances
       );
-    if (characterInventoryErr) {
-      return [characterInventoryErr, null, null];
+    if (inventoryItemDataErr) {
+      return [inventoryItemDataErr, null, null];
     }
 
-    return [
-      null,
-      characterInventoryRes?.inventory?.data.items || [],
-      characterInventoryRes?.itemComponents?.instances?.data || {}
-    ];
+    return [null, ...inventoryItemData];
   }
 
   async getEquipmentItems(
     sessionId: string,
     membershipType: number,
     membershipId: string,
-    characterId: string,
-    options?: GetEquipmentItemsOptions
+    characterId: string
   ): Promise<
     | [Error, null, null]
     | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
@@ -152,25 +128,19 @@ export class Destiny2InventoryService {
     logger.debug(
       `Fetching all equipment items for ${membershipType}/${membershipId}/${characterId} ...`
     );
-    const [characterInventoryErr, characterInventoryRes] =
-      await this.bungieApiService.sendApiRequest<null, DestinyCharacterResponse>(
+    const [equipmentItemDataErr, equipmentItemData] =
+      await this.destiny2ComponentDataService.getCharacterComponentsData(
         sessionId,
-        "GET",
-        `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}?components=${[
-          DestinyComponentType.CharacterEquipment,
-          ...(options?.includeItemInstances ? [DestinyComponentType.ItemInstances] : [])
-        ].join(",")}`,
-        null
+        membershipType,
+        membershipId,
+        characterId,
+        resolveCharacterEquipmentItemInstances
       );
-    if (characterInventoryErr) {
-      return [characterInventoryErr, null, null];
+    if (equipmentItemDataErr) {
+      return [equipmentItemDataErr, null, null];
     }
 
-    return [
-      null,
-      characterInventoryRes?.equipment?.data.items || [],
-      characterInventoryRes?.itemComponents?.instances?.data || {}
-    ];
+    return [null, ...equipmentItemData];
   }
 
   async getLocationBuckets(
@@ -196,6 +166,6 @@ export class Destiny2InventoryService {
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
       .resolve<LogService>("LogService")
-      .getLogger("Destiny2InventoryService");
+      .getLogger("InventoryService");
   }
 }

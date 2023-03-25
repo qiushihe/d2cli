@@ -1,10 +1,9 @@
 import { SerializedItem } from "~src/helper/item-serialization.helper";
 import { SerializedPlug } from "~src/helper/item-serialization.helper";
 import { CharacterDescription } from "~src/service/character-description/character-description.types";
-import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
-import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
-import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
+import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PlugService } from "~src/service/plug/plug.service";
 
 export type LoadoutAction = {
   type: "DEPOSIT" | "WITHDRAW" | "EQUIP" | "SOCKET";
@@ -352,15 +351,14 @@ export const describeLoadoutAction = (loadoutAction: LoadoutAction) => {
 };
 
 export const applyLoadoutAction = async (
-  destiny2InventoryTransferService: Destiny2InventoryTransferService,
-  destiny2InventoryEquipmentService: Destiny2InventoryEquipmentService,
-  destiny2PlugService: Destiny2PlugService,
+  destiny2ActionService: Destiny2ActionService,
+  destiny2PlugService: PlugService,
   loadoutAction: LoadoutAction,
   sessionId: string,
   membershipType: number
 ): Promise<Error | null> => {
   if (loadoutAction.type === "DEPOSIT") {
-    const transferErr = await destiny2InventoryTransferService.transferToVault(
+    const transferErr = await destiny2ActionService.transferItemToVault(
       sessionId,
       membershipType,
       loadoutAction.characterId,
@@ -371,7 +369,7 @@ export const applyLoadoutAction = async (
       return transferErr;
     }
   } else if (loadoutAction.type === "WITHDRAW") {
-    const transferErr = await destiny2InventoryTransferService.transferFromVault(
+    const transferErr = await destiny2ActionService.transferItemFromVault(
       sessionId,
       membershipType,
       loadoutAction.characterId,
@@ -382,7 +380,7 @@ export const applyLoadoutAction = async (
       return transferErr;
     }
   } else if (loadoutAction.type === "EQUIP") {
-    const equipErr = await destiny2InventoryEquipmentService.equip(
+    const equipErr = await destiny2ActionService.equipItem(
       sessionId,
       membershipType,
       loadoutAction.characterId,

@@ -2,9 +2,9 @@ import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { AppModule } from "~src/module/app.module";
+import { CharacterService } from "~src/service/character/character.service";
+import { CharacterReference } from "~src/service/character/character.types";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
-import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
-import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
@@ -35,8 +35,8 @@ const cmd: CommandDefinition = {
 
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-    const destiny2CharacterService =
-      AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
+    const characterService =
+      AppModule.getDefaultInstance().resolve<CharacterService>("CharacterService");
 
     const characterDescriptionService =
       AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
@@ -54,7 +54,7 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving characters ...");
-    const [charactersErr, characters] = await destiny2CharacterService.getCharacters(sessionId);
+    const [charactersErr, characters] = await characterService.getCharacters(sessionId);
     if (charactersErr) {
       return logger.loggedError(`Unable to retrieve characters: ${charactersErr.message}`);
     }

@@ -7,9 +7,9 @@ import { hasSelectedCharacter } from "~src/helper/current-character.helper";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterService } from "~src/service/character/character.service";
+import { CharacterReference } from "~src/service/character/character.types";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
-import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
-import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
 import { LogService } from "~src/service/log/log.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
@@ -25,8 +25,8 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2CharacterService =
-      AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
+    const characterService =
+      AppModule.getDefaultInstance().resolve<CharacterService>("CharacterService");
 
     const characterDescriptionService =
       AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
@@ -49,7 +49,7 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving characters ...");
-    const [charactersErr, characters] = await destiny2CharacterService.getCharacters(sessionId);
+    const [charactersErr, characters] = await characterService.getCharacters(sessionId);
     if (charactersErr) {
       return logger.loggedError(`Unable to retrieve characters: ${charactersErr.message}`);
     }

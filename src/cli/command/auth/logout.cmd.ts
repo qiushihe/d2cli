@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { AppModule } from "~src/module/app.module";
 import { OAuthAccessToken } from "~src/service/bungie-oauth/bungie-oauth.types";
-import { CharacterReference } from "~src/service/destiny2-character/destiny2-character.types";
+import { CharacterReference } from "~src/service/character/character.types";
 import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";

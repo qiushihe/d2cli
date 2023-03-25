@@ -20,11 +20,11 @@ import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { getLoadoutPlugRecords } from "~src/helper/subclass.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
-import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
+import { InventoryService } from "~src/service/inventory/inventory.service";
+import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PlugService } from "~src/service/plug/plug.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions &
@@ -57,13 +57,11 @@ const cmd: CommandDefinition = {
       );
 
     const destiny2InventoryService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
+      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
-    const destiny2ItemService =
-      AppModule.getDefaultInstance().resolve<Destiny2ItemService>("Destiny2ItemService");
+    const destiny2PlugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
-    const destiny2PlugService =
-      AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
+    const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -112,7 +110,7 @@ const cmd: CommandDefinition = {
     const [subclassPlugRecordsErr, subclassPlugRecords] = await getLoadoutPlugRecords(
       logger,
       manifestDefinitionService,
-      destiny2ItemService,
+      itemService,
       destiny2PlugService,
       sessionId,
       characterInfo.membershipType,
@@ -152,7 +150,7 @@ const cmd: CommandDefinition = {
         const [equipmentPlugRecordsErr, equipmentPlugRecords] = await getLoadoutPlugRecords(
           logger,
           manifestDefinitionService,
-          destiny2ItemService,
+          itemService,
           destiny2PlugService,
           sessionId,
           characterInfo.membershipType,

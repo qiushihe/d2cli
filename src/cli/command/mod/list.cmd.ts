@@ -11,10 +11,10 @@ import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
+import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PlugService } from "~src/service/plug/plug.service";
 
 type CmdOptions = SessionIdCommandOptions &
   VerboseCommandOptions &
@@ -45,11 +45,9 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2PlugService =
-      AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
+    const destiny2PlugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
-    const destiny2ItemService =
-      AppModule.getDefaultInstance().resolve<Destiny2ItemService>("Destiny2ItemService");
+    const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -91,7 +89,7 @@ const cmd: CommandDefinition = {
     let equippedPlugHashes: number[] = [];
     if (itemIdentifier.itemInstanceId) {
       const [equippedPlugHashesErr, _equippedPlugHashes] =
-        await destiny2ItemService.getItemEquippedPlugHashes(
+        await itemService.getItemEquippedPlugHashes(
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,

@@ -23,14 +23,13 @@ import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
-import { Destiny2InventoryEquipmentService } from "~src/service/destiny2-inventory-equipment/destiny2-inventory-equipment.service";
-import { Destiny2InventoryTransferService } from "~src/service/destiny2-inventory-transfer/destiny2-inventory-transfer.service";
-import { Destiny2ItemService } from "~src/service/destiny2-item/destiny2-item.service";
-import { Destiny2PlugService } from "~src/service/destiny2-plug/destiny2-plug.service";
-import { SocketName } from "~src/service/destiny2-plug/destiny2-plug.service.types";
+import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
+import { InventoryService } from "~src/service/inventory/inventory.service";
+import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PlugService } from "~src/service/plug/plug.service";
+import { SocketName } from "~src/service/plug/plug.service.types";
 
 type CmdOptions = SessionIdCommandOptions &
   VerboseCommandOptions & { file: string; dryRun: boolean };
@@ -65,28 +64,19 @@ const cmd: CommandDefinition = {
       );
 
     const destiny2InventoryService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
+      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
     const characterDescriptionService =
       AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
         "CharacterDescriptionService"
       );
 
-    const destiny2InventoryTransferService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryTransferService>(
-        "Destiny2InventoryTransferService"
-      );
+    const destiny2ActionService =
+      AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
 
-    const destiny2InventoryEquipmentService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryEquipmentService>(
-        "Destiny2InventoryEquipmentService"
-      );
+    const destiny2PlugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
-    const destiny2ItemService =
-      AppModule.getDefaultInstance().resolve<Destiny2ItemService>("Destiny2ItemService");
-
-    const destiny2PlugService =
-      AppModule.getDefaultInstance().resolve<Destiny2PlugService>("Destiny2PlugService");
+    const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
     const loadoutFilePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
 
@@ -499,7 +489,7 @@ const cmd: CommandDefinition = {
 
       logger.info(`Fetching equipped plugs for ${itemName} ...`);
       const [equippedPlugHashesErr, _equippedPlugHashes] =
-        await destiny2ItemService.getItemEquippedPlugHashes(
+        await itemService.getItemEquippedPlugHashes(
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,
@@ -556,8 +546,7 @@ const cmd: CommandDefinition = {
 
         logger.info(`Applying loadout action: ${loadoutActionDescription} ...`);
         const loadoutActionErr = await applyLoadoutAction(
-          destiny2InventoryTransferService,
-          destiny2InventoryEquipmentService,
+          destiny2ActionService,
           destiny2PlugService,
           loadoutAction,
           sessionId,

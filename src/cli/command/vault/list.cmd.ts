@@ -8,7 +8,7 @@ import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2InventoryService } from "~src/service/destiny2-inventory/destiny2-inventory.service";
+import { InventoryService } from "~src/service/inventory/inventory.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
@@ -31,7 +31,7 @@ const cmd: CommandDefinition = {
       );
 
     const destiny2InventoryService =
-      AppModule.getDefaultInstance().resolve<Destiny2InventoryService>("Destiny2InventoryService");
+      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -43,10 +43,7 @@ const cmd: CommandDefinition = {
       await destiny2InventoryService.getVaultItems(
         sessionId,
         characterInfo.membershipType,
-        characterInfo.membershipId,
-        {
-          includeItemInstances: verbose
-        }
+        characterInfo.membershipId
       );
     if (vaultItemsErr) {
       return logger.loggedError(

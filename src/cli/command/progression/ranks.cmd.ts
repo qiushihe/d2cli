@@ -6,7 +6,8 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
-import { Destiny2CharacterService } from "~src/service/destiny2-character/destiny2-character.service";
+import { resolveCharacterProgressions } from "~src/service/destiny2-component-data/character.resolver";
+import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
@@ -40,8 +41,10 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2CharacterService =
-      AppModule.getDefaultInstance().resolve<Destiny2CharacterService>("Destiny2CharacterService");
+    const destiny2ComponentDataService =
+      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
+        "Destiny2ComponentDataService"
+      );
 
     const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
     if (characterInfoErr) {
@@ -50,11 +53,12 @@ const cmd: CommandDefinition = {
 
     logger.info("Retrieving character progression ...");
     const [characterProgressionErr, characterProgression] =
-      await destiny2CharacterService.getCharacterProgressions(
+      await destiny2ComponentDataService.getCharacterComponentsData(
         sessionId,
         characterInfo.membershipType,
         characterInfo.membershipId,
-        characterInfo.characterId
+        characterInfo.characterId,
+        resolveCharacterProgressions
       );
     if (characterProgressionErr) {
       return logger.loggedError(
