@@ -67,6 +67,10 @@ export class ConfigService {
     return (LOG_LEVEL as Record<string, number>)[logLevelName];
   }
 
+  getPastebinApiRoot(): string {
+    return "https://pastebin.com";
+  }
+
   getBungieApiRoot(): string {
     return "https://www.bungie.net/Platform";
   }

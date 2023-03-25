@@ -24,12 +24,13 @@ import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PastebinService } from "~src/service/pastebin/pastebin.service";
 import { PlugService } from "~src/service/plug/plug.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions &
   LoadoutNameCommandOptions &
-  IncludeUnequippedCommandOptions & { file: string };
+  IncludeUnequippedCommandOptions & { file: string; usePastebin: boolean };
 
 const cmd: CommandDefinition = {
   description: "Export the currently equipped loadout",
@@ -41,6 +42,11 @@ const cmd: CommandDefinition = {
       flags: ["f", "file <loadout-file>"],
       description: "Path to the loadout file to write",
       defaultValue: ""
+    },
+    {
+      flags: ["use-pastebin"],
+      description: "Save the loadout to Pastebin",
+      defaultValue: false
     }
   ],
   action: async (_, opts) => {
@@ -48,7 +54,13 @@ const cmd: CommandDefinition = {
       .resolve<LogService>("LogService")
       .getLogger("cmd:loadout:export");
 
-    const { session: sessionId, loadoutName, includeUnequipped, file } = opts as CmdOptions;
+    const {
+      session: sessionId,
+      loadoutName,
+      includeUnequipped,
+      file,
+      usePastebin
+    } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
     const manifestDefinitionService =
@@ -63,6 +75,9 @@ const cmd: CommandDefinition = {
 
     const inventoryService =
       AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
+
+    const pastebinService =
+      AppModule.getDefaultInstance().resolve<PastebinService>("PastebinService");
 
     const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
@@ -192,11 +207,10 @@ const cmd: CommandDefinition = {
       );
     }
 
-    exportLines.push(
-      `LOADOUT // ${
-        loadoutName || `${subclassDefinition?.displayProperties.name || "UNKNOWN SUBCLASS"} Loadout`
-      }`
-    );
+    const exportedLoadoutName =
+      loadoutName || `${subclassDefinition?.displayProperties.name || "UNKNOWN SUBCLASS"} Loadout`;
+
+    exportLines.push(`LOADOUT // ${exportedLoadoutName}`);
 
     const [serializeSubclassErr, serializedSubclass] = await serializeItem(
       manifestDefinitionService,
@@ -276,8 +290,19 @@ const cmd: CommandDefinition = {
         return logger.loggedError(`Unable to write loadout file: ${writeErr.message}`);
       }
       logger.log(`Loadout exported to: ${loadoutFilePath}`);
+    } else if (usePastebin) {
+      logger.info("Writing loadout to Pastebin ...");
+      const [pastebinUrlErr, pastebinUrl] = await pastebinService.createPaste(
+        exportedLoadoutName,
+        exportLines.join("\n")
+      );
+      if (pastebinUrlErr) {
+        return logger.loggedError(`Unable to write to Pastebin: ${pastebinUrlErr.message}`);
+      }
+
+      logger.log(`Loadout URL (Pastebin): ${pastebinUrl}`);
     } else {
-      console.log(exportLines.join("\n"));
+      logger.log(exportLines.join("\n"));
     }
   }
 };

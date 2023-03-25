@@ -13,6 +13,7 @@ import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PastebinService } from "~src/service/pastebin/pastebin.service";
 import { PlugService } from "~src/service/plug/plug.service";
 import { PostmasterService } from "~src/service/postmaster/postmaster.service";
 import { SessionService } from "~src/service/session/session.service";
@@ -37,6 +38,7 @@ const MODULE: Record<string, new () => any> = {
   ItemService,
   LogService,
   ManifestDefinitionService,
+  PastebinService,
   PlugService,
   PostmasterService,
   SessionService,

@@ -59,6 +59,7 @@ export class BungieApiService {
     }
 
     const requestHeader: Record<string, any> = {
+      "Content-Type": "application/json",
       "X-API-Key": apiKey
     };
 
@@ -74,7 +75,6 @@ export class BungieApiService {
     logger.debug(`Sending request for session: ${sessionId} ...`);
     const [resErr, res] = await this.sendRequest(`${this.config.getBungieApiRoot()}${path}`, {
       method,
-      "Content-Type": "application/json",
       headers: requestHeader,
       body: body ? JSON.stringify(body) : undefined
     });
