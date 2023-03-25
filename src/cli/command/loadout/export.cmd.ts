@@ -30,7 +30,7 @@ import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.ty
 
 type CmdOptions = SessionIdCommandOptions &
   LoadoutNameCommandOptions &
-  IncludeUnequippedCommandOptions & { file: string; usePastebin: boolean };
+  IncludeUnequippedCommandOptions & { toFile: string; toPastebin: boolean };
 
 const cmd: CommandDefinition = {
   description: "Export the currently equipped loadout",
@@ -39,12 +39,12 @@ const cmd: CommandDefinition = {
     loadoutNameOption,
     includeUnequippedOption,
     {
-      flags: ["f", "file <loadout-file>"],
+      flags: ["to-file <loadout-file>"],
       description: "Path to the loadout file to write",
       defaultValue: ""
     },
     {
-      flags: ["use-pastebin"],
+      flags: ["to-pastebin"],
       description: "Save the loadout to Pastebin",
       defaultValue: false
     }
@@ -58,8 +58,8 @@ const cmd: CommandDefinition = {
       session: sessionId,
       loadoutName,
       includeUnequipped,
-      file,
-      usePastebin
+      toFile,
+      toPastebin
     } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
@@ -274,8 +274,10 @@ const cmd: CommandDefinition = {
       }
     }
 
-    if (file) {
-      const loadoutFilePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
+    if (toFile) {
+      const loadoutFilePath = path.isAbsolute(toFile)
+        ? toFile
+        : path.resolve(process.cwd(), toFile);
 
       logger.info("Writing to loadout file ...");
       const [writeErr] = await promisedFn(
@@ -290,7 +292,7 @@ const cmd: CommandDefinition = {
         return logger.loggedError(`Unable to write loadout file: ${writeErr.message}`);
       }
       logger.log(`Loadout exported to: ${loadoutFilePath}`);
-    } else if (usePastebin) {
+    } else if (toPastebin) {
       logger.info("Writing loadout to Pastebin ...");
       const [pastebinUrlErr, pastebinUrl] = await pastebinService.createPaste(
         exportedLoadoutName,
