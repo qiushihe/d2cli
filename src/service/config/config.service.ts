@@ -2,14 +2,22 @@ import * as fs from "fs";
 import { homedir } from "os";
 import * as path from "path";
 
+import { ensureDirectoryExistSync } from "~src/helper/fs.helper";
 import { triedFn } from "~src/helper/function.helper";
-import { errorLogger } from "~src/service/log/log.service";
+import { AppModule } from "~src/module/app.module";
+import { errorLogger, LogService } from "~src/service/log/log.service";
 import { LOG_LEVEL } from "~src/service/log/log.service";
+import { Logger } from "~src/service/log/log.types";
 
 import { AppConfigName } from "./config.types";
 
 export class ConfigService {
   getAppConfig(name: AppConfigName): [Error, null] | [null, string | null] {
+    const storageRootErr = ensureDirectoryExistSync(this.getConfigRootPath());
+    if (storageRootErr) {
+      return [storageRootErr, null];
+    }
+
     const [reloadErr, appConfig] = this.reloadAppConfig();
     if (reloadErr) {
       return [reloadErr, null];
@@ -19,6 +27,11 @@ export class ConfigService {
   }
 
   setAppConfig(name: AppConfigName, value: string | null): Error | null {
+    const storageRootErr = ensureDirectoryExistSync(this.getConfigRootPath());
+    if (storageRootErr) {
+      return storageRootErr;
+    }
+
     const [reloadErr, appConfig] = this.reloadAppConfig();
     if (reloadErr) {
       return reloadErr;
@@ -58,7 +71,6 @@ export class ConfigService {
     return "https://www.bungie.net/Platform";
   }
 
-  // /common/destiny2_content/json/es/DestinyCollectibleDefinition-ed55fd73-3627-4784-9026-96aae1a7b82f.json
   getBungieAssetRoot(): string {
     return "https://www.bungie.net";
   }
@@ -109,7 +121,21 @@ export class ConfigService {
     return [null, appConfig];
   }
 
+  getFsStorageRootPath() {
+    return path.resolve(this.getConfigRootPath(), "fs-storage");
+  }
+
   private getAppConfigPath(): string {
-    return path.resolve(homedir(), ".d2cli-app-config.json");
+    return path.resolve(this.getConfigRootPath(), "config.json");
+  }
+
+  private getConfigRootPath(): string {
+    return path.resolve(homedir(), ".d2cli");
+  }
+
+  private getLogger(): Logger {
+    return AppModule.getDefaultInstance()
+      .resolve<LogService>("LogService")
+      .getLogger("ConfigService");
   }
 }

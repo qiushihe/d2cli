@@ -1,14 +1,11 @@
-import { homedir } from "os";
 import * as path from "path";
 
 import { sha1Digest } from "~src/helper/crypto.helper";
-import { exists as fsExists } from "~src/helper/fs.helper";
-import { isDirectory as fsIsDirectory } from "~src/helper/fs.helper";
-import { recursiveRemove as fsRecursiveRemove } from "~src/helper/fs.helper";
+import { ensureDirectoryExistSync } from "~src/helper/fs.helper";
 import { readFile as fsReadFile } from "~src/helper/fs.helper";
 import { writeFile as fsWriteFile } from "~src/helper/fs.helper";
-import { makeDirectory as fsMakeDirectory } from "~src/helper/fs.helper";
 import { AppModule } from "~src/module/app.module";
+import { ConfigService } from "~src/service/config/config.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
 
@@ -19,18 +16,24 @@ import { StorageNamespace } from "./storage.types";
 const _ns = (namespace: string, filename: string) => `${namespace}-${filename}`;
 
 export class FsStorageService implements IStorageInterface {
+  private readonly config: ConfigService;
+
+  constructor() {
+    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+  }
+
   async read<T>(
     namespace: StorageNamespace,
     filePath: string
   ): Promise<[Error, null] | [null, StorageFile<T>]> {
-    const storageRootErr = await this.ensureStorageRoot();
+    const storageRootErr = ensureDirectoryExistSync(this.config.getFsStorageRootPath());
     if (storageRootErr) {
       return [storageRootErr, null];
     }
 
     const rawFilename = sha1Digest(filePath);
     const rawFilePath = path.resolve(
-      this.getStorageRootPath(),
+      this.config.getFsStorageRootPath(),
       _ns(namespace, `${rawFilename}.json`)
     );
 
@@ -59,57 +62,18 @@ export class FsStorageService implements IStorageInterface {
   }
 
   async write<T>(namespace: StorageNamespace, file: StorageFile<T>): Promise<Error | null> {
-    const storageRootErr = await this.ensureStorageRoot();
+    const storageRootErr = ensureDirectoryExistSync(this.config.getFsStorageRootPath());
     if (storageRootErr) {
       return storageRootErr;
     }
 
     const rawFilename = sha1Digest(file.filename);
     const rawFilePath = path.resolve(
-      this.getStorageRootPath(),
+      this.config.getFsStorageRootPath(),
       _ns(namespace, `${rawFilename}.json`)
     );
 
     return await fsWriteFile(rawFilePath, JSON.stringify(file, null, 2));
-  }
-
-  private async ensureStorageRoot(): Promise<Error | null> {
-    const storageRootPath = this.getStorageRootPath();
-
-    const [storageRootExistsErr, storageRootExists] = await fsExists(storageRootPath);
-    if (storageRootExistsErr) {
-      return storageRootExistsErr;
-    }
-    if (!storageRootExists) {
-      const mkdirErr = await fsMakeDirectory(storageRootPath);
-      if (mkdirErr) {
-        return mkdirErr;
-      }
-    }
-
-    const [storageRootIsDirectoryErr, storageRootIsDirectory] = await fsIsDirectory(
-      storageRootPath
-    );
-    if (storageRootIsDirectoryErr) {
-      return storageRootIsDirectoryErr;
-    }
-    if (!storageRootIsDirectory) {
-      const rmErr = await fsRecursiveRemove(storageRootPath);
-      if (rmErr) {
-        return rmErr;
-      }
-
-      const mkdirErr = await fsMakeDirectory(storageRootPath);
-      if (mkdirErr) {
-        return mkdirErr;
-      }
-    }
-
-    return null;
-  }
-
-  private getStorageRootPath(): string {
-    return path.resolve(homedir(), ".d2cli");
   }
 
   private getLogger(): Logger {
