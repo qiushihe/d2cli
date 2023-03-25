@@ -5,9 +5,9 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { itemInstanceIdsOption } from "~src/cli/command-option/item.option";
 import { ItemInstanceIdsCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { LogService } from "~src/service/log/log.service";
@@ -41,13 +41,19 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           "ManifestDefinitionService"
         );
 
-      const destiny2InventoryService =
+      const characterSelectionService =
+        AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+          "CharacterSelectionService"
+        );
+
+      const inventoryService =
         AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
       const destiny2ActionService =
         AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
 
-      const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+      const [characterInfoErr, characterInfo] =
+        await characterSelectionService.ensureSelectedCharacter(sessionId);
       if (characterInfoErr) {
         return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
       }
@@ -58,13 +64,12 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
         let sourceItems: DestinyItemComponent[];
 
         if (options.toVault) {
-          const [inventoryItemsErr, inventoryItems] =
-            await destiny2InventoryService.getInventoryItems(
-              sessionId,
-              characterInfo.membershipType,
-              characterInfo.membershipId,
-              characterInfo.characterId
-            );
+          const [inventoryItemsErr, inventoryItems] = await inventoryService.getInventoryItems(
+            sessionId,
+            characterInfo.membershipType,
+            characterInfo.membershipId,
+            characterInfo.characterId
+          );
           if (inventoryItemsErr) {
             return logger.loggedError(
               `Unable to get inventory items: ${inventoryItemsErr.message}`
@@ -72,7 +77,7 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           }
           sourceItems = inventoryItems;
         } else {
-          const [vaultItemsErr, vaultItems] = await destiny2InventoryService.getVaultItems(
+          const [vaultItemsErr, vaultItems] = await inventoryService.getVaultItems(
             sessionId,
             characterInfo.membershipType,
             characterInfo.membershipId

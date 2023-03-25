@@ -4,6 +4,7 @@ import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.servi
 import { CacheService } from "~src/service/cache/cache.service";
 import { CharacterService } from "~src/service/character/character.service";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { ConfigService } from "~src/service/config/config.service";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
 import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
@@ -15,6 +16,7 @@ import { ManifestDefinitionService } from "~src/service/manifest-definition/mani
 import { PlugService } from "~src/service/plug/plug.service";
 import { PostmasterService } from "~src/service/postmaster/postmaster.service";
 import { SessionService } from "~src/service/session/session.service";
+import { StatService } from "~src/service/stat/stat.service";
 import { FsStorageService } from "~src/service/storage/fs-storage.service";
 
 import { AppModule } from "./app.module";
@@ -26,6 +28,7 @@ const MODULE: Record<string, new () => any> = {
   CacheService,
   CharacterService,
   CharacterDescriptionService,
+  CharacterSelectionService,
   ConfigService,
   Destiny2ActionService,
   Destiny2ComponentDataService,
@@ -37,6 +40,7 @@ const MODULE: Record<string, new () => any> = {
   PlugService,
   PostmasterService,
   SessionService,
+  StatService,
   FsStorageService
 };
 

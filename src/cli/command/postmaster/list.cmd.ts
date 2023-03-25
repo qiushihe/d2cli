@@ -3,12 +3,12 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
-import { getPostmasterItems } from "~src/helper/postmaster.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PostmasterService } from "~src/service/postmaster/postmaster.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
@@ -28,13 +28,22 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+    const characterSelectionService =
+      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
+
+    const postmasterService =
+      AppModule.getDefaultInstance().resolve<PostmasterService>("PostmasterService");
+
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
     logger.info("Retrieving postmaster items ...");
-    const [postmasterItemsErr, postmasterItems] = await getPostmasterItems(
+    const [postmasterItemsErr, postmasterItems] = await postmasterService.getItems(
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId,

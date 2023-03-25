@@ -3,11 +3,11 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
@@ -30,21 +30,26 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2InventoryService =
+    const inventoryService =
       AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
-    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+    const characterSelectionService =
+      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
+
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
     logger.info("Retrieving vault items ...");
-    const [vaultItemsErr, vaultItems, vaultItemInstances] =
-      await destiny2InventoryService.getVaultItems(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId
-      );
+    const [vaultItemsErr, vaultItems, vaultItemInstances] = await inventoryService.getVaultItems(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId
+    );
     if (vaultItemsErr) {
       return logger.loggedError(
         `Unable to retrieve profile inventory items: ${vaultItemsErr.message}`

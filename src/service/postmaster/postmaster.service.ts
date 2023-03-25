@@ -8,13 +8,13 @@ import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.ty
 
 export class PostmasterService {
   private readonly destiny2ActionService: Destiny2ActionService;
-  private readonly destiny2InventoryService: InventoryService;
+  private readonly inventoryService: InventoryService;
 
   constructor() {
     this.destiny2ActionService =
       AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
 
-    this.destiny2InventoryService =
+    this.inventoryService =
       AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
   }
 
@@ -28,7 +28,7 @@ export class PostmasterService {
 
     logger.debug(`Getting postmaster buckets ...`);
     const [postmasterBucketsErr, postmasterBuckets] =
-      await this.destiny2InventoryService.getLocationBuckets(ItemLocation.Postmaster);
+      await this.inventoryService.getLocationBuckets(ItemLocation.Postmaster);
     if (postmasterBucketsErr) {
       return [postmasterBucketsErr, null];
     }
@@ -38,13 +38,12 @@ export class PostmasterService {
     );
 
     logger.debug(`Getting inventory items ...`);
-    const [inventoryItemsErr, inventoryItems] =
-      await this.destiny2InventoryService.getInventoryItems(
-        sessionId,
-        membershipType,
-        membershipId,
-        characterId
-      );
+    const [inventoryItemsErr, inventoryItems] = await this.inventoryService.getInventoryItems(
+      sessionId,
+      membershipType,
+      membershipId,
+      characterId
+    );
     if (inventoryItemsErr) {
       return [inventoryItemsErr, null];
     }

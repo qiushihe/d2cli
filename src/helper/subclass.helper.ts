@@ -13,9 +13,9 @@ export type LoadoutPlugRecord = {
 
 export const getLoadoutPlugRecords = async (
   logger: Logger,
-  itemDefinitionService: ManifestDefinitionService,
+  manifestDefinitionService: ManifestDefinitionService,
   itemService: ItemService,
-  destiny2PlugService: PlugService,
+  plugService: PlugService,
   sessionId: string,
   membershipType: number,
   membershipId: string,
@@ -25,7 +25,7 @@ export const getLoadoutPlugRecords = async (
   socketNames: string[]
 ): Promise<[Error, null] | [null, LoadoutPlugRecord[]]> => {
   logger.info(`Retrieving item definition for ${itemHash} ...`);
-  const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+  const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
     itemHash
   );
   if (itemDefinitionErr) {
@@ -60,7 +60,7 @@ export const getLoadoutPlugRecords = async (
     const socketName = socketNames[socketNameIndex] as SocketName;
 
     logger.info(`Fetching ${itemName} ${socketName.toLocaleLowerCase()} socket indices ...`);
-    const [socketIndicesErr, socketIndices] = await destiny2PlugService.getSocketIndices(
+    const [socketIndicesErr, socketIndices] = await plugService.getSocketIndices(
       sessionId,
       membershipType,
       membershipId,

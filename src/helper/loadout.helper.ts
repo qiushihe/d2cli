@@ -15,11 +15,11 @@ export const LoadoutInventoryBuckets = [
 ];
 
 export const serializeItem = async (
-  itemDefinitionService: ManifestDefinitionService,
+  manifestDefinitionService: ManifestDefinitionService,
   item: DestinyItemComponent,
   equip: boolean
 ): Promise<[Error, null] | [null, string]> => {
-  const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+  const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
     item.itemHash
   );
   if (itemDefinitionErr) {
@@ -33,7 +33,7 @@ export const serializeItem = async (
 };
 
 export const serializeItemPlugs = async (
-  itemDefinitionService: ManifestDefinitionService,
+  manifestDefinitionService: ManifestDefinitionService,
   item: DestinyItemComponent,
   plugs: LoadoutPlugRecord[]
 ): Promise<[Error, null] | [null, string[]]> => {
@@ -43,7 +43,7 @@ export const serializeItemPlugs = async (
     const plug = plugs[plugIndex];
 
     const [plugItemDefinitionErr, plugItemDefinition] =
-      await itemDefinitionService.getItemDefinition(plug.itemHash);
+      await manifestDefinitionService.getItemDefinition(plug.itemHash);
     if (plugItemDefinitionErr) {
       return [plugItemDefinitionErr, null];
     }

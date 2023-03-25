@@ -5,11 +5,11 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { showAllOption } from "~src/cli/command-option/cli.option";
 import { ShowAllCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
@@ -58,15 +58,20 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           "ManifestDefinitionService"
         );
 
-      const destiny2InventoryService =
+      const characterSelectionService =
+        AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+          "CharacterSelectionService"
+        );
+
+      const inventoryService =
         AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
-      const destiny2PlugService =
-        AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+      const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
       const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
-      const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+      const [characterInfoErr, characterInfo] =
+        await characterSelectionService.ensureSelectedCharacter(sessionId);
       if (characterInfoErr) {
         return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
       }
@@ -76,13 +81,12 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
 
       if (options.listEquipped) {
         logger.info("Retrieving equipment items ...");
-        const [equipmentItemsErr, equipmentItems] =
-          await destiny2InventoryService.getEquipmentItems(
-            sessionId,
-            characterInfo.membershipType,
-            characterInfo.membershipId,
-            characterInfo.characterId
-          );
+        const [equipmentItemsErr, equipmentItems] = await inventoryService.getEquipmentItems(
+          sessionId,
+          characterInfo.membershipType,
+          characterInfo.membershipId,
+          characterInfo.characterId
+        );
         if (equipmentItemsErr) {
           return logger.loggedError(
             `Unable to retrieve equipment items: ${equipmentItemsErr.message}`
@@ -91,13 +95,12 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
         getSubclassItems(equipmentItems).forEach((subclass) => allSubclasses.push(subclass));
       } else {
         logger.info("Retrieving inventory items ...");
-        const [inventoryItemsErr, inventoryItems] =
-          await destiny2InventoryService.getInventoryItems(
-            sessionId,
-            characterInfo.membershipType,
-            characterInfo.membershipId,
-            characterInfo.characterId
-          );
+        const [inventoryItemsErr, inventoryItems] = await inventoryService.getInventoryItems(
+          sessionId,
+          characterInfo.membershipType,
+          characterInfo.membershipId,
+          characterInfo.characterId
+        );
         if (inventoryItemsErr) {
           return logger.loggedError(
             `Unable to retrieve inventory items: ${inventoryItemsErr.message}`
@@ -151,7 +154,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           logger.info(
             `Fetching ${subclassName} ${socketName.toLocaleLowerCase()} socket indices ...`
           );
-          const [socketIndicesErr, socketIndices] = await destiny2PlugService.getSocketIndices(
+          const [socketIndicesErr, socketIndices] = await plugService.getSocketIndices(
             sessionId,
             characterInfo.membershipType,
             characterInfo.membershipId,
@@ -170,7 +173,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           logger.info(
             `Retrieving ${subclassName} available ${socketName.toLocaleLowerCase()} items ...`
           );
-          const [plugItemHashesErr, plugItemHashes] = await destiny2PlugService.getPlugItemHashes(
+          const [plugItemHashesErr, plugItemHashes] = await plugService.getPlugItemHashes(
             sessionId,
             characterInfo.membershipType,
             characterInfo.membershipId,

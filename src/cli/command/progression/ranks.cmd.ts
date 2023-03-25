@@ -3,9 +3,9 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { resolveCharacterProgressions } from "~src/service/destiny2-component-data/character.resolver";
 import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
 import { LogService } from "~src/service/log/log.service";
@@ -46,7 +46,13 @@ const cmd: CommandDefinition = {
         "Destiny2ComponentDataService"
       );
 
-    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+    const characterSelectionService =
+      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
+
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }

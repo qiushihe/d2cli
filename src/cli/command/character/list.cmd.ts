@@ -3,13 +3,12 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { hasSelectedCharacter } from "~src/helper/current-character.helper";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterService } from "~src/service/character/character.service";
 import { CharacterReference } from "~src/service/character/character.types";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { LogService } from "~src/service/log/log.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
@@ -28,12 +27,18 @@ const cmd: CommandDefinition = {
     const characterService =
       AppModule.getDefaultInstance().resolve<CharacterService>("CharacterService");
 
+    const characterSelectionService =
+      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
+
     const characterDescriptionService =
       AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
         "CharacterDescriptionService"
       );
 
-    const [hasCharacterInfoErr, hasCharacterInfo] = await hasSelectedCharacter(logger, sessionId);
+    const [hasCharacterInfoErr, hasCharacterInfo] =
+      await characterSelectionService.hasSelectedCharacter(sessionId);
     if (hasCharacterInfoErr) {
       return logger.loggedError(`Unable to check character info: ${hasCharacterInfoErr.message}`);
     }
@@ -41,7 +46,8 @@ const cmd: CommandDefinition = {
     let characterInfo: CharacterReference | null = null;
 
     if (hasCharacterInfo) {
-      const [characterInfoErr, _characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+      const [characterInfoErr, _characterInfo] =
+        await characterSelectionService.ensureSelectedCharacter(sessionId);
       if (characterInfoErr) {
         return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
       }

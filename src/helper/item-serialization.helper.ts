@@ -100,7 +100,7 @@ export const serializeItem = (
 };
 
 export const serializeItems = async (
-  itemDefinitionService: ManifestDefinitionService,
+  manifestDefinitionService: ManifestDefinitionService,
   items: DestinyItemComponent[]
 ): Promise<[Error, null] | [null, SerializedItem[]]> => {
   const serializedItems: SerializedItem[] = [];
@@ -108,7 +108,7 @@ export const serializeItems = async (
   for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
     const item = items[itemIndex];
 
-    const [itemDefinitionErr, itemDefinition] = await itemDefinitionService.getItemDefinition(
+    const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
       item.itemHash
     );
     if (itemDefinitionErr) {
@@ -137,14 +137,14 @@ export const serializeItems = async (
 };
 
 export const serializeCharacterItems = async (
-  itemDefinitionService: ManifestDefinitionService,
-  destiny2InventoryService: InventoryService,
+  manifestDefinitionService: ManifestDefinitionService,
+  inventoryService: InventoryService,
   sessionId: string,
   membershipType: number,
   membershipId: string,
   characterId: string
 ): Promise<[Error, null, null] | [null, SerializedItem[], SerializedItem[]]> => {
-  const [equipmentItemsErr, equipmentItems] = await destiny2InventoryService.getEquipmentItems(
+  const [equipmentItemsErr, equipmentItems] = await inventoryService.getEquipmentItems(
     sessionId,
     membershipType,
     membershipId,
@@ -154,7 +154,7 @@ export const serializeCharacterItems = async (
     return [equipmentItemsErr, null, null];
   }
 
-  const [inventoryItemsErr, inventoryItems] = await destiny2InventoryService.getInventoryItems(
+  const [inventoryItemsErr, inventoryItems] = await inventoryService.getInventoryItems(
     sessionId,
     membershipType,
     membershipId,
@@ -165,7 +165,7 @@ export const serializeCharacterItems = async (
   }
 
   const [serializeEquippedItemsErr, serializedEquippedItems] = await serializeItems(
-    itemDefinitionService,
+    manifestDefinitionService,
     equipmentItems
   );
   if (serializeEquippedItemsErr) {
@@ -173,7 +173,7 @@ export const serializeCharacterItems = async (
   }
 
   const [serializeUnequippedItemsErr, serializedUnequippedItems] = await serializeItems(
-    itemDefinitionService,
+    manifestDefinitionService,
     inventoryItems
   );
   if (serializeUnequippedItemsErr) {
@@ -184,8 +184,8 @@ export const serializeCharacterItems = async (
 };
 
 export const serializeAllItems = async (
-  itemDefinitionService: ManifestDefinitionService,
-  destiny2InventoryService: InventoryService,
+  manifestDefinitionService: ManifestDefinitionService,
+  inventoryService: InventoryService,
   characterDescriptions: Record<string, CharacterDescription>,
   sessionId: string,
   membershipType: number,
@@ -212,8 +212,8 @@ export const serializeAllItems = async (
 > => {
   const [serializeOwnItemsErr, serializedOwnEquippedItems, serializedOwnUnequippedItems] =
     await serializeCharacterItems(
-      itemDefinitionService,
-      destiny2InventoryService,
+      manifestDefinitionService,
+      inventoryService,
       sessionId,
       membershipType,
       membershipId,
@@ -242,8 +242,8 @@ export const serializeAllItems = async (
       serializedOthersEquippedItems,
       serializedOthersUnequippedItems
     ] = await serializeCharacterItems(
-      itemDefinitionService,
-      destiny2InventoryService,
+      manifestDefinitionService,
+      inventoryService,
       sessionId,
       membershipType,
       membershipId,
@@ -259,7 +259,7 @@ export const serializeAllItems = async (
     };
   }
 
-  const [vaultItemsErr, vaultItems] = await destiny2InventoryService.getVaultItems(
+  const [vaultItemsErr, vaultItems] = await inventoryService.getVaultItems(
     sessionId,
     membershipType,
     membershipId
@@ -269,7 +269,7 @@ export const serializeAllItems = async (
   }
 
   const [serializeVaultItemsErr, serializedVaultItems] = await serializeItems(
-    itemDefinitionService,
+    manifestDefinitionService,
     vaultItems
   );
   if (serializeVaultItemsErr) {

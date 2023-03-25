@@ -18,7 +18,7 @@ export type LoadoutAction = {
 };
 
 export const resolveTransferActions = async (
-  itemDefinitionService: ManifestDefinitionService,
+  manifestDefinitionService: ManifestDefinitionService,
   characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
   equipmentItems: SerializedItem[],
@@ -32,7 +32,7 @@ export const resolveTransferActions = async (
     const equipment = equipmentItems[equipmentIndex];
 
     const [equipmentItemDefinitionErr, equipmentItemDefinition] =
-      await itemDefinitionService.getItemDefinition(equipment.itemHash);
+      await manifestDefinitionService.getItemDefinition(equipment.itemHash);
     if (equipmentItemDefinitionErr) {
       return [equipmentItemDefinitionErr, null];
     }
@@ -352,7 +352,7 @@ export const describeLoadoutAction = (loadoutAction: LoadoutAction) => {
 
 export const applyLoadoutAction = async (
   destiny2ActionService: Destiny2ActionService,
-  destiny2PlugService: PlugService,
+  plugService: PlugService,
   loadoutAction: LoadoutAction,
   sessionId: string,
   membershipType: number
@@ -398,7 +398,7 @@ export const applyLoadoutAction = async (
     } else if (!plugItemHash) {
       return new Error("Missing plug item hash");
     } else {
-      const socketErr = await destiny2PlugService.insert(
+      const socketErr = await plugService.insert(
         sessionId,
         membershipType,
         loadoutAction.characterId,

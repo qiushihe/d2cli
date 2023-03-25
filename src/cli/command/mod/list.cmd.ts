@@ -7,10 +7,10 @@ import { ShowAllCommandOptions } from "~src/cli/command-option/cli.option";
 import { itemIdentifierOption } from "~src/cli/command-option/item.option";
 import { ItemIdentifierCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
@@ -45,18 +45,24 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2PlugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const characterSelectionService =
+      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
+
+    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
     const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
-    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
     logger.info("Retrieving armour mod socket indices ...");
     const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] =
-      await destiny2PlugService.getSocketIndices(
+      await plugService.getSocketIndices(
         sessionId,
         characterInfo.membershipType,
         characterInfo.membershipId,
@@ -71,15 +77,14 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving available armour mods ...");
-    const [armourPlugItemHashesErr, armourPlugItemHashes] =
-      await destiny2PlugService.getPlugItemHashes(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId,
-        itemIdentifier.itemHash,
-        "ARMOR MODS"
-      );
+    const [armourPlugItemHashesErr, armourPlugItemHashes] = await plugService.getPlugItemHashes(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId,
+      itemIdentifier.itemHash,
+      "ARMOR MODS"
+    );
     if (armourPlugItemHashesErr) {
       return logger.loggedError(
         `Unable to retrieve available armour mods: ${armourPlugItemHashesErr.message}`

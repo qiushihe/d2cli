@@ -8,7 +8,6 @@ import { LoadoutNameCommandOptions } from "~src/cli/command-option/loadout.optio
 import { includeUnequippedOption } from "~src/cli/command-option/loadout.option";
 import { IncludeUnequippedCommandOptions } from "~src/cli/command-option/loadout.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { groupEquipmentItems } from "~src/helper/inventory-bucket.helper";
 import { ArmourBucketHashes } from "~src/helper/inventory-bucket.helper";
@@ -20,6 +19,7 @@ import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { getLoadoutPlugRecords } from "~src/helper/subclass.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
@@ -56,14 +56,20 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2InventoryService =
+    const characterSelectionService =
+      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
+
+    const inventoryService =
       AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
-    const destiny2PlugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
     const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
-    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
@@ -73,7 +79,7 @@ const cmd: CommandDefinition = {
 
     if (includeUnequipped) {
       logger.info("Retrieving inventory items ...");
-      const [inventoryItemsErr, inventoryItems] = await destiny2InventoryService.getInventoryItems(
+      const [inventoryItemsErr, inventoryItems] = await inventoryService.getInventoryItems(
         sessionId,
         characterInfo.membershipType,
         characterInfo.membershipId,
@@ -91,7 +97,7 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving equipment items ...");
-    const [equipmentItemsErr, equipmentItems] = await destiny2InventoryService.getEquipmentItems(
+    const [equipmentItemsErr, equipmentItems] = await inventoryService.getEquipmentItems(
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId,
@@ -111,7 +117,7 @@ const cmd: CommandDefinition = {
       logger,
       manifestDefinitionService,
       itemService,
-      destiny2PlugService,
+      plugService,
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId,
@@ -151,7 +157,7 @@ const cmd: CommandDefinition = {
           logger,
           manifestDefinitionService,
           itemService,
-          destiny2PlugService,
+          plugService,
           sessionId,
           characterInfo.membershipType,
           characterInfo.membershipId,

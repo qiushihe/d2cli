@@ -7,9 +7,9 @@ import { SocketNumberCommandOptions } from "~src/cli/command-option/socket.optio
 import { plugIHashOption } from "~src/cli/command-option/socket.option";
 import { PlugHashCommandOptions } from "~src/cli/command-option/socket.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { AppModule } from "~src/module/app.module";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PlugService } from "~src/service/plug/plug.service";
@@ -49,9 +49,15 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2PlugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const characterSelectionService =
+      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
 
-    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
@@ -81,7 +87,7 @@ const cmd: CommandDefinition = {
     logger.info(
       `Inserting ${plugItemDescription} into slot #${socketIndex + 1} of ${itemDescription} ...`
     );
-    const insertErr = await destiny2PlugService.insert(
+    const insertErr = await plugService.insert(
       sessionId,
       characterInfo.membershipType,
       characterInfo.characterId,

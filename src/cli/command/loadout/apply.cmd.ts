@@ -6,7 +6,6 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { getSelectedCharacterInfo } from "~src/helper/current-character.helper";
 import { SerializedItem } from "~src/helper/item-serialization.helper";
 import { SerializedPlug } from "~src/helper/item-serialization.helper";
 import { serializeItem } from "~src/helper/item-serialization.helper";
@@ -23,6 +22,7 @@ import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
+import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
@@ -63,7 +63,12 @@ const cmd: CommandDefinition = {
         "ManifestDefinitionService"
       );
 
-    const destiny2InventoryService =
+    const characterSelectionService =
+      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
+
+    const inventoryService =
       AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
 
     const characterDescriptionService =
@@ -74,13 +79,14 @@ const cmd: CommandDefinition = {
     const destiny2ActionService =
       AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
 
-    const destiny2PlugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
     const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
     const loadoutFilePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
 
-    const [characterInfoErr, characterInfo] = await getSelectedCharacterInfo(logger, sessionId);
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
     if (characterInfoErr) {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
@@ -252,7 +258,7 @@ const cmd: CommandDefinition = {
     logger.info("Indexing existing items ...");
     const [allItemsInfoErr, allItemsInfo] = await serializeAllItems(
       manifestDefinitionService,
-      destiny2InventoryService,
+      inventoryService,
       characterDescriptions,
       sessionId,
       characterInfo.membershipType,
@@ -413,7 +419,7 @@ const cmd: CommandDefinition = {
       if (itemType === "ARMOUR") {
         logger.info("Retrieving armour mod socket indices ...");
         const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] =
-          await destiny2PlugService.getSocketIndices(
+          await plugService.getSocketIndices(
             sessionId,
             characterInfo.membershipType,
             characterInfo.membershipId,
@@ -438,7 +444,7 @@ const cmd: CommandDefinition = {
           const socketName = SUBCLASS_SOCKET_NAMES[socketNameIndex] as SocketName;
 
           logger.info(`Fetching ${socketName.toLocaleLowerCase()} socket indices ...`);
-          const [socketIndicesErr, socketIndices] = await destiny2PlugService.getSocketIndices(
+          const [socketIndicesErr, socketIndices] = await plugService.getSocketIndices(
             sessionId,
             characterInfo.membershipType,
             characterInfo.membershipId,
@@ -547,7 +553,7 @@ const cmd: CommandDefinition = {
         logger.info(`Applying loadout action: ${loadoutActionDescription} ...`);
         const loadoutActionErr = await applyLoadoutAction(
           destiny2ActionService,
-          destiny2PlugService,
+          plugService,
           loadoutAction,
           sessionId,
           characterInfo.membershipType

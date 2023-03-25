@@ -9,13 +9,13 @@ import { DestinyCharacterComponent } from "~type/bungie-api/destiny/entities/cha
 
 export class CharacterService {
   private readonly sessionService: SessionService;
-  private readonly bungieNetMembershipService: BungieMembershipService;
+  private readonly bungieMembershipService: BungieMembershipService;
   private readonly destiny2ComponentDataService: Destiny2ComponentDataService;
 
   constructor() {
     this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-    this.bungieNetMembershipService =
+    this.bungieMembershipService =
       AppModule.getDefaultInstance().resolve<BungieMembershipService>("BungieMembershipService");
 
     this.destiny2ComponentDataService =
@@ -34,7 +34,7 @@ export class CharacterService {
     }
 
     const [membershipErr, membershipInfo] =
-      await this.bungieNetMembershipService.getDestiny2Membership(bungieNetMembershipId);
+      await this.bungieMembershipService.getDestiny2Membership(bungieNetMembershipId);
     if (membershipErr) {
       return [membershipErr, null];
     }

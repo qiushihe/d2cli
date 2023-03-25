@@ -24,7 +24,7 @@ const cmd: CommandDefinition = {
 
     const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
 
-    const bungieNetMembershipService =
+    const bungieMembershipService =
       AppModule.getDefaultInstance().resolve<BungieMembershipService>("BungieMembershipService");
 
     logger.info("Retrieving authorization status ...");
@@ -59,7 +59,7 @@ const cmd: CommandDefinition = {
 
           logger.info("Retrieving Destiny 2 membership ...");
           const [membershipErr, membershipInfo] =
-            await bungieNetMembershipService.getDestiny2Membership(bungieNetMembershipId);
+            await bungieMembershipService.getDestiny2Membership(bungieNetMembershipId);
           if (membershipErr) {
             return logger.loggedError(
               `Unable to retrieve Destiny 2 membership: ${membershipErr.message}`
