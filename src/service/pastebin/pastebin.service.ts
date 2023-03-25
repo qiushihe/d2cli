@@ -57,9 +57,22 @@ export class PastebinService {
     return [null, pasteUrl.toString()];
   }
 
-  // async getPasteById(pasteId: string) {
-  //   // await this.sendApiRequest("GET", `/raw/${pasteId}`, null);
-  // }
+  async getPasteById(pasteId: string): Promise<[Error, null] | [null, string]> {
+    const [resErr, res] = await this.sendRequest(
+      `${this.config.getPastebinApiRoot()}/raw/${pasteId}`,
+      { method: "GET" }
+    );
+    if (resErr) {
+      return [resErr, null];
+    }
+
+    const [resTextErr, resText] = await promisedFn(() => res.text());
+    if (resTextErr) {
+      return [resTextErr, null];
+    }
+
+    return [null, resText];
+  }
 
   async sendRequest(url: string, options: any): Promise<[Error, null] | [null, Response]> {
     const logger = this.getLogger();

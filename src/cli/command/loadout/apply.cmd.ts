@@ -28,11 +28,14 @@ import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
+import { PastebinService } from "~src/service/pastebin/pastebin.service";
 import { PlugService } from "~src/service/plug/plug.service";
 import { SocketName } from "~src/service/plug/plug.service.types";
 
 type CmdOptions = SessionIdCommandOptions &
-  VerboseCommandOptions & { file: string; dryRun: boolean };
+  VerboseCommandOptions & { dryRun: boolean; fromFile: string; fromPastebin: string };
+
+const PASTEBIN_ID_FROM_URL_REGEXP = new RegExp("^https://pastebin.com/([^/]*)$", "gi");
 
 const cmd: CommandDefinition = {
   description: "Apply a loadout to the current character",
@@ -40,14 +43,19 @@ const cmd: CommandDefinition = {
     sessionIdOption,
     verboseOption,
     {
-      flags: ["f", "file <loadout-file>"],
+      flags: ["dry-run"],
+      description: "Only list the expected loadout actions without applying them",
+      defaultValue: false
+    },
+    {
+      flags: ["from-file <file-path>"],
       description: "Path to the loadout file to apply",
       defaultValue: ""
     },
     {
-      flags: ["dry-run"],
-      description: "Only list the expected loadout actions without applying them",
-      defaultValue: false
+      flags: ["from-pastebin <loadout-url>"],
+      description: "Read the loadout from Pastebin",
+      defaultValue: ""
     }
   ],
   action: async (_, opts) => {
@@ -55,7 +63,7 @@ const cmd: CommandDefinition = {
       .resolve<LogService>("LogService")
       .getLogger("cmd:loadout:apply");
 
-    const { session: sessionId, verbose, file, dryRun } = opts as CmdOptions;
+    const { session: sessionId, verbose, dryRun, fromFile, fromPastebin } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
     const manifestDefinitionService =
@@ -83,7 +91,52 @@ const cmd: CommandDefinition = {
 
     const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
 
-    const loadoutFilePath = path.isAbsolute(file) ? file : path.resolve(process.cwd(), file);
+    const pastebinService =
+      AppModule.getDefaultInstance().resolve<PastebinService>("PastebinService");
+
+    let loadoutContent: string;
+
+    if (fromFile) {
+      const loadoutFilePath = path.isAbsolute(fromFile)
+        ? fromFile
+        : path.resolve(process.cwd(), fromFile);
+
+      logger.info("Reading loadout file ...");
+      const [fileContentErr, fileContent] = await promisedFn(
+        () =>
+          new Promise<string>((resolve, reject) => {
+            fs.readFile(loadoutFilePath, "utf8", (err, data) => {
+              err ? reject(err) : resolve(data);
+            });
+          })
+      );
+      if (fileContentErr) {
+        return logger.loggedError(`Unable to read loadout file: ${fileContentErr.message}`);
+      }
+
+      loadoutContent = fileContent;
+    } else if (fromPastebin) {
+      const pastebinUrlMatch = PASTEBIN_ID_FROM_URL_REGEXP.exec(`${fromPastebin}`.trim());
+      if (!pastebinUrlMatch) {
+        return logger.loggedError(`Invalid Pastebin URL: ${fromPastebin}`);
+      }
+
+      const pasteId = `${pastebinUrlMatch[1]}`.trim();
+      if (pasteId.length <= 0) {
+        return logger.loggedError(`Unable to extract Paste ID from URL: ${fromPastebin}`);
+      }
+
+      const [pasteContentErr, pasteContent] = await pastebinService.getPasteById(pasteId);
+      if (pasteContentErr) {
+        return logger.loggedError(
+          `Unable to read loadout from Pastebin: ${pasteContentErr.message}`
+        );
+      }
+
+      loadoutContent = pasteContent;
+    } else {
+      return logger.loggedError(`Missing loadout source`);
+    }
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);
@@ -91,20 +144,11 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    logger.info("Reading loadout file ...");
-    const [fileContentErr, fileContent] = await promisedFn(
-      () =>
-        new Promise<string>((resolve, reject) => {
-          fs.readFile(loadoutFilePath, "utf8", (err, data) => {
-            err ? reject(err) : resolve(data);
-          });
-        })
-    );
-    if (fileContentErr) {
-      return logger.loggedError(`Unable to read loadout file: ${fileContentErr.message}`);
+    if (`${loadoutContent}`.trim().length <= 0) {
+      return logger.loggedError(`Loading is empty`);
     }
 
-    const loadoutLines = `${fileContent}`
+    const loadoutLines = `${loadoutContent}`
       .trim()
       .split("\n")
       .map((line) => `${line}`.trim())

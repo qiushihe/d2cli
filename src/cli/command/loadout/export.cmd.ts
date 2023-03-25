@@ -39,7 +39,7 @@ const cmd: CommandDefinition = {
     loadoutNameOption,
     includeUnequippedOption,
     {
-      flags: ["to-file <loadout-file>"],
+      flags: ["to-file <file-path>"],
       description: "Path to the loadout file to write",
       defaultValue: ""
     },
