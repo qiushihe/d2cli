@@ -6,6 +6,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
+import { getEditedContent } from "~src/helper/edit.helper";
 import { SerializedItem } from "~src/helper/item-serialization.helper";
 import { SerializedPlug } from "~src/helper/item-serialization.helper";
 import { serializeItem } from "~src/helper/item-serialization.helper";
@@ -23,6 +24,8 @@ import { stringifyTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
+import { ConfigService } from "~src/service/config/config.service";
+import { AppConfigName } from "~src/service/config/config.types";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
@@ -33,7 +36,12 @@ import { PlugService } from "~src/service/plug/plug.service";
 import { SocketName } from "~src/service/plug/plug.service.types";
 
 type CmdOptions = SessionIdCommandOptions &
-  VerboseCommandOptions & { dryRun: boolean; fromFile: string; fromPastebin: string };
+  VerboseCommandOptions & {
+    dryRun: boolean;
+    edit: boolean;
+    fromFile: string;
+    fromPastebin: string;
+  };
 
 const PASTEBIN_ID_FROM_URL_REGEXP = new RegExp("^https://pastebin.com/([^/]*)$", "gi");
 
@@ -45,6 +53,11 @@ const cmd: CommandDefinition = {
     {
       flags: ["dry-run"],
       description: "Only list the expected loadout actions without applying them",
+      defaultValue: false
+    },
+    {
+      flags: ["edit"],
+      description: "Edit the loadout content before applying it",
       defaultValue: false
     },
     {
@@ -63,8 +76,17 @@ const cmd: CommandDefinition = {
       .resolve<LogService>("LogService")
       .getLogger("cmd:loadout:apply");
 
-    const { session: sessionId, verbose, dryRun, fromFile, fromPastebin } = opts as CmdOptions;
+    const {
+      session: sessionId,
+      verbose,
+      dryRun,
+      edit: editBeforeImport,
+      fromFile,
+      fromPastebin
+    } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
+
+    const configService = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
 
     const manifestDefinitionService =
       AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
@@ -138,14 +160,39 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Missing loadout source`);
     }
 
-    const [characterInfoErr, characterInfo] =
-      await characterSelectionService.ensureSelectedCharacter(sessionId);
-    if (characterInfoErr) {
-      return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
+    if (editBeforeImport) {
+      if (`${loadoutContent}`.trim().length <= 0) {
+        return logger.loggedError(`Loading is empty`);
+      }
+
+      const [editorPathErr, editorPath] = configService.getAppConfig(AppConfigName.EditorPath);
+      if (editorPathErr) {
+        return logger.loggedError(`Unable to retrieve editor path: ${editorPathErr.message}`);
+      }
+      if (!editorPath || editorPath.trim().length <= 0) {
+        return logger.loggedError(`Missing editor path`);
+      }
+
+      const [editedLoadoutContentErr, editedLoadoutContent] = await getEditedContent(
+        logger,
+        editorPath,
+        `${loadoutContent}`.trim()
+      );
+      if (editedLoadoutContentErr) {
+        return logger.loggedError(`Unable to edit loadout: ${editedLoadoutContentErr.message}`);
+      }
+
+      loadoutContent = editedLoadoutContent;
     }
 
     if (`${loadoutContent}`.trim().length <= 0) {
       return logger.loggedError(`Loading is empty`);
+    }
+
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
+    if (characterInfoErr) {
+      return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
     const loadoutLines = `${loadoutContent}`
