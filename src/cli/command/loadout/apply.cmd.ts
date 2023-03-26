@@ -298,7 +298,7 @@ const cmd: CommandDefinition = {
 
             logger.info(`Fetching item definition for ${plugItemHash} ...`);
             const [plugItemDefinitionErr, plugItemDefinition] =
-              await manifestDefinitionService.getItemDefinition(itemHash);
+              await manifestDefinitionService.getItemDefinition(plugItemHash);
             if (plugItemDefinitionErr) {
               return logger.loggedError(
                 `Unable to fetch item definition for ${plugItemHash}: ${plugItemDefinitionErr.message}`

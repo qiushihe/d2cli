@@ -299,7 +299,6 @@ export const resolveEquipActions = (
     });
 };
 
-// TODO: Only generate action if the plug isn't already in the socket.
 export const resolveSocketActions = (
   characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
