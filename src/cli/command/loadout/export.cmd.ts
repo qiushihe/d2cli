@@ -258,28 +258,19 @@ const cmd: CommandDefinition = {
     const equipmentsGroups: EquipmentGroup[] = [
       {
         isExtra: false,
-        separateEquipments: true,
+        separateEquipments: false,
         equipments: equipments.filter(
           (equipment) =>
             !extraItemHashes.includes(equipment.itemHash) &&
-            ArmourBucketHashes.includes(equipment.bucketHash)
+            !ArmourBucketHashes.includes(equipment.bucketHash)
         )
       },
       {
         isExtra: false,
-        separateEquipments: false,
-        equipments: equipments.filter(
-          (equipment) =>
-            !extraItemHashes.includes(equipment.itemHash) &&
-            !ArmourBucketHashes.includes(equipment.bucketHash)
-        )
-      },
-      {
-        isExtra: true,
         separateEquipments: true,
         equipments: equipments.filter(
           (equipment) =>
-            extraItemHashes.includes(equipment.itemHash) &&
+            !extraItemHashes.includes(equipment.itemHash) &&
             ArmourBucketHashes.includes(equipment.bucketHash)
         )
       },
@@ -290,6 +281,15 @@ const cmd: CommandDefinition = {
           (equipment) =>
             extraItemHashes.includes(equipment.itemHash) &&
             !ArmourBucketHashes.includes(equipment.bucketHash)
+        )
+      },
+      {
+        isExtra: true,
+        separateEquipments: true,
+        equipments: equipments.filter(
+          (equipment) =>
+            extraItemHashes.includes(equipment.itemHash) &&
+            ArmourBucketHashes.includes(equipment.bucketHash)
         )
       }
     ];
