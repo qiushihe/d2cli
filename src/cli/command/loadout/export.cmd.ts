@@ -35,6 +35,12 @@ type CmdOptions = SessionIdCommandOptions &
   LoadoutNameCommandOptions &
   IncludeUnequippedCommandOptions & { edit: boolean; toFile: string; toPastebin: boolean };
 
+type EquipmentGroup = {
+  isExtra: boolean;
+  separateEquipments: boolean;
+  equipments: DestinyItemComponent[];
+};
+
 const cmd: CommandDefinition = {
   description: "Export the currently equipped loadout",
   options: [
@@ -207,7 +213,7 @@ const cmd: CommandDefinition = {
       }
     }
 
-    const exportLines: string[] = [];
+    const exportLinesGroups: string[][] = [];
 
     logger.info(`Fetching item definition for ${subclass.itemHash} ...`);
     const [subclassDefinitionErr, subclassDefinition] =
@@ -221,8 +227,9 @@ const cmd: CommandDefinition = {
     const exportedLoadoutName =
       loadoutName || `${subclassDefinition?.displayProperties.name || "UNKNOWN SUBCLASS"} Loadout`;
 
-    exportLines.push(`LOADOUT // ${exportedLoadoutName}`);
+    exportLinesGroups.push([`LOADOUT // ${exportedLoadoutName}`]);
 
+    const subclassExportLines: string[] = [];
     const [serializeSubclassErr, serializedSubclass] = await serializeItem(
       manifestDefinitionService,
       subclass,
@@ -231,7 +238,7 @@ const cmd: CommandDefinition = {
     if (serializeSubclassErr) {
       return logger.loggedError(`Unable to serialize subclass: ${serializeSubclassErr.message}`);
     }
-    exportLines.push(serializedSubclass);
+    subclassExportLines.push(serializedSubclass);
 
     const [serializeSubclassPlugsErr, serializedSubclassPlugs] = await serializeItemPlugs(
       manifestDefinitionService,
@@ -244,48 +251,137 @@ const cmd: CommandDefinition = {
       );
     }
     serializedSubclassPlugs.forEach((serialized) => {
-      exportLines.push(serialized);
+      subclassExportLines.push(serialized);
     });
+    exportLinesGroups.push(subclassExportLines);
 
-    const orderedEquipments = [
-      [equipments.filter((equipment) => !extraItemHashes.includes(equipment.itemHash)), true],
-      [equipments.filter((equipment) => extraItemHashes.includes(equipment.itemHash)), false]
-    ] as [DestinyItemComponent[], boolean][];
-    for (let equipmentsIndex = 0; equipmentsIndex < orderedEquipments.length; equipmentsIndex++) {
-      const [_equipments, equip] = orderedEquipments[equipmentsIndex];
+    const equipmentsGroups: EquipmentGroup[] = [
+      {
+        isExtra: false,
+        separateEquipments: true,
+        equipments: equipments.filter(
+          (equipment) =>
+            !extraItemHashes.includes(equipment.itemHash) &&
+            ArmourBucketHashes.includes(equipment.bucketHash)
+        )
+      },
+      {
+        isExtra: false,
+        separateEquipments: false,
+        equipments: equipments.filter(
+          (equipment) =>
+            !extraItemHashes.includes(equipment.itemHash) &&
+            !ArmourBucketHashes.includes(equipment.bucketHash)
+        )
+      },
+      {
+        isExtra: true,
+        separateEquipments: true,
+        equipments: equipments.filter(
+          (equipment) =>
+            extraItemHashes.includes(equipment.itemHash) &&
+            ArmourBucketHashes.includes(equipment.bucketHash)
+        )
+      },
+      {
+        isExtra: true,
+        separateEquipments: false,
+        equipments: equipments.filter(
+          (equipment) =>
+            extraItemHashes.includes(equipment.itemHash) &&
+            !ArmourBucketHashes.includes(equipment.bucketHash)
+        )
+      }
+    ];
 
-      for (let equipmentIndex = 0; equipmentIndex < _equipments.length; equipmentIndex++) {
-        const equipment = _equipments[equipmentIndex];
+    // TODO: Refactor this into a service function
+    const serializeEquipment = async (
+      equipment: DestinyItemComponent,
+      isExtra: boolean
+    ): Promise<[Error, null] | [null, string[]]> => {
+      const lines: string[] = [];
 
-        const [serializeEquipmentErr, serializedEquipment] = await serializeItem(
-          manifestDefinitionService,
-          equipment,
-          equip
-        );
-        if (serializeEquipmentErr) {
-          return logger.loggedError(
-            `Unable to serialize equipment: ${serializeEquipmentErr.message}`
+      const [serializeEquipmentErr, serializedEquipment] = await serializeItem(
+        manifestDefinitionService,
+        equipment,
+        !isExtra
+      );
+      if (serializeEquipmentErr) {
+        return [serializeEquipmentErr, null];
+      }
+      lines.push(serializedEquipment);
+
+      const [serializeEquipmentPlugsErr, serializedEquipmentPlugs] = await serializeItemPlugs(
+        manifestDefinitionService,
+        equipment,
+        equipmentsPlugRecords[`${equipment.itemHash}:${equipment.itemInstanceId}`] || []
+      );
+      if (serializeEquipmentPlugsErr) {
+        return [serializeEquipmentPlugsErr, null];
+      }
+      serializedEquipmentPlugs.forEach((serialized) => {
+        lines.push(serialized);
+      });
+
+      return [null, lines];
+    };
+
+    for (let groupIndex = 0; groupIndex < equipmentsGroups.length; groupIndex++) {
+      const equipmentsGroup = equipmentsGroups[groupIndex];
+
+      if (equipmentsGroup.separateEquipments) {
+        for (
+          let equipmentIndex = 0;
+          equipmentIndex < equipmentsGroup.equipments.length;
+          equipmentIndex++
+        ) {
+          const equipment = equipmentsGroup.equipments[equipmentIndex];
+
+          const [equipmentExportLinesErr, equipmentExportLines] = await serializeEquipment(
+            equipment,
+            equipmentsGroup.isExtra
           );
-        }
-        exportLines.push(serializedEquipment);
+          if (equipmentExportLinesErr) {
+            return logger.loggedError(
+              `Unable to serialize equipment: ${equipmentExportLinesErr.message}`
+            );
+          }
 
-        const [serializeEquipmentPlugsErr, serializedEquipmentPlugs] = await serializeItemPlugs(
-          manifestDefinitionService,
-          equipment,
-          equipmentsPlugRecords[`${equipment.itemHash}:${equipment.itemInstanceId}`] || []
-        );
-        if (serializeEquipmentPlugsErr) {
-          return logger.loggedError(
-            `Unable to serialize equipment plugs: ${serializeEquipmentPlugsErr.message}`
-          );
+          if (equipmentExportLines.length > 0) {
+            exportLinesGroups.push(equipmentExportLines);
+          }
         }
-        serializedEquipmentPlugs.forEach((serialized) => {
-          exportLines.push(serialized);
-        });
+      } else {
+        const equipmentsExportLines: string[] = [];
+
+        for (
+          let equipmentIndex = 0;
+          equipmentIndex < equipmentsGroup.equipments.length;
+          equipmentIndex++
+        ) {
+          const equipment = equipmentsGroup.equipments[equipmentIndex];
+
+          const [equipmentExportLinesErr, equipmentExportLines] = await serializeEquipment(
+            equipment,
+            equipmentsGroup.isExtra
+          );
+          if (equipmentExportLinesErr) {
+            return logger.loggedError(
+              `Unable to serialize equipment: ${equipmentExportLinesErr.message}`
+            );
+          }
+          equipmentExportLines.forEach((line) => equipmentsExportLines.push(line));
+        }
+
+        if (equipmentsExportLines.length > 0) {
+          exportLinesGroups.push(equipmentsExportLines);
+        }
       }
     }
 
-    let exportLoadoutContent: string;
+    const exportContent = exportLinesGroups.map((lines) => lines.join("\n")).join("\n\n");
+
+    let finalExportContent: string;
     if (editBeforeExport) {
       const [editorPathErr, editorPath] = configService.getAppConfig(AppConfigName.EditorPath);
       if (editorPathErr) {
@@ -298,15 +394,15 @@ const cmd: CommandDefinition = {
       const [editedLoadoutContentErr, editedLoadoutContent] = await getEditedContent(
         logger,
         editorPath.trim(),
-        exportLines.join("\n")
+        exportContent
       );
       if (editedLoadoutContentErr) {
         return logger.loggedError(`Unable to edit loadout: ${editedLoadoutContentErr.message}`);
       }
 
-      exportLoadoutContent = editedLoadoutContent;
+      finalExportContent = editedLoadoutContent;
     } else {
-      exportLoadoutContent = exportLines.join("\n");
+      finalExportContent = exportContent;
     }
 
     if (toFile) {
@@ -318,7 +414,7 @@ const cmd: CommandDefinition = {
       const [writeErr] = await promisedFn(
         () =>
           new Promise<void>((resolve, reject) => {
-            fs.writeFile(loadoutFilePath, exportLoadoutContent, "utf8", (err) => {
+            fs.writeFile(loadoutFilePath, finalExportContent, "utf8", (err) => {
               err ? reject(err) : resolve();
             });
           })
@@ -331,7 +427,7 @@ const cmd: CommandDefinition = {
       logger.info("Writing loadout to Pastebin ...");
       const [pastebinUrlErr, pastebinUrl] = await pastebinService.createPaste(
         exportedLoadoutName,
-        exportLoadoutContent
+        finalExportContent
       );
       if (pastebinUrlErr) {
         return logger.loggedError(`Unable to write to Pastebin: ${pastebinUrlErr.message}`);
@@ -339,7 +435,7 @@ const cmd: CommandDefinition = {
 
       logger.log(`Loadout URL (Pastebin): ${pastebinUrl}`);
     } else {
-      logger.log(exportLoadoutContent);
+      logger.log(finalExportContent);
     }
   }
 };

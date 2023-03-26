@@ -8,6 +8,9 @@ import { ManifestDefinitionService } from "~src/service/manifest-definition/mani
 import { DestinyInventoryItemDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
+// TODO: Refactor this whole file as calling "serializer" is inaccurate because it's used only
+//       by the command to import/apply loadouts, and NOT by the loadout exporting command.
+
 export type SerializedItemType = "SUBCLASS" | "WEAPON" | "ARMOUR" | "OTHER";
 
 export type SerializedItemBucket =
