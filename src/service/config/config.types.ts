@@ -4,5 +4,6 @@ export enum AppConfigName {
   BungieOauthClientId = "bungieOauthClientId",
   BungieOauthClientSecret = "bungieOauthClientSecret",
   GistApiKey = "gistApiKey",
-  PastebinApiKey = "pastebinApiKey"
+  PastebinApiKey = "pastebinApiKey",
+  EditorPath = "editorPath"
 }

@@ -8,6 +8,7 @@ import { LoadoutNameCommandOptions } from "~src/cli/command-option/loadout.optio
 import { includeUnequippedOption } from "~src/cli/command-option/loadout.option";
 import { IncludeUnequippedCommandOptions } from "~src/cli/command-option/loadout.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
+import { getEditedContent } from "~src/helper/edit.helper";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { groupEquipmentItems } from "~src/helper/inventory-bucket.helper";
 import { ArmourBucketHashes } from "~src/helper/inventory-bucket.helper";
@@ -20,6 +21,8 @@ import { getLoadoutPlugRecords } from "~src/helper/subclass.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
+import { ConfigService } from "~src/service/config/config.service";
+import { AppConfigName } from "~src/service/config/config.types";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
 import { LogService } from "~src/service/log/log.service";
@@ -30,7 +33,7 @@ import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.ty
 
 type CmdOptions = SessionIdCommandOptions &
   LoadoutNameCommandOptions &
-  IncludeUnequippedCommandOptions & { toFile: string; toPastebin: boolean };
+  IncludeUnequippedCommandOptions & { edit: boolean; toFile: string; toPastebin: boolean };
 
 const cmd: CommandDefinition = {
   description: "Export the currently equipped loadout",
@@ -38,6 +41,11 @@ const cmd: CommandDefinition = {
     sessionIdOption,
     loadoutNameOption,
     includeUnequippedOption,
+    {
+      flags: ["edit"],
+      description: "Edit the loadout content before writing it to a destination",
+      defaultValue: false
+    },
     {
       flags: ["to-file <file-path>"],
       description: "Path to the loadout file to write",
@@ -58,10 +66,13 @@ const cmd: CommandDefinition = {
       session: sessionId,
       loadoutName,
       includeUnequipped,
+      edit: editBeforeExport,
       toFile,
       toPastebin
     } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
+
+    const configService = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
 
     const manifestDefinitionService =
       AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
@@ -274,6 +285,30 @@ const cmd: CommandDefinition = {
       }
     }
 
+    let exportLoadoutContent: string;
+    if (editBeforeExport) {
+      const [editorPathErr, editorPath] = configService.getAppConfig(AppConfigName.EditorPath);
+      if (editorPathErr) {
+        return logger.loggedError(`Unable to retrieve editor path: ${editorPathErr.message}`);
+      }
+      if (!editorPath || editorPath.trim().length <= 0) {
+        return logger.loggedError(`Missing editor path`);
+      }
+
+      const [editedLoadoutContentErr, editedLoadoutContent] = await getEditedContent(
+        logger,
+        editorPath.trim(),
+        exportLines.join("\n")
+      );
+      if (editedLoadoutContentErr) {
+        return logger.loggedError(`Unable to edit loadout: ${editedLoadoutContentErr.message}`);
+      }
+
+      exportLoadoutContent = editedLoadoutContent;
+    } else {
+      exportLoadoutContent = exportLines.join("\n");
+    }
+
     if (toFile) {
       const loadoutFilePath = path.isAbsolute(toFile)
         ? toFile
@@ -283,7 +318,7 @@ const cmd: CommandDefinition = {
       const [writeErr] = await promisedFn(
         () =>
           new Promise<void>((resolve, reject) => {
-            fs.writeFile(loadoutFilePath, exportLines.join("\n"), "utf8", (err) => {
+            fs.writeFile(loadoutFilePath, exportLoadoutContent, "utf8", (err) => {
               err ? reject(err) : resolve();
             });
           })
@@ -296,7 +331,7 @@ const cmd: CommandDefinition = {
       logger.info("Writing loadout to Pastebin ...");
       const [pastebinUrlErr, pastebinUrl] = await pastebinService.createPaste(
         exportedLoadoutName,
-        exportLines.join("\n")
+        exportLoadoutContent
       );
       if (pastebinUrlErr) {
         return logger.loggedError(`Unable to write to Pastebin: ${pastebinUrlErr.message}`);
@@ -304,7 +339,7 @@ const cmd: CommandDefinition = {
 
       logger.log(`Loadout URL (Pastebin): ${pastebinUrl}`);
     } else {
-      logger.log(exportLines.join("\n"));
+      logger.log(exportLoadoutContent);
     }
   }
 };
