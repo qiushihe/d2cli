@@ -470,6 +470,7 @@ const cmd: CommandDefinition = {
 
     if (exoticWeapon && reEquipExoticWeapon) {
       loadoutActions.push({
+        skip: false,
         type: "EQUIP",
         characterName: characterDescriptions[characterInfo.characterId].asString,
         characterId: characterInfo.characterId,
@@ -484,6 +485,7 @@ const cmd: CommandDefinition = {
 
     if (exoticArmour && reEquipExoticArmour) {
       loadoutActions.push({
+        skip: false,
         type: "EQUIP",
         characterName: characterDescriptions[characterInfo.characterId].asString,
         characterId: characterInfo.characterId,
@@ -635,35 +637,38 @@ const cmd: CommandDefinition = {
 
     for (let actionIndex = 0; actionIndex < loadoutActions.length; actionIndex++) {
       const loadoutAction = loadoutActions[actionIndex];
-      let actionSuccess: boolean;
+      let actionResult: "Yes" | "No" | "Skip";
       let actionMessage: string;
 
       if (!dryRun) {
-        const loadoutActionDescription = describeLoadoutAction(loadoutAction);
-
-        logger.info(`Applying loadout action: ${loadoutActionDescription} ...`);
-        const loadoutActionErr = await applyLoadoutAction(
-          destiny2ActionService,
-          plugService,
-          loadoutAction,
-          sessionId,
-          characterInfo.membershipType
-        );
-        if (loadoutActionErr) {
-          actionSuccess = false;
-          actionMessage = loadoutActionErr.message;
-        } else {
-          actionSuccess = true;
+        if (loadoutAction.skip) {
+          actionResult = "Skip";
           actionMessage = "";
+        } else {
+          logger.info(`Applying loadout action: ${describeLoadoutAction(loadoutAction)} ...`);
+          const loadoutActionErr = await applyLoadoutAction(
+            destiny2ActionService,
+            plugService,
+            loadoutAction,
+            sessionId,
+            characterInfo.membershipType
+          );
+          if (loadoutActionErr) {
+            actionResult = "No";
+            actionMessage = loadoutActionErr.message;
+          } else {
+            actionResult = "Yes";
+            actionMessage = "";
+          }
         }
       } else {
-        actionSuccess = false;
+        actionResult = "Skip";
         actionMessage = "";
       }
 
       const tableRow = [];
       if (!dryRun) {
-        tableRow.push(actionSuccess ? "Yes" : "No");
+        tableRow.push(actionResult);
       }
       tableRow.push(loadoutAction.characterName);
       tableRow.push(loadoutAction.type);

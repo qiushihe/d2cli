@@ -6,6 +6,7 @@ import { ManifestDefinitionService } from "~src/service/manifest-definition/mani
 import { PlugService } from "~src/service/plug/plug.service";
 
 export type LoadoutAction = {
+  skip: boolean;
   type: "DEPOSIT" | "WITHDRAW" | "EQUIP" | "SOCKET";
   characterName: string;
   characterId: string;
@@ -54,6 +55,7 @@ export const resolveTransferActions = async (
         )
       ) {
         actions.push({
+          skip: false,
           type: "WITHDRAW",
           characterName: characterDescriptions[characterId].asString,
           characterId: characterId,
@@ -75,6 +77,7 @@ export const resolveTransferActions = async (
           ) || null;
         if (unequippedOtherCharacterId) {
           actions.push({
+            skip: false,
             type: "DEPOSIT",
             characterName: characterDescriptions[unequippedOtherCharacterId].asString,
             characterId: unequippedOtherCharacterId,
@@ -86,6 +89,7 @@ export const resolveTransferActions = async (
             plugItemHash: null
           });
           actions.push({
+            skip: false,
             type: "WITHDRAW",
             characterName: characterDescriptions[characterId].asString,
             characterId: characterId,
@@ -149,6 +153,7 @@ export const resolveDeExoticActions = (
     ) || null;
   if (extraNonExoticItem) {
     actions.push({
+      skip: false,
       type: "EQUIP",
       characterName: characterDescriptions[characterId].asString,
       characterId: characterId,
@@ -169,6 +174,7 @@ export const resolveDeExoticActions = (
       ) || null;
     if (vaultNonExoticItem) {
       actions.push({
+        skip: false,
         type: "WITHDRAW",
         characterName: characterDescriptions[characterId].asString,
         characterId: characterId,
@@ -181,6 +187,7 @@ export const resolveDeExoticActions = (
       });
 
       actions.push({
+        skip: false,
         type: "EQUIP",
         characterName: characterDescriptions[characterId].asString,
         characterId: characterId,
@@ -212,6 +219,7 @@ export const resolveDeExoticActions = (
           ) || null;
         if (otherCharacterUnequippedNonExoticItem) {
           actions.push({
+            skip: false,
             type: "DEPOSIT",
             characterName: characterDescriptions[otherCharacterId].asString,
             characterId: otherCharacterId,
@@ -224,6 +232,7 @@ export const resolveDeExoticActions = (
           });
 
           actions.push({
+            skip: false,
             type: "WITHDRAW",
             characterName: characterDescriptions[characterId].asString,
             characterId: characterId,
@@ -236,6 +245,7 @@ export const resolveDeExoticActions = (
           });
 
           actions.push({
+            skip: false,
             type: "EQUIP",
             characterName: characterDescriptions[characterId].asString,
             characterId: characterId,
@@ -280,23 +290,24 @@ export const resolveEquipActions = (
   equipmentItems: SerializedItem[],
   equippedItems: SerializedItem[]
 ): LoadoutAction[] => {
-  return equipmentItems
-    .filter(
-      (item) => !equippedItems.find((equipped) => equipped.itemInstanceId === item.itemInstanceId)
-    )
-    .map((item) => {
-      return {
-        type: "EQUIP",
-        characterName: characterDescriptions[characterId].asString,
-        characterId,
-        itemName: item.itemName,
-        itemHash: item.itemHash,
-        itemInstanceId: item.itemInstanceId,
-        socketIndex: null,
-        plugItemName: null,
-        plugItemHash: null
-      };
-    });
+  return equipmentItems.map((item) => {
+    const alreadyEquipped = !!equippedItems.find(
+      (equipped) => equipped.itemInstanceId === item.itemInstanceId
+    );
+
+    return {
+      skip: alreadyEquipped,
+      type: "EQUIP",
+      characterName: characterDescriptions[characterId].asString,
+      characterId,
+      itemName: item.itemName,
+      itemHash: item.itemHash,
+      itemInstanceId: item.itemInstanceId,
+      socketIndex: null,
+      plugItemName: null,
+      plugItemHash: null
+    };
+  });
 };
 
 export const resolveSocketActions = (
@@ -315,19 +326,20 @@ export const resolveSocketActions = (
     const equippedPlugHash =
       equippedPlugHashesByItemInstanceId[plug.itemInstanceId][normalizedSocketIndex];
 
-    if (plug.plugItemHash !== equippedPlugHash) {
-      loadoutActions.push({
-        type: "SOCKET",
-        characterName: characterDescriptions[characterId].asString,
-        characterId,
-        itemName: plug.itemName,
-        itemHash: plug.itemHash,
-        itemInstanceId: plug.itemInstanceId,
-        socketIndex: plug.socketIndex,
-        plugItemName: plug.plugItemName,
-        plugItemHash: plug.plugItemHash
-      });
-    }
+    const alreadyEquipped = plug.plugItemHash === equippedPlugHash;
+
+    loadoutActions.push({
+      skip: alreadyEquipped,
+      type: "SOCKET",
+      characterName: characterDescriptions[characterId].asString,
+      characterId,
+      itemName: plug.itemName,
+      itemHash: plug.itemHash,
+      itemInstanceId: plug.itemInstanceId,
+      socketIndex: plug.socketIndex,
+      plugItemName: plug.plugItemName,
+      plugItemHash: plug.plugItemHash
+    });
   });
 
   return loadoutActions;
