@@ -5,7 +5,7 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
@@ -94,7 +94,7 @@ const cmd: CommandDefinition = {
       }
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable(tableData));
   }
 };
 

@@ -5,7 +5,7 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { itemInstanceIdsOption } from "~src/cli/command-option/item.option";
 import { ItemInstanceIdsCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
@@ -175,7 +175,7 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           }
         }
 
-        logger.log(stringifyTable(tableData));
+        logger.log(makeTable(tableData));
 
         if (failedToTransferCount > 0) {
           logger.log(`Failed to transfer ${failedToTransferCount} item(s)`);

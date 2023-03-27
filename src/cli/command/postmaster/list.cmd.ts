@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { LogService } from "~src/service/log/log.service";
@@ -57,12 +57,11 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["#", "Description", "Quantity"];
+    const tableHeader = ["#", "Description", "Quantity"];
     if (verbose) {
-      tableData.push([...basicHeaders, "Hash", "Instance ID"]);
-    } else {
-      tableData.push(basicHeaders);
+      tableHeader.push("ID");
     }
+    tableData.push(tableHeader);
 
     for (
       let postmasterItemIndex = 0;
@@ -79,32 +78,28 @@ const cmd: CommandDefinition = {
           `Unable to fetch item definition for ${postmasterItem.itemHash}: ${postmasterItemDefinitionErr.message}`
         );
       }
-
       if (!postmasterItemDefinition) {
-        tableData.push([
-          `${postmasterItemIndex + 1}`,
-          `Missing item definition for hash ${postmasterItem.itemHash}`,
-          "x ???"
-        ]);
-      } else {
-        const basicCells = [
-          `${postmasterItemIndex + 1}`,
-          `${postmasterItemDefinition.displayProperties.name} (${postmasterItemDefinition.itemTypeAndTierDisplayName})`,
-          `x ${postmasterItem.quantity}`
-        ];
-        if (verbose) {
-          tableData.push([
-            ...basicCells,
-            `${postmasterItem.itemHash}`,
-            postmasterItem.itemInstanceId || ""
-          ]);
+        return logger.loggedError(`Missing item definition for ${postmasterItem.itemHash}`);
+      }
+
+      const rowColumns = [
+        `${postmasterItemIndex + 1}`,
+        `${postmasterItemDefinition.displayProperties.name} (${postmasterItemDefinition.itemTypeAndTierDisplayName})`,
+        `${postmasterItem.quantity}`
+      ];
+
+      if (verbose) {
+        if (postmasterItem.itemInstanceId) {
+          rowColumns.push(`${postmasterItem.itemHash}:${postmasterItem.itemInstanceId}`);
         } else {
-          tableData.push(basicCells);
+          rowColumns.push(`${postmasterItem.itemHash}`);
         }
       }
+
+      tableData.push(rowColumns);
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable2(tableData, { flexibleColumns: [1] }));
   }
 };
 

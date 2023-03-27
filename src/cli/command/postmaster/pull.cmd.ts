@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { LogService } from "~src/service/log/log.service";
@@ -145,7 +145,7 @@ const cmd: CommandDefinition = {
       }
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable(tableData));
 
     if (failedToPullCount > 0) {
       logger.log(`Failed to pull ${failedToPullCount} item(s)`);

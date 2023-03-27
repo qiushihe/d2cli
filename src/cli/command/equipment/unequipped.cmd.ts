@@ -8,7 +8,7 @@ import { EquipmentBuckets } from "~src/helper/inventory-bucket.helper";
 import { groupEquipmentItems } from "~src/helper/inventory-bucket.helper";
 import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
@@ -63,21 +63,16 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["Slot", "Item", "ID"];
+    const tableHeader = ["Slot", "Item", "Power"];
     if (verbose) {
-      tableData.push([...basicHeaders, "Power Level"]);
-    } else {
-      tableData.push(basicHeaders);
+      tableHeader.push("ID");
     }
+    tableData.push(tableHeader);
 
     for (let bucketNameIndex = 0; bucketNameIndex < EquipmentBuckets.length; bucketNameIndex++) {
       const bucket = EquipmentBuckets[bucketNameIndex];
       const bucketLabel = InventoryBucketLabels[bucket];
       const bucketItems = unequippedItems[bucket];
-
-      const unEquippedItemLabels: string[] = [];
-      const unEquippedItemIds: string[] = [];
-      const unEquippedItemPowerLevels: string[] = [];
 
       for (
         let unEquippedItemIndex = 0;
@@ -100,28 +95,21 @@ const cmd: CommandDefinition = {
           inventoryItemInstances[unEquippedItem.itemInstanceId] || null
         );
 
-        unEquippedItemLabels.push(unEquippedItemInfo.label);
-        unEquippedItemIds.push(`${unEquippedItem.itemHash}:${unEquippedItem.itemInstanceId}`);
-        unEquippedItemPowerLevels.push(unEquippedItemInfo.powerLevel);
-      }
+        const rowColumns = [
+          unEquippedItemIndex === 0 ? bucketLabel : "",
+          unEquippedItemInfo.label,
+          unEquippedItemInfo.powerLevel
+        ];
 
-      if (verbose) {
-        tableData.push([
-          bucketLabel,
-          unEquippedItemLabels.join("\n"),
-          unEquippedItemIds.join("\n"),
-          unEquippedItemPowerLevels.map((lvl) => lvl.padStart(4, " ")).join("\n")
-        ]);
-      } else {
-        tableData.push([
-          bucketLabel,
-          unEquippedItemLabels.join("\n"),
-          unEquippedItemIds.join("\n")
-        ]);
+        if (verbose) {
+          rowColumns.push(`${unEquippedItem.itemHash}:${unEquippedItem.itemInstanceId}`);
+        }
+
+        tableData.push(rowColumns);
       }
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable2(tableData, { flexibleColumns: [1] }));
   }
 };
 

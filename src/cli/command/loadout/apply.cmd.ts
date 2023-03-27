@@ -19,7 +19,7 @@ import { resolveSocketActions } from "~src/helper/loadout-apply.helper";
 import { applyLoadoutAction } from "~src/helper/loadout-apply.helper";
 import { promisedFn } from "~src/helper/promise.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
@@ -682,7 +682,7 @@ const cmd: CommandDefinition = {
       tableData.push(tableRow);
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable(tableData));
   }
 };
 

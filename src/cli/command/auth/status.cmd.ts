@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { BungieMembershipService } from "~src/service/bungie-membership/bungie-membership.service";
 import { LogService } from "~src/service/log/log.service";
@@ -43,7 +43,7 @@ const cmd: CommandDefinition = {
 
         const tableData: string[][] = [];
 
-        tableData.push(["Active", "Membership", "Type", "ID", "Display Name"]);
+        tableData.push(["Active", "Type", "Membership", "Display Name"]);
 
         if (verbose) {
           logger.info("Retrieving Bungie.net membership ID ...");
@@ -55,7 +55,7 @@ const cmd: CommandDefinition = {
             );
           }
 
-          tableData.push(["✓", "Bungie.net", "", bungieNetMembershipId, ""]);
+          tableData.push(["✓", "Bungie.net", bungieNetMembershipId, ""]);
 
           logger.info("Retrieving Destiny 2 membership ...");
           const [membershipErr, membershipInfo] =
@@ -69,8 +69,7 @@ const cmd: CommandDefinition = {
           tableData.push([
             "✓",
             "Destiny 2",
-            `${membershipInfo.membership.membershipType}`,
-            membershipInfo.membership.membershipId,
+            `${membershipInfo.membership.membershipType}:${membershipInfo.membership.membershipId}`,
             `${membershipInfo.membership.bungieGlobalDisplayName}#${membershipInfo.membership.bungieGlobalDisplayNameCode}`
           ]);
 
@@ -78,13 +77,12 @@ const cmd: CommandDefinition = {
             tableData.push([
               "",
               "Destiny 2",
-              `${otherMembership.membershipType}`,
-              otherMembership.membershipId,
+              `${otherMembership.membershipType}:${otherMembership.membershipId}`,
               `${otherMembership.bungieGlobalDisplayName}#${otherMembership.bungieGlobalDisplayNameCode}`
             ]);
           });
 
-          logger.log(stringifyTable(tableData));
+          logger.log(makeTable2(tableData));
 
           if (membershipInfo.otherMemberships.length > 0) {
             logger.warn(

@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { resolveCharacterProgressions } from "~src/service/destiny2-component-data/character.resolver";
@@ -85,13 +85,15 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["Rank", "Level", "%"];
-
+    const tableHeader = ["Rank", "Level", "%"];
     if (verbose) {
-      tableData.push([...basicHeaders, "Cap", "Current", "Next", "Total", "Resets"]);
-    } else {
-      tableData.push(basicHeaders);
+      tableHeader.push("Cap");
+      tableHeader.push("Current");
+      tableHeader.push("Next");
+      tableHeader.push("Total");
+      tableHeader.push("Resets");
     }
+    tableData.push(tableHeader);
 
     for (
       let progressionIndex = 0;
@@ -109,27 +111,24 @@ const cmd: CommandDefinition = {
         );
       }
 
-      const basicCells = [
+      const rowColumns = [
         progressionDefinition?.displayProperties.name || "UNKNOWN PROGRESSION",
         `${progression.level + 1}`,
         `${Math.round((progression.progressToNextLevel / progression.nextLevelAt) * 100)}%`
       ];
 
       if (verbose) {
-        tableData.push([
-          ...basicCells,
-          `${progression.levelCap + 1}`,
-          `${progression.progressToNextLevel}`,
-          `${progression.nextLevelAt}`,
-          `${progression.currentProgress}`,
-          `${progression.currentResetCount || 0}`
-        ]);
-      } else {
-        tableData.push(basicCells);
+        rowColumns.push(`${progression.levelCap + 1}`);
+        rowColumns.push(`${progression.progressToNextLevel}`);
+        rowColumns.push(`${progression.nextLevelAt}`);
+        rowColumns.push(`${progression.currentProgress}`);
+        rowColumns.push(`${progression.currentResetCount || 0}`);
       }
+
+      tableData.push(rowColumns);
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable2(tableData, { flexibleColumns: [0] }));
   }
 };
 

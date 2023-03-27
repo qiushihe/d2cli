@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
@@ -79,7 +79,11 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    tableData.push(["Stat", "Value", ...(verbose ? ["Description"] : [])]);
+    const tableHeader = ["Stat", "Value"];
+    if (verbose) {
+      tableHeader.push("Description");
+    }
+    tableData.push(tableHeader);
 
     tableData.push(["Class", characterDescription.class, ...(verbose ? [""] : [])]);
     tableData.push(["Physique", characterDescription.gender, ...(verbose ? [""] : [])]);
@@ -89,7 +93,7 @@ const cmd: CommandDefinition = {
       tableData.push([name, `${value}`, ...(verbose ? [description] : [])]);
     });
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable2(tableData, { flexibleColumns: [2] }));
   }
 };
 

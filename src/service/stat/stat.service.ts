@@ -41,7 +41,7 @@ export class StatService {
         description: (statDefinition.displayProperties.description || "")
           .split("\n")
           .filter((line) => (line || "").trim().length > 0)
-          .join("\n")
+          .join(" ")
       });
     }
 

@@ -8,7 +8,7 @@ import { itemIdentifierOption } from "~src/cli/command-option/item.option";
 import { ItemIdentifierCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { parseItemIdentifier } from "~src/helper/item.helper";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { ItemService } from "~src/service/item/item.service";
@@ -139,21 +139,39 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
+    let tableFlexibleColumnIndices: number[] = [];
     const tableHeader = ["Slot"];
-    if (itemIdentifier.itemInstanceId) {
-      tableHeader.push("Equipped");
-    }
-    if (verbose) {
-      tableHeader.push("ID");
-    }
-    if (showAll || !itemIdentifier.itemInstanceId) {
+    if (showAll) {
       if (itemIdentifier.itemInstanceId) {
+        tableHeader.push("Equipped");
+        if (verbose) {
+          tableHeader.push("ID");
+        }
         tableHeader.push("Unequipped");
+        if (verbose) {
+          tableHeader.push("ID");
+        }
+        tableFlexibleColumnIndices = [1, 3];
       } else {
         tableHeader.push("Available");
+        if (verbose) {
+          tableHeader.push("ID");
+        }
+        tableFlexibleColumnIndices = [1];
       }
-      if (verbose) {
-        tableHeader.push("ID");
+    } else {
+      if (itemIdentifier.itemInstanceId) {
+        tableHeader.push("Equipped");
+        if (verbose) {
+          tableHeader.push("ID");
+        }
+        tableFlexibleColumnIndices = [1];
+      } else {
+        tableHeader.push("Available");
+        if (verbose) {
+          tableHeader.push("ID");
+        }
+        tableFlexibleColumnIndices = [1];
       }
     }
     tableData.push(tableHeader);
@@ -162,27 +180,64 @@ const cmd: CommandDefinition = {
       const plugs = plugsBySlotIndex[slotIndex];
 
       const equippedPlug = plugs.find((plug) => plug.isEquipped) || null;
+      const unequippedPlugs = plugs.filter((plug) => !plug.isEquipped);
 
-      const tableRow = [`${slotIndex + 1}`];
+      if (showAll) {
+        for (
+          let subRowIndex = 0;
+          subRowIndex < Math.max(unequippedPlugs.length, 1);
+          subRowIndex++
+        ) {
+          const tableRow = [subRowIndex === 0 ? `${slotIndex + 1}` : ""];
 
-      if (itemIdentifier.itemInstanceId) {
-        tableRow.push(equippedPlug ? equippedPlug.label : "");
-      }
-      if (verbose) {
-        tableRow.push(equippedPlug ? `${equippedPlug.hash}` : "");
-      }
-      if (showAll || !itemIdentifier.itemInstanceId) {
-        const unequippedPlugs = plugs.filter((plug) => !plug.isEquipped);
-        tableRow.push(unequippedPlugs.map((plug) => plug.label).join("\n"));
-        if (verbose) {
-          tableRow.push(unequippedPlugs.map((plug) => `${plug.hash}`).join("\n"));
+          if (itemIdentifier.itemInstanceId) {
+            tableRow.push(subRowIndex === 0 ? (equippedPlug ? equippedPlug.label : "") : "");
+            if (verbose) {
+              tableRow.push(subRowIndex === 0 ? (equippedPlug ? `${equippedPlug.hash}` : "") : "");
+            }
+            tableRow.push(unequippedPlugs[subRowIndex].label);
+            if (verbose) {
+              tableRow.push(`${unequippedPlugs[subRowIndex].hash}`);
+            }
+          } else {
+            tableRow.push(unequippedPlugs[subRowIndex].label);
+            if (verbose) {
+              tableRow.push(`${unequippedPlugs[subRowIndex].hash}`);
+            }
+          }
+
+          tableData.push(tableRow);
+        }
+      } else {
+        if (itemIdentifier.itemInstanceId) {
+          const tableRow = [`${slotIndex + 1}`];
+
+          tableRow.push(equippedPlug ? equippedPlug.label : "");
+          if (verbose) {
+            tableRow.push(equippedPlug ? `${equippedPlug.hash}` : "");
+          }
+
+          tableData.push(tableRow);
+        } else {
+          for (
+            let subRowIndex = 0;
+            subRowIndex < Math.max(unequippedPlugs.length, 1);
+            subRowIndex++
+          ) {
+            const tableRow = [subRowIndex === 0 ? `${slotIndex + 1}` : ""];
+
+            tableRow.push(unequippedPlugs[subRowIndex].label);
+            if (verbose) {
+              tableRow.push(`${unequippedPlugs[subRowIndex].hash}`);
+            }
+
+            tableData.push(tableRow);
+          }
         }
       }
-
-      tableData.push(tableRow);
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable2(tableData, { flexibleColumns: tableFlexibleColumnIndices }));
   }
 };
 

@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
@@ -95,7 +95,7 @@ const cmd: CommandDefinition = {
     const tableHeaders: string[] = [
       "Vendor",
       "Location",
-      ...(verbose ? ["ID (Key)", "Refresh"] : [])
+      ...(verbose ? ["ID", "Key", "Refresh"] : [])
     ];
 
     const tableRows: string[][] = [];
@@ -172,20 +172,15 @@ const cmd: CommandDefinition = {
           : `${vendorDefinition.displayProperties.name}, ${vendorDefinition.displayProperties.subtitle}`,
         `${vendorLocation}`,
         ...(verbose
-          ? [
-              `${
-                VENDOR_KEY_BY_HASH[vendorHash]
-                  ? `${vendorHash} (${VENDOR_KEY_BY_HASH[vendorHash]})`
-                  : vendorHash
-              }`,
-              `${vendorRefresh}`
-            ]
+          ? [`${vendorHash}`, VENDOR_KEY_BY_HASH[vendorHash] || "", `${vendorRefresh}`]
           : [])
       ]);
     }
 
     logger.log(
-      stringifyTable([tableHeaders, ...tableRows.sort((a, b) => a[0].localeCompare(b[0]))])
+      makeTable2([tableHeaders, ...tableRows.sort((a, b) => a[0].localeCompare(b[0]))], {
+        flexibleColumns: [0, 1]
+      })
     );
   }
 };

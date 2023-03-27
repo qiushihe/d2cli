@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterService } from "~src/service/character/character.service";
 import { CharacterReference } from "~src/service/character/character.types";
@@ -62,12 +62,19 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["Selected", "#", "Description", "Light Level"];
+    const tableHeader = ["Selected", "#", "Class"];
     if (verbose) {
-      tableData.push([...basicHeaders, "Last Played", "ID", "Membership ID / Type"]);
-    } else {
-      tableData.push(basicHeaders);
+      tableHeader.push("Physique");
+      tableHeader.push("Race");
     }
+    tableHeader.push("Light");
+    if (verbose) {
+      tableHeader.push("Last Played");
+      tableHeader.push("ID");
+      tableHeader.push("Membership");
+    }
+
+    tableData.push(tableHeader);
 
     for (let characterIndex = 0; characterIndex < characters.length; characterIndex++) {
       const character = characters[characterIndex];
@@ -77,30 +84,37 @@ const cmd: CommandDefinition = {
         characterInfo?.membershipId === character.membershipId &&
         characterInfo?.characterId === character.characterId;
 
-      const basicCells = [isSelected ? "✓" : "", `${characterIndex + 1}`, "", `${character.light}`];
+      const rowColumns = [isSelected ? "✓" : "", `${characterIndex + 1}`];
 
       logger.info("Retrieving character description ...");
       const [characterDescriptionErr, characterDescription] =
         await characterDescriptionService.getDescription(character);
       if (characterDescriptionErr) {
-        basicCells[2] = `Error: ${characterDescriptionErr.message}`;
+        rowColumns.push("ERR");
+        if (verbose) {
+          rowColumns.push("ERR");
+          rowColumns.push("ERR");
+        }
       } else {
-        basicCells[2] = `${characterDescription.class} (${characterDescription.gender} ${characterDescription.race})`;
+        rowColumns.push(characterDescription.class);
+        if (verbose) {
+          rowColumns.push(characterDescription.gender);
+          rowColumns.push(characterDescription.race);
+        }
       }
+
+      rowColumns.push(`${character.light}`);
 
       if (verbose) {
-        tableData.push([
-          ...basicCells,
-          character.dateLastPlayed,
-          character.characterId,
-          `${character.membershipId} / ${character.membershipType}`
-        ]);
-      } else {
-        tableData.push(basicCells);
+        rowColumns.push(character.dateLastPlayed);
+        rowColumns.push(character.characterId);
+        rowColumns.push(`${character.membershipType}:${character.membershipId}`);
       }
+
+      tableData.push(rowColumns);
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable2(tableData));
   }
 };
 

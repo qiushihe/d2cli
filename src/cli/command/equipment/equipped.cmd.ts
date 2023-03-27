@@ -8,7 +8,7 @@ import { EquipmentBuckets } from "~src/helper/inventory-bucket.helper";
 import { groupEquipmentItems } from "~src/helper/inventory-bucket.helper";
 import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
-import { stringifyTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
@@ -63,12 +63,11 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["Slot", "Item", "ID"];
+    const tableHeader = ["Slot", "Item", "Power"];
     if (verbose) {
-      tableData.push([...basicHeaders, "Power Level"]);
-    } else {
-      tableData.push(basicHeaders);
+      tableHeader.push("ID");
     }
+    tableData.push(tableHeader);
 
     for (let bucketNameIndex = 0; bucketNameIndex < EquipmentBuckets.length; bucketNameIndex++) {
       const bucket = EquipmentBuckets[bucketNameIndex];
@@ -93,23 +92,22 @@ const cmd: CommandDefinition = {
           )
         : { label: "UNKNOWN", powerLevel: "N/A" };
 
+      const rowColumns = [
+        bucketLabel,
+        equippedItemInfo.label,
+        equippedItemInfo.powerLevel.padStart(4, " ")
+      ];
+
       if (verbose) {
-        tableData.push([
-          bucketLabel,
-          equippedItemInfo.label,
-          equippedItem ? `${equippedItem.itemHash}:${equippedItem.itemInstanceId}` : "N/A",
-          equippedItemInfo.powerLevel.padStart(4, " ")
-        ]);
-      } else {
-        tableData.push([
-          bucketLabel,
-          equippedItemInfo.label,
-          equippedItem ? `${equippedItem.itemHash}:${equippedItem.itemInstanceId}` : "N/A"
-        ]);
+        rowColumns.push(
+          equippedItem ? `${equippedItem.itemHash}:${equippedItem.itemInstanceId}` : "???"
+        );
       }
+
+      tableData.push(rowColumns);
     }
 
-    logger.log(stringifyTable(tableData));
+    logger.log(makeTable2(tableData, { flexibleColumns: [1] }));
   }
 };
 
