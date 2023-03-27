@@ -7,17 +7,16 @@ import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getEditedContent } from "~src/helper/edit.helper";
-import { SerializedItem } from "~src/helper/item-serialization.helper";
-import { SerializedPlug } from "~src/helper/item-serialization.helper";
-import { serializeItem } from "~src/helper/item-serialization.helper";
-import { serializeAllItems } from "~src/helper/item-serialization.helper";
-import { LoadoutAction } from "~src/helper/loadout-action.helper";
-import { describeLoadoutAction } from "~src/helper/loadout-action.helper";
-import { resolveTransferActions } from "~src/helper/loadout-action.helper";
-import { resolveDeExoticActions } from "~src/helper/loadout-action.helper";
-import { resolveEquipActions } from "~src/helper/loadout-action.helper";
-import { resolveSocketActions } from "~src/helper/loadout-action.helper";
-import { applyLoadoutAction } from "~src/helper/loadout-action.helper";
+import { LoadoutItem } from "~src/helper/loadout-apply.helper";
+import { LoadoutPlug } from "~src/helper/loadout-apply.helper";
+import { parseLoadoutItem } from "~src/helper/loadout-apply.helper";
+import { LoadoutAction } from "~src/helper/loadout-apply.helper";
+import { describeLoadoutAction } from "~src/helper/loadout-apply.helper";
+import { resolveTransferActions } from "~src/helper/loadout-apply.helper";
+import { resolveDeExoticActions } from "~src/helper/loadout-apply.helper";
+import { resolveEquipActions } from "~src/helper/loadout-apply.helper";
+import { resolveSocketActions } from "~src/helper/loadout-apply.helper";
+import { applyLoadoutAction } from "~src/helper/loadout-apply.helper";
 import { promisedFn } from "~src/helper/promise.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { stringifyTable } from "~src/helper/table.helper";
@@ -27,13 +26,15 @@ import { CharacterSelectionService } from "~src/service/character-selection/char
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
-import { InventoryService } from "~src/service/inventory/inventory.service";
-import { ItemService } from "~src/service/item/item.service";
+import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
+import { resolveProfileAllItems } from "~src/service/destiny2-component-data/profile.resolver";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PastebinService } from "~src/service/pastebin/pastebin.service";
 import { PlugService } from "~src/service/plug/plug.service";
 import { SocketName } from "~src/service/plug/plug.service.types";
+import { DestinyInventoryItemDefinition } from "~type/bungie-api/destiny/definitions.types";
+import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions &
   VerboseCommandOptions & {
@@ -98,9 +99,6 @@ const cmd: CommandDefinition = {
         "CharacterSelectionService"
       );
 
-    const inventoryService =
-      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
-
     const characterDescriptionService =
       AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
         "CharacterDescriptionService"
@@ -109,9 +107,12 @@ const cmd: CommandDefinition = {
     const destiny2ActionService =
       AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
 
-    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const destiny2ComponentDataService =
+      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
+        "Destiny2ComponentDataService"
+      );
 
-    const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
+    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
 
     const pastebinService =
       AppModule.getDefaultInstance().resolve<PastebinService>("PastebinService");
@@ -189,91 +190,47 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Loading is empty`);
     }
 
-    const [characterInfoErr, characterInfo] =
-      await characterSelectionService.ensureSelectedCharacter(sessionId);
-    if (characterInfoErr) {
-      return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
-    }
-
     const loadoutLines = `${loadoutContent}`
       .trim()
       .split("\n")
       .map((line) => `${line}`.trim())
       .filter((line) => line.length > 0);
 
-    let loadoutName = "";
-    const loadoutEquipments: SerializedItem[] = [];
-    const loadoutExtraEquipments: SerializedItem[] = [];
-    const loadoutPlugs: SerializedPlug[] = [];
-
+    const loadoutDataLines: (
+      | { type: "LOADOUT_NAME"; loadoutName: string }
+      | { type: "LOADOUT_EQUIP"; itemHash: number; itemInstanceId: string }
+      | { type: "LOADOUT_EXTRA"; itemHash: number; itemInstanceId: string }
+      | {
+          type: "LOADOUT_SOCKET";
+          itemHash: number;
+          itemInstanceId: string;
+          socketIndex: number;
+          plugItemHash: number;
+        }
+    )[] = [];
     for (let lineIndex = 0; lineIndex < loadoutLines.length; lineIndex++) {
       const line = loadoutLines[lineIndex];
       const metaLineMatch = line.match(/^LOADOUT\s*\/\/(.*)$/);
       if (metaLineMatch) {
-        loadoutName = `${metaLineMatch[1]}`.trim();
+        loadoutDataLines.push({ type: "LOADOUT_NAME", loadoutName: `${metaLineMatch[1]}`.trim() });
       } else {
         const dataLineMatch = line.match(/^([^/]+)\s*\/\/([^/]*)\s*\/\/(.*)$/);
         if (dataLineMatch) {
           const dataType = `${dataLineMatch[1]}`.trim();
           const dataValue = `${dataLineMatch[2]}`.trim();
-          const dataLabel = `${dataLineMatch[3]}`.trim();
 
           if (dataType === "EQUIP") {
             const dataParts = dataValue.split(":", 2);
             const itemHash = parseInt(`${dataParts[0]}`.trim(), 10);
             const itemInstanceId = `${dataParts[1]}`.trim().replace(/\D/gi, "");
 
-            logger.info(`Fetching item definition for ${itemHash} ...`);
-            const [itemDefinitionErr, itemDefinition] =
-              await manifestDefinitionService.getItemDefinition(itemHash);
-            if (itemDefinitionErr) {
-              return logger.loggedError(
-                `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
-              );
-            }
-            if (!itemDefinition) {
-              return logger.loggedError(`Unable to find item definition for: ${itemHash}`);
-            }
-
-            const [serializeItemErr, serializedItem] = serializeItem(
-              itemDefinition,
-              itemHash,
-              itemInstanceId
-            );
-            if (serializeItemErr) {
-              return logger.loggedError(`Unable to serialize item: ${serializeItemErr.message}`);
-            }
-
-            loadoutEquipments.push(serializedItem);
+            loadoutDataLines.push({ type: "LOADOUT_EQUIP", itemHash, itemInstanceId });
           } else if (dataType === "EXTRA") {
             const dataParts = dataValue.split(":", 2);
             const itemHash = parseInt(`${dataParts[0]}`.trim(), 10);
             const itemInstanceId = `${dataParts[1]}`.trim().replace(/\D/gi, "");
 
-            logger.info(`Fetching item definition for ${itemHash} ...`);
-            const [itemDefinitionErr, itemDefinition] =
-              await manifestDefinitionService.getItemDefinition(itemHash);
-            if (itemDefinitionErr) {
-              return logger.loggedError(
-                `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
-              );
-            }
-            if (!itemDefinition) {
-              return logger.loggedError(`Unable to find extra item definition for: ${itemHash}`);
-            }
-
-            const [serializeItemErr, serializedItem] = serializeItem(
-              itemDefinition,
-              itemHash,
-              itemInstanceId
-            );
-            if (serializeItemErr) {
-              return logger.loggedError(
-                `Unable to serialize extra item: ${serializeItemErr.message}`
-              );
-            }
-
-            loadoutExtraEquipments.push(serializedItem);
+            loadoutDataLines.push({ type: "LOADOUT_EXTRA", itemHash, itemInstanceId });
           } else if (dataType === "SOCKET") {
             const dataParts = dataValue.split("::", 3);
             const itemParts = `${dataParts[0]}`.trim().split(":", 2);
@@ -284,50 +241,11 @@ const cmd: CommandDefinition = {
             const socketIndex = parseInt(`${indexParts[1]}`.trim(), 10);
             const plugItemHash = parseInt(`${plugParts[1]}`.trim(), 10);
 
-            logger.info(`Fetching item definition for ${itemHash} ...`);
-            const [itemDefinitionErr, itemDefinition] =
-              await manifestDefinitionService.getItemDefinition(itemHash);
-            if (itemDefinitionErr) {
-              return logger.loggedError(
-                `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
-              );
-            }
-            if (!itemDefinition) {
-              return logger.loggedError(`Unable to find item definition for: ${itemHash}`);
-            }
-
-            logger.info(`Fetching item definition for ${plugItemHash} ...`);
-            const [plugItemDefinitionErr, plugItemDefinition] =
-              await manifestDefinitionService.getItemDefinition(plugItemHash);
-            if (plugItemDefinitionErr) {
-              return logger.loggedError(
-                `Unable to fetch item definition for ${plugItemHash}: ${plugItemDefinitionErr.message}`
-              );
-            }
-            if (!plugItemDefinition) {
-              return logger.loggedError(`Unable to find item definition for: ${plugItemHash}`);
-            }
-
-            const [serializeItemErr, serializedItem] = serializeItem(
-              itemDefinition,
-              itemHash,
-              itemInstanceId
-            );
-            if (serializeItemErr) {
-              return logger.loggedError(
-                `Unable to serialize plug item: ${serializeItemErr.message}`
-              );
-            }
-
-            loadoutPlugs.push({
-              label: dataLabel,
-              itemType: serializedItem.itemType,
-              itemBucket: serializedItem.itemBucket,
-              itemName: serializedItem.itemName,
+            loadoutDataLines.push({
+              type: "LOADOUT_SOCKET",
               itemHash,
               itemInstanceId,
               socketIndex,
-              plugItemName: plugItemDefinition.displayProperties.name || "UNKNOWN PLUG",
               plugItemHash
             });
           }
@@ -335,7 +253,19 @@ const cmd: CommandDefinition = {
       }
     }
 
-    logger.debug(`Loadout name: ${loadoutName}`);
+    const loadoutPlugItemHashes: number[] = [];
+    for (let lineIndex = 0; lineIndex < loadoutLines.length; lineIndex++) {
+      const line = loadoutDataLines[lineIndex];
+      if (line.type === "LOADOUT_SOCKET") {
+        loadoutPlugItemHashes.push(line.plugItemHash);
+      }
+    }
+
+    const [characterInfoErr, characterInfo] =
+      await characterSelectionService.ensureSelectedCharacter(sessionId);
+    if (characterInfoErr) {
+      return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
+    }
 
     logger.info("Retrieving character descriptions ...");
     const [characterDescriptionsErr, characterDescriptions] =
@@ -346,83 +276,182 @@ const cmd: CommandDefinition = {
       );
     }
 
-    logger.info("Indexing existing items ...");
-    const [allItemsInfoErr, allItemsInfo] = await serializeAllItems(
-      manifestDefinitionService,
-      inventoryService,
-      characterDescriptions,
+    logger.info("Indexing items ...");
+    const [allItemsErr, allItems] = await destiny2ComponentDataService.getProfileComponentsData(
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId,
-      characterInfo.characterId
+      resolveProfileAllItems
     );
-    if (allItemsInfoErr) {
-      return logger.loggedError(`Unable to index existing items: ${allItemsInfoErr.message}`);
+    if (allItemsErr) {
+      return logger.loggedError(`Unable to index items: ${allItemsErr.message}`);
     }
+
+    const allItemHashes = [
+      ...Object.values(allItems.charactersItems)
+        .map(({ equipped, unequipped }) => [...equipped, ...unequipped])
+        .flat()
+        .map((item) => item.itemHash),
+      ...allItems.vaultItems.map((item) => item.itemHash),
+      ...loadoutPlugItemHashes
+    ];
+
+    logger.info(`Indexing item definitions ...`);
+    const allItemDefinitions: Record<number, DestinyInventoryItemDefinition> = {};
+    for (let itemHashIndex = 0; itemHashIndex < allItemHashes.length; itemHashIndex++) {
+      const itemHash = allItemHashes[itemHashIndex];
+
+      const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
+        itemHash
+      );
+      if (itemDefinitionErr) {
+        return logger.loggedError(
+          `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
+        );
+      }
+      if (!itemDefinition) {
+        return logger.loggedError(`Unable to find item definition for: ${itemHash}`);
+      }
+
+      allItemDefinitions[itemHash] = itemDefinition;
+    }
+
+    const characterItems = allItems.charactersItems[characterInfo.characterId];
+
+    const otherCharactersItems = Object.keys(allItems.charactersItems)
+      .filter((characterId) => characterId !== characterInfo.characterId)
+      .reduce(
+        (acc, characterId) => ({
+          ...acc,
+          [characterId]: allItems.charactersItems[characterId]
+        }),
+        {} as Record<
+          string,
+          { equipped: DestinyItemComponent[]; unequipped: DestinyItemComponent[] }
+        >
+      );
+
+    const vaultItems = allItems.vaultItems;
+
+    let loadoutName = "";
+    const loadoutEquipments: LoadoutItem[] = [];
+    const loadoutExtraEquipments: LoadoutItem[] = [];
+    const loadoutPlugs: LoadoutPlug[] = [];
+
+    for (let lineIndex = 0; lineIndex < loadoutLines.length; lineIndex++) {
+      const line = loadoutDataLines[lineIndex];
+
+      if (line.type === "LOADOUT_NAME") {
+        loadoutName = line.loadoutName;
+      } else if (line.type === "LOADOUT_EQUIP") {
+        const [loadoutEquipmentErr, loadoutEquipment] = parseLoadoutItem(
+          allItemDefinitions,
+          line.itemHash,
+          line.itemInstanceId
+        );
+        if (loadoutEquipmentErr) {
+          return logger.loggedError(`Unable to serialize item: ${loadoutEquipmentErr.message}`);
+        }
+
+        loadoutEquipments.push(loadoutEquipment);
+      } else if (line.type === "LOADOUT_EXTRA") {
+        const [loadoutExtraEquipmentErr, loadoutExtraEquipment] = parseLoadoutItem(
+          allItemDefinitions,
+          line.itemHash,
+          line.itemInstanceId
+        );
+        if (loadoutExtraEquipmentErr) {
+          return logger.loggedError(
+            `Unable to serialize extra item: ${loadoutExtraEquipmentErr.message}`
+          );
+        }
+
+        loadoutExtraEquipments.push(loadoutExtraEquipment);
+      } else if (line.type === "LOADOUT_SOCKET") {
+        const [loadoutPlugErr, loadoutPlug] = parseLoadoutItem(
+          allItemDefinitions,
+          line.itemHash,
+          line.itemInstanceId
+        );
+        if (loadoutPlugErr) {
+          return logger.loggedError(`Unable to serialize plug item: ${loadoutPlugErr.message}`);
+        }
+
+        loadoutPlugs.push({
+          itemType: loadoutPlug.itemType,
+          itemBucket: loadoutPlug.itemBucket,
+          itemHash: line.itemHash,
+          itemInstanceId: line.itemInstanceId,
+          socketIndex: line.socketIndex,
+          plugItemHash: line.plugItemHash
+        });
+      }
+    }
+
+    logger.debug(`Loadout name: ${loadoutName}`);
 
     const loadoutActions: LoadoutAction[] = [];
 
-    const [equipmentTransferActionsErr, equipmentTransferActions] = await resolveTransferActions(
-      manifestDefinitionService,
-      characterDescriptions,
+    logger.info("Resolving transfer actions ...");
+    const [equipmentTransferActions2Err, equipmentTransferActions2] = await resolveTransferActions(
       characterInfo.characterId,
       loadoutEquipments,
-      allItemsInfo.currentCharacter,
-      allItemsInfo.otherCharacter,
-      allItemsInfo.vault
+      characterItems,
+      otherCharactersItems,
+      vaultItems
     );
-    if (equipmentTransferActionsErr) {
+    if (equipmentTransferActions2Err) {
       return logger.loggedError(
-        `Unable to resolve equipment transfer actions: ${equipmentTransferActionsErr.message}`
+        `Unable to resolve equipment transfer actions: ${equipmentTransferActions2Err.message}`
       );
     }
-    equipmentTransferActions.forEach((action) => loadoutActions.push(action));
+    equipmentTransferActions2.forEach((action) => loadoutActions.push(action));
 
-    const [extraEquipmentTransferActionsErr, extraEquipmentTransferActions] =
+    logger.info("Resolving extra transfer actions ...");
+    const [extraEquipmentTransferActions2Err, extraEquipmentTransferActions2] =
       await resolveTransferActions(
-        manifestDefinitionService,
-        characterDescriptions,
         characterInfo.characterId,
         loadoutExtraEquipments,
-        allItemsInfo.currentCharacter,
-        allItemsInfo.otherCharacter,
-        allItemsInfo.vault
+        characterItems,
+        otherCharactersItems,
+        vaultItems
       );
-    if (extraEquipmentTransferActionsErr) {
+    if (extraEquipmentTransferActions2Err) {
       return logger.loggedError(
-        `Unable to resolve extra equipment transfer actions: ${extraEquipmentTransferActionsErr.message}`
+        `Unable to resolve extra equipment transfer actions: ${extraEquipmentTransferActions2Err.message}`
       );
     }
-    extraEquipmentTransferActions.forEach((action) => loadoutActions.push(action));
+    extraEquipmentTransferActions2.forEach((action) => loadoutActions.push(action));
 
     const exoticWeapon =
       loadoutEquipments.find((item) => item.itemType === "WEAPON" && item.isItemExotic) || null;
     let reEquipExoticWeapon = false;
     if (exoticWeapon) {
-      const alreadyEquipped = !!allItemsInfo.currentCharacter.equipped.find(
+      const alreadyEquipped = !!characterItems.equipped.find(
         (equipped) => equipped.itemInstanceId === exoticWeapon.itemInstanceId
       );
 
-      const alreadyUnEquipped = !!allItemsInfo.currentCharacter.unequipped.find(
+      const alreadyUnEquipped = !!characterItems.unequipped.find(
         (equipped) => equipped.itemInstanceId === exoticWeapon.itemInstanceId
       );
 
       if (!alreadyEquipped) {
         if (!alreadyUnEquipped) {
-          const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
-            characterDescriptions,
+          logger.info("Resolving de-exotic weapon actions ...");
+          const [deExoticActionsErr2, deExoticActions2] = resolveDeExoticActions(
+            allItemDefinitions,
             characterInfo.characterId,
             loadoutExtraEquipments,
-            allItemsInfo.otherCharacter,
-            allItemsInfo.vault,
+            otherCharactersItems,
+            vaultItems,
             exoticWeapon
           );
-          if (deExoticActionsErr) {
+          if (deExoticActionsErr2) {
             return logger.loggedError(
-              `Unable to resolve de-exotic weapon actions: ${deExoticActionsErr.message}`
+              `Unable to resolve de-exotic weapon actions: ${deExoticActionsErr2.message}`
             );
           }
-          deExoticActions.forEach((action) => loadoutActions.push(action));
+          deExoticActions2.forEach((action) => loadoutActions.push(action));
         }
         reEquipExoticWeapon = true;
       }
@@ -432,53 +461,52 @@ const cmd: CommandDefinition = {
       loadoutEquipments.find((item) => item.itemType === "ARMOUR" && item.isItemExotic) || null;
     let reEquipExoticArmour = false;
     if (exoticArmour) {
-      const alreadyEquipped = !!allItemsInfo.currentCharacter.equipped.find(
+      const alreadyEquipped = !!characterItems.equipped.find(
         (equipped) => equipped.itemInstanceId === exoticArmour.itemInstanceId
       );
 
-      const alreadyUnEquipped = !!allItemsInfo.currentCharacter.unequipped.find(
+      const alreadyUnEquipped = !!characterItems.unequipped.find(
         (equipped) => equipped.itemInstanceId === exoticArmour.itemInstanceId
       );
 
       if (!alreadyEquipped) {
         if (!alreadyUnEquipped) {
-          const [deExoticActionsErr, deExoticActions] = resolveDeExoticActions(
-            characterDescriptions,
+          logger.info("Resolving de-exotic armour actions ...");
+          const [deExoticActions2Err, deExoticActions2] = resolveDeExoticActions(
+            allItemDefinitions,
             characterInfo.characterId,
             loadoutExtraEquipments,
-            allItemsInfo.otherCharacter,
-            allItemsInfo.vault,
+            otherCharactersItems,
+            vaultItems,
             exoticArmour
           );
-          if (deExoticActionsErr) {
+          if (deExoticActions2Err) {
             return logger.loggedError(
-              `Unable to resolve de-exotic armour actions: ${deExoticActionsErr.message}`
+              `Unable to resolve de-exotic armour actions: ${deExoticActions2Err.message}`
             );
           }
-          deExoticActions.forEach((action) => loadoutActions.push(action));
+          deExoticActions2.forEach((action) => loadoutActions.push(action));
         }
         reEquipExoticArmour = true;
       }
     }
 
-    resolveEquipActions(
-      characterDescriptions,
+    logger.info("Resolving equip actions ...");
+    const equipActions2 = resolveEquipActions(
       characterInfo.characterId,
       loadoutEquipments.filter((item) => !item.isItemExotic),
-      allItemsInfo.currentCharacter.equipped
-    ).forEach((loadoutAction) => loadoutActions.push(loadoutAction));
+      characterItems.equipped
+    );
+    equipActions2.forEach((loadoutAction) => loadoutActions.push(loadoutAction));
 
     if (exoticWeapon && reEquipExoticWeapon) {
       loadoutActions.push({
         skip: false,
         type: "EQUIP",
-        characterName: characterDescriptions[characterInfo.characterId].asString,
         characterId: characterInfo.characterId,
-        itemName: exoticWeapon.itemName,
         itemHash: exoticWeapon.itemHash,
         itemInstanceId: exoticWeapon.itemInstanceId,
         socketIndex: null,
-        plugItemName: null,
         plugItemHash: null
       });
     }
@@ -487,13 +515,10 @@ const cmd: CommandDefinition = {
       loadoutActions.push({
         skip: false,
         type: "EQUIP",
-        characterName: characterDescriptions[characterInfo.characterId].asString,
         characterId: characterInfo.characterId,
-        itemName: exoticArmour.itemName,
         itemHash: exoticArmour.itemHash,
         itemInstanceId: exoticArmour.itemInstanceId,
         socketIndex: null,
-        plugItemName: null,
         plugItemHash: null
       });
     }
@@ -505,12 +530,13 @@ const cmd: CommandDefinition = {
         {} as Record<number, string>
       )
     );
+
+    logger.info("Retrieving item socket indices ...");
     for (let plugItemIndex = 0; plugItemIndex < plugItemHashesAndTypes.length; plugItemIndex++) {
       const [itemHashStr, itemType] = plugItemHashesAndTypes[plugItemIndex];
       const itemHash = parseInt(itemHashStr, 10);
 
       if (itemType === "ARMOUR") {
-        logger.info("Retrieving armour mod socket indices ...");
         const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] =
           await plugService.getSocketIndices(
             sessionId,
@@ -536,7 +562,6 @@ const cmd: CommandDefinition = {
         ) {
           const socketName = SUBCLASS_SOCKET_NAMES[socketNameIndex] as SocketName;
 
-          logger.info(`Fetching ${socketName.toLocaleLowerCase()} socket indices ...`);
           const [socketIndicesErr, socketIndices] = await plugService.getSocketIndices(
             sessionId,
             characterInfo.membershipType,
@@ -547,7 +572,7 @@ const cmd: CommandDefinition = {
           );
           if (socketIndicesErr) {
             return logger.loggedError(
-              `Unable to fetch ${socketName.toLocaleLowerCase()} socket indices: ${
+              `Unable to retrieve ${socketName.toLocaleLowerCase()} socket indices: ${
                 socketIndicesErr.message
               }`
             );
@@ -560,58 +585,14 @@ const cmd: CommandDefinition = {
       }
     }
 
-    const equippedPlugHashesByItemInstanceId: Record<string, number[]> = {};
-    const plugItemInstanceIdsAndHashes = Object.entries(
-      loadoutPlugs.reduce(
-        (acc, plug) => ({ ...acc, [plug.itemInstanceId]: plug.itemHash }),
-        {} as Record<string, number>
-      )
-    );
-    for (
-      let plugItemIndex = 0;
-      plugItemIndex < plugItemInstanceIdsAndHashes.length;
-      plugItemIndex++
-    ) {
-      const [itemInstanceId, itemHash] = plugItemInstanceIdsAndHashes[plugItemIndex];
-
-      logger.info(`Fetching item definition for ${itemHash} ...`);
-      const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
-        itemHash
-      );
-      if (itemDefinitionErr) {
-        return logger.loggedError(
-          `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
-        );
-      }
-
-      const itemName = itemDefinition?.displayProperties.name || "UNKNOWN ITEM";
-
-      logger.info(`Fetching equipped plugs for ${itemName} ...`);
-      const [equippedPlugHashesErr, _equippedPlugHashes] =
-        await itemService.getItemEquippedPlugHashes(
-          sessionId,
-          characterInfo.membershipType,
-          characterInfo.membershipId,
-          itemInstanceId
-        );
-      if (equippedPlugHashesErr) {
-        return logger.loggedError(
-          `Unable to fetch equipped plugs for ${itemName}: ${equippedPlugHashesErr.message}`
-        );
-      }
-
-      equippedPlugHashesByItemInstanceId[itemInstanceId] = socketIndicesByItemHash[itemHash].map(
-        (index) => _equippedPlugHashes[index]
-      );
-    }
-
-    resolveSocketActions(
-      characterDescriptions,
+    logger.info("Resolving socket actions ...");
+    const socketActions2 = resolveSocketActions(
       characterInfo.characterId,
       socketIndicesByItemHash,
-      equippedPlugHashesByItemInstanceId,
+      allItems.itemPlugHashes,
       loadoutPlugs
-    ).forEach((loadoutAction) => loadoutActions.push(loadoutAction));
+    );
+    socketActions2.forEach((loadoutAction) => loadoutActions.push(loadoutAction));
 
     const tableData: string[][] = [];
 
@@ -645,7 +626,13 @@ const cmd: CommandDefinition = {
           actionResult = "Skip";
           actionMessage = "";
         } else {
-          logger.info(`Applying loadout action: ${describeLoadoutAction(loadoutAction)} ...`);
+          logger.info(
+            `Applying loadout action: ${describeLoadoutAction(
+              allItemDefinitions,
+              characterDescriptions,
+              loadoutAction
+            )} ...`
+          );
           const loadoutActionErr = await applyLoadoutAction(
             destiny2ActionService,
             plugService,
@@ -670,14 +657,16 @@ const cmd: CommandDefinition = {
       if (!dryRun) {
         tableRow.push(actionResult);
       }
-      tableRow.push(loadoutAction.characterName);
+      tableRow.push(characterDescriptions[loadoutAction.characterId].asString);
       tableRow.push(loadoutAction.type);
-      tableRow.push(loadoutAction.itemName);
+      tableRow.push(allItemDefinitions[loadoutAction.itemHash || -1]?.displayProperties.name || "");
       if (verbose) {
         tableRow.push(`${loadoutAction.itemHash}:${loadoutAction.itemInstanceId}`);
       }
       tableRow.push(loadoutAction.socketIndex !== null ? `${loadoutAction.socketIndex + 1}` : "");
-      tableRow.push(loadoutAction.plugItemName || "");
+      tableRow.push(
+        allItemDefinitions[loadoutAction.plugItemHash || -1]?.displayProperties.name || ""
+      );
       if (verbose) {
         tableRow.push(loadoutAction.plugItemHash ? `${loadoutAction.plugItemHash}` : "");
       }

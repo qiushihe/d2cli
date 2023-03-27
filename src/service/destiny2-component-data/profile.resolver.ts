@@ -70,3 +70,60 @@ export const resolveProfileInventoryItemInstances: ComponentDataResolver<
     ];
   }
 };
+
+export const resolveProfileAllItems: ComponentDataResolver<
+  DestinyProfileResponse,
+  {
+    charactersItems: Record<
+      string,
+      { equipped: DestinyItemComponent[]; unequipped: DestinyItemComponent[] }
+    >;
+    vaultItems: DestinyItemComponent[];
+    itemInstances: Record<string, DestinyItemInstanceComponent>;
+    itemPlugHashes: Record<string, number[]>;
+  }
+> = {
+  components: [
+    DestinyComponentType.ProfileInventories,
+    DestinyComponentType.CharacterInventories,
+    DestinyComponentType.CharacterEquipment,
+    DestinyComponentType.ItemInstances,
+    DestinyComponentType.ItemSockets
+  ],
+  resolve: (res) => {
+    const charactersItems: Record<
+      string,
+      { equipped: DestinyItemComponent[]; unequipped: DestinyItemComponent[] }
+    > = {};
+
+    Object.entries(res?.characterEquipment?.data || {}).forEach(([characterId, data]) => {
+      charactersItems[characterId] = charactersItems[characterId] || {
+        equipped: [],
+        unequipped: []
+      };
+      charactersItems[characterId].equipped = data.items;
+    });
+
+    Object.entries(res?.characterInventories?.data || {}).forEach(([characterId, data]) => {
+      charactersItems[characterId] = charactersItems[characterId] || {
+        equipped: [],
+        unequipped: []
+      };
+      charactersItems[characterId].unequipped = data.items;
+    });
+
+    const vaultItems = res?.profileInventory?.data?.items || [];
+
+    const itemInstances = res?.itemComponents?.instances?.data || {};
+
+    const itemPlugHashes = Object.entries(res?.itemComponents?.sockets?.data || {}).reduce(
+      (acc, [itemInstanceId, data]) => ({
+        ...acc,
+        [itemInstanceId]: (data?.sockets || []).map((socket) => socket.plugHash || -1)
+      }),
+      {} as Record<string, number[]>
+    );
+
+    return [null, { charactersItems, vaultItems, itemInstances, itemPlugHashes }];
+  }
+};

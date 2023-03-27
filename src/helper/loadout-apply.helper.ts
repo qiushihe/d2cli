@@ -1,42 +1,125 @@
-import { SerializedItem } from "~src/helper/item-serialization.helper";
-import { SerializedPlug } from "~src/helper/item-serialization.helper";
+import { InventoryBucket } from "~src/helper/inventory-bucket.helper";
+import { InventoryBucketHashes } from "~src/helper/inventory-bucket.helper";
+import { ArmourBucketHashes } from "~src/helper/inventory-bucket.helper";
+import { WeaponBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { CharacterDescription } from "~src/service/character-description/character-description.types";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
-import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PlugService } from "~src/service/plug/plug.service";
+import { DestinyInventoryItemDefinition } from "~type/bungie-api/destiny/definitions.types";
+import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
+
+export type LoadoutItemType = "SUBCLASS" | "WEAPON" | "ARMOUR" | "OTHER";
+
+export type LoadoutItemBucket =
+  | InventoryBucket.KineticWeapon
+  | InventoryBucket.EnergyWeapon
+  | InventoryBucket.PowerWeapon
+  | InventoryBucket.Helmet
+  | InventoryBucket.Gauntlet
+  | InventoryBucket.ChestArmour
+  | InventoryBucket.LegArmour
+  | InventoryBucket.ClassItem
+  | InventoryBucket.Subclass
+  | "other";
+
+export type LoadoutItem = {
+  itemType: LoadoutItemType;
+  itemBucket: LoadoutItemBucket;
+  itemHash: number;
+  itemInstanceId: string;
+  isItemExotic: boolean;
+};
+
+export type LoadoutPlug = {
+  itemType: LoadoutItemType;
+  itemBucket: LoadoutItemBucket;
+  itemHash: number;
+  itemInstanceId: string;
+  socketIndex: number;
+  plugItemHash: number;
+};
 
 export type LoadoutAction = {
   skip: boolean;
   type: "DEPOSIT" | "WITHDRAW" | "EQUIP" | "SOCKET";
-  characterName: string;
   characterId: string;
-  itemName: string;
   itemHash: number;
   itemInstanceId: string;
   socketIndex: number | null;
-  plugItemName: string | null;
   plugItemHash: number | null;
 };
 
+export const EXOTIC_TIER_TYPE_HASH = 2759499571;
+
+export const parseLoadoutItem = (
+  itemDefinitions: Record<number, DestinyInventoryItemDefinition>,
+  itemHash: number,
+  itemInstanceId: string
+): [Error, null] | [null, LoadoutItem] => {
+  const itemDefinition = itemDefinitions[itemHash];
+  const bucketHash = itemDefinition.inventory.bucketTypeHash;
+
+  let itemType: LoadoutItemType;
+  if (bucketHash === InventoryBucketHashes[InventoryBucket.Subclass]) {
+    itemType = "SUBCLASS";
+  } else if (ArmourBucketHashes.includes(bucketHash)) {
+    itemType = "ARMOUR";
+  } else if (WeaponBucketHashes.includes(bucketHash)) {
+    itemType = "WEAPON";
+  } else {
+    itemType = "OTHER";
+  }
+
+  let itemBucket: LoadoutItemBucket;
+  if (bucketHash === InventoryBucketHashes[InventoryBucket.KineticWeapon]) {
+    itemBucket = InventoryBucket.KineticWeapon;
+  } else if (bucketHash === InventoryBucketHashes[InventoryBucket.EnergyWeapon]) {
+    itemBucket = InventoryBucket.EnergyWeapon;
+  } else if (bucketHash === InventoryBucketHashes[InventoryBucket.PowerWeapon]) {
+    itemBucket = InventoryBucket.PowerWeapon;
+  } else if (bucketHash === InventoryBucketHashes[InventoryBucket.Helmet]) {
+    itemBucket = InventoryBucket.Helmet;
+  } else if (bucketHash === InventoryBucketHashes[InventoryBucket.Gauntlet]) {
+    itemBucket = InventoryBucket.Gauntlet;
+  } else if (bucketHash === InventoryBucketHashes[InventoryBucket.ChestArmour]) {
+    itemBucket = InventoryBucket.ChestArmour;
+  } else if (bucketHash === InventoryBucketHashes[InventoryBucket.LegArmour]) {
+    itemBucket = InventoryBucket.LegArmour;
+  } else if (bucketHash === InventoryBucketHashes[InventoryBucket.ClassItem]) {
+    itemBucket = InventoryBucket.ClassItem;
+  } else if (bucketHash === InventoryBucketHashes[InventoryBucket.Subclass]) {
+    itemBucket = InventoryBucket.Subclass;
+  } else {
+    itemBucket = "other";
+  }
+
+  return [
+    null,
+    {
+      itemType: itemType,
+      itemBucket: itemBucket,
+      itemHash: itemHash,
+      itemInstanceId: itemInstanceId,
+      isItemExotic: itemDefinition.inventory.tierTypeHash === EXOTIC_TIER_TYPE_HASH
+    }
+  ];
+};
+
+// TODO: Can not de-exotic using an armour piece that the current character can not equip.
 export const resolveTransferActions = async (
-  manifestDefinitionService: ManifestDefinitionService,
-  characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
-  equipmentItems: SerializedItem[],
-  characterItems: { equipped: SerializedItem[]; unequipped: SerializedItem[] },
-  otherCharacterItems: Record<string, { equipped: SerializedItem[]; unequipped: SerializedItem[] }>,
-  vaultItemsInfo: SerializedItem[]
+  equipmentItems: LoadoutItem[],
+  characterItems: { equipped: DestinyItemComponent[]; unequipped: DestinyItemComponent[] },
+  otherCharacterItems: Record<
+    string,
+    { equipped: DestinyItemComponent[]; unequipped: DestinyItemComponent[] }
+  >,
+  vaultItemsInfo: DestinyItemComponent[]
 ): Promise<[Error, null] | [null, LoadoutAction[]]> => {
   const actions: LoadoutAction[] = [];
 
   for (let equipmentIndex = 0; equipmentIndex < equipmentItems.length; equipmentIndex++) {
     const equipment = equipmentItems[equipmentIndex];
-
-    const [equipmentItemDefinitionErr, equipmentItemDefinition] =
-      await manifestDefinitionService.getItemDefinition(equipment.itemHash);
-    if (equipmentItemDefinitionErr) {
-      return [equipmentItemDefinitionErr, null];
-    }
 
     if (
       !characterItems.equipped.find(
@@ -57,13 +140,10 @@ export const resolveTransferActions = async (
         actions.push({
           skip: false,
           type: "WITHDRAW",
-          characterName: characterDescriptions[characterId].asString,
           characterId: characterId,
-          itemName: equipmentItemDefinition?.displayProperties.name,
           itemHash: equipment.itemHash,
           itemInstanceId: equipment.itemInstanceId,
           socketIndex: null,
-          plugItemName: null,
           plugItemHash: null
         });
       } else {
@@ -79,25 +159,19 @@ export const resolveTransferActions = async (
           actions.push({
             skip: false,
             type: "DEPOSIT",
-            characterName: characterDescriptions[unequippedOtherCharacterId].asString,
             characterId: unequippedOtherCharacterId,
-            itemName: equipmentItemDefinition?.displayProperties.name,
             itemHash: equipment.itemHash,
             itemInstanceId: equipment.itemInstanceId,
             socketIndex: null,
-            plugItemName: null,
             plugItemHash: null
           });
           actions.push({
             skip: false,
             type: "WITHDRAW",
-            characterName: characterDescriptions[characterId].asString,
             characterId: characterId,
-            itemName: equipmentItemDefinition?.displayProperties.name,
             itemHash: equipment.itemHash,
             itemInstanceId: equipment.itemInstanceId,
             socketIndex: null,
-            plugItemName: null,
             plugItemHash: null
           });
         } else {
@@ -114,15 +188,13 @@ export const resolveTransferActions = async (
             //       character. Then move to vault. Then move to current character.
             return [
               new Error(
-                `Unable to resolve transfer for: ${equipment.itemHash}:${equipment.itemInstanceId} (${equipmentItemDefinition?.displayProperties.name}) from character: ${equippedOtherCharacterId}`
+                `Unable to resolve transfer for: ${equipment.itemHash}:${equipment.itemInstanceId} from character: ${equippedOtherCharacterId}`
               ),
               null
             ];
           } else {
             return [
-              new Error(
-                `Unable to find: ${equipment.itemHash}:${equipment.itemInstanceId} (${equipmentItemDefinition?.displayProperties.name})`
-              ),
+              new Error(`Unable to find: ${equipment.itemHash}:${equipment.itemInstanceId}`),
               null
             ];
           }
@@ -134,13 +206,75 @@ export const resolveTransferActions = async (
   return [null, actions];
 };
 
+const getItemType = (
+  itemDefinitions: Record<number, DestinyInventoryItemDefinition>,
+  itemHash: number
+): LoadoutItemType => {
+  const bucketTypeHash = itemDefinitions[itemHash]?.inventory.bucketTypeHash;
+  let itemType: LoadoutItemType;
+
+  if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.Subclass]) {
+    itemType = "SUBCLASS";
+  } else if (ArmourBucketHashes.includes(bucketTypeHash)) {
+    itemType = "ARMOUR";
+  } else if (WeaponBucketHashes.includes(bucketTypeHash)) {
+    itemType = "WEAPON";
+  } else {
+    itemType = "OTHER";
+  }
+
+  return itemType;
+};
+
+const getItemBucket = (
+  itemDefinitions: Record<number, DestinyInventoryItemDefinition>,
+  itemHash: number
+): LoadoutItemBucket => {
+  const bucketTypeHash = itemDefinitions[itemHash]?.inventory.bucketTypeHash;
+  let itemBucket: LoadoutItemBucket;
+
+  if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.KineticWeapon]) {
+    itemBucket = InventoryBucket.KineticWeapon;
+  } else if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.EnergyWeapon]) {
+    itemBucket = InventoryBucket.EnergyWeapon;
+  } else if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.PowerWeapon]) {
+    itemBucket = InventoryBucket.PowerWeapon;
+  } else if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.Helmet]) {
+    itemBucket = InventoryBucket.Helmet;
+  } else if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.Gauntlet]) {
+    itemBucket = InventoryBucket.Gauntlet;
+  } else if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.ChestArmour]) {
+    itemBucket = InventoryBucket.ChestArmour;
+  } else if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.LegArmour]) {
+    itemBucket = InventoryBucket.LegArmour;
+  } else if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.ClassItem]) {
+    itemBucket = InventoryBucket.ClassItem;
+  } else if (bucketTypeHash === InventoryBucketHashes[InventoryBucket.Subclass]) {
+    itemBucket = InventoryBucket.Subclass;
+  } else {
+    itemBucket = "other";
+  }
+
+  return itemBucket;
+};
+
+const getItemIsExotic = (
+  itemDefinitions: Record<number, DestinyInventoryItemDefinition>,
+  itemHash: number
+): boolean => {
+  return itemDefinitions[itemHash]?.inventory.tierTypeHash === EXOTIC_TIER_TYPE_HASH;
+};
+
 export const resolveDeExoticActions = (
-  characterDescriptions: Record<string, CharacterDescription>,
+  itemDefinitions: Record<number, DestinyInventoryItemDefinition>,
   characterId: string,
-  extraEquipmentsItems: SerializedItem[],
-  otherCharacterItems: Record<string, { equipped: SerializedItem[]; unequipped: SerializedItem[] }>,
-  vaultItems: SerializedItem[],
-  exoticItem: SerializedItem
+  extraEquipmentsItems: LoadoutItem[],
+  otherCharacterItems: Record<
+    string,
+    { equipped: DestinyItemComponent[]; unequipped: DestinyItemComponent[] }
+  >,
+  vaultItems: DestinyItemComponent[],
+  exoticItem: LoadoutItem
 ): [Error, null] | [null, LoadoutAction[]] => {
   const actions: LoadoutAction[] = [];
 
@@ -155,47 +289,38 @@ export const resolveDeExoticActions = (
     actions.push({
       skip: false,
       type: "EQUIP",
-      characterName: characterDescriptions[characterId].asString,
       characterId: characterId,
-      itemName: extraNonExoticItem.itemName,
       itemHash: extraNonExoticItem.itemHash,
       itemInstanceId: extraNonExoticItem.itemInstanceId,
       socketIndex: null,
-      plugItemName: null,
       plugItemHash: null
     });
   } else {
     const vaultNonExoticItem =
       vaultItems.find(
         (item) =>
-          item.itemType === exoticItem.itemType &&
-          item.itemBucket === exoticItem.itemBucket &&
-          !item.isItemExotic
+          getItemType(itemDefinitions, item.itemHash) === exoticItem.itemType &&
+          getItemBucket(itemDefinitions, item.itemHash) === exoticItem.itemBucket &&
+          !getItemIsExotic(itemDefinitions, item.itemHash)
       ) || null;
     if (vaultNonExoticItem) {
       actions.push({
         skip: false,
         type: "WITHDRAW",
-        characterName: characterDescriptions[characterId].asString,
         characterId: characterId,
-        itemName: vaultNonExoticItem.itemName,
         itemHash: vaultNonExoticItem.itemHash,
         itemInstanceId: vaultNonExoticItem.itemInstanceId,
         socketIndex: null,
-        plugItemName: null,
         plugItemHash: null
       });
 
       actions.push({
         skip: false,
         type: "EQUIP",
-        characterName: characterDescriptions[characterId].asString,
         characterId: characterId,
-        itemName: vaultNonExoticItem.itemName,
         itemHash: vaultNonExoticItem.itemHash,
         itemInstanceId: vaultNonExoticItem.itemInstanceId,
         socketIndex: null,
-        plugItemName: null,
         plugItemHash: null
       });
     } else {
@@ -213,47 +338,38 @@ export const resolveDeExoticActions = (
         const otherCharacterUnequippedNonExoticItem =
           itemsInfo.unequipped.find(
             (item) =>
-              item.itemType === exoticItem.itemType &&
-              item.itemBucket === exoticItem.itemBucket &&
-              !item.isItemExotic
+              getItemType(itemDefinitions, item.itemHash) === exoticItem.itemType &&
+              getItemBucket(itemDefinitions, item.itemHash) === exoticItem.itemBucket &&
+              !getItemIsExotic(itemDefinitions, item.itemHash)
           ) || null;
         if (otherCharacterUnequippedNonExoticItem) {
           actions.push({
             skip: false,
             type: "DEPOSIT",
-            characterName: characterDescriptions[otherCharacterId].asString,
             characterId: otherCharacterId,
-            itemName: otherCharacterUnequippedNonExoticItem.itemName,
             itemHash: otherCharacterUnequippedNonExoticItem.itemHash,
             itemInstanceId: otherCharacterUnequippedNonExoticItem.itemInstanceId,
             socketIndex: null,
-            plugItemName: null,
             plugItemHash: null
           });
 
           actions.push({
             skip: false,
             type: "WITHDRAW",
-            characterName: characterDescriptions[characterId].asString,
             characterId: characterId,
-            itemName: otherCharacterUnequippedNonExoticItem.itemName,
             itemHash: otherCharacterUnequippedNonExoticItem.itemHash,
             itemInstanceId: otherCharacterUnequippedNonExoticItem.itemInstanceId,
             socketIndex: null,
-            plugItemName: null,
             plugItemHash: null
           });
 
           actions.push({
             skip: false,
             type: "EQUIP",
-            characterName: characterDescriptions[characterId].asString,
             characterId: characterId,
-            itemName: otherCharacterUnequippedNonExoticItem.itemName,
             itemHash: otherCharacterUnequippedNonExoticItem.itemHash,
             itemInstanceId: otherCharacterUnequippedNonExoticItem.itemInstanceId,
             socketIndex: null,
-            plugItemName: null,
             plugItemHash: null
           });
 
@@ -263,9 +379,9 @@ export const resolveDeExoticActions = (
           const otherCharacterEquippedNonExoticItem =
             itemsInfo.equipped.find(
               (item) =>
-                item.itemType === exoticItem.itemType &&
-                item.itemBucket === exoticItem.itemBucket &&
-                !item.isItemExotic
+                getItemType(itemDefinitions, item.itemHash) === exoticItem.itemType &&
+                getItemBucket(itemDefinitions, item.itemHash) === exoticItem.itemBucket &&
+                !getItemIsExotic(itemDefinitions, item.itemHash)
             ) || null;
           if (otherCharacterEquippedNonExoticItem) {
             // TODO: Need to equip a different item in a way that doesn't conflict with this
@@ -285,10 +401,9 @@ export const resolveDeExoticActions = (
 };
 
 export const resolveEquipActions = (
-  characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
-  equipmentItems: SerializedItem[],
-  equippedItems: SerializedItem[]
+  equipmentItems: LoadoutItem[],
+  equippedItems: DestinyItemComponent[]
 ): LoadoutAction[] => {
   return equipmentItems.map((item) => {
     const alreadyEquipped = !!equippedItems.find(
@@ -298,24 +413,20 @@ export const resolveEquipActions = (
     return {
       skip: alreadyEquipped,
       type: "EQUIP",
-      characterName: characterDescriptions[characterId].asString,
       characterId,
-      itemName: item.itemName,
       itemHash: item.itemHash,
       itemInstanceId: item.itemInstanceId,
       socketIndex: null,
-      plugItemName: null,
       plugItemHash: null
     };
   });
 };
 
 export const resolveSocketActions = (
-  characterDescriptions: Record<string, CharacterDescription>,
   characterId: string,
   socketIndicesByItemHash: Record<number, number[]>,
   equippedPlugHashesByItemInstanceId: Record<string, number[]>,
-  plugs: SerializedPlug[]
+  plugs: LoadoutPlug[]
 ): LoadoutAction[] => {
   const loadoutActions: LoadoutAction[] = [];
 
@@ -323,21 +434,21 @@ export const resolveSocketActions = (
     const socketIndices = socketIndicesByItemHash[plug.itemHash];
     const normalizedSocketIndex = socketIndices.indexOf(plug.socketIndex);
 
-    const equippedPlugHash =
-      equippedPlugHashesByItemInstanceId[plug.itemInstanceId][normalizedSocketIndex];
+    const equippedPlugHashes = socketIndicesByItemHash[plug.itemHash].map(
+      (index) => equippedPlugHashesByItemInstanceId[plug.itemInstanceId][index]
+    );
+
+    const equippedPlugHash = equippedPlugHashes[normalizedSocketIndex];
 
     const alreadyEquipped = plug.plugItemHash === equippedPlugHash;
 
     loadoutActions.push({
       skip: alreadyEquipped,
       type: "SOCKET",
-      characterName: characterDescriptions[characterId].asString,
       characterId,
-      itemName: plug.itemName,
       itemHash: plug.itemHash,
       itemInstanceId: plug.itemInstanceId,
       socketIndex: plug.socketIndex,
-      plugItemName: plug.plugItemName,
       plugItemHash: plug.plugItemHash
     });
   });
@@ -345,17 +456,29 @@ export const resolveSocketActions = (
   return loadoutActions;
 };
 
-export const describeLoadoutAction = (loadoutAction: LoadoutAction) => {
+export const describeLoadoutAction = (
+  itemDefinitions: Record<number, DestinyInventoryItemDefinition>,
+  characterDescriptions: Record<string, CharacterDescription>,
+  loadoutAction: LoadoutAction
+) => {
+  const characterName = characterDescriptions[loadoutAction.characterId].asString;
+
+  const itemName =
+    itemDefinitions[loadoutAction.itemHash || -1]?.displayProperties.name || "UNKNOWN ITEM";
+
+  const plugItemName =
+    itemDefinitions[loadoutAction.plugItemHash || -1]?.displayProperties.name || "UNKNOWN PLUG";
+
   if (loadoutAction.type === "DEPOSIT") {
-    return `Move ${loadoutAction.itemName} from ${loadoutAction.characterName} to vault`;
+    return `Move ${itemName} from ${characterName} to vault`;
   } else if (loadoutAction.type === "WITHDRAW") {
-    return `Move ${loadoutAction.itemName} from vault to ${loadoutAction.characterName}`;
+    return `Move ${itemName} from vault to ${characterName}`;
   } else if (loadoutAction.type === "EQUIP") {
-    return `Equip ${loadoutAction.itemName}`;
+    return `Equip ${itemName}`;
   } else if (loadoutAction.type === "SOCKET") {
-    return `Socket ${loadoutAction.plugItemName} into slot #${
+    return `Socket ${plugItemName} into slot #${
       (loadoutAction.socketIndex || 0) + 1
-    } of ${loadoutAction.itemName}`;
+    } of ${itemName}`;
   } else {
     return "UNKNOWN LOADOUT ACTION";
   }

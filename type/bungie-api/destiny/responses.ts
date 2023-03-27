@@ -4,6 +4,7 @@ import { SingleComponentResponseOfDestinyCharacterComponent } from "~type/bungie
 import { SingleComponentResponseOfDestinyCharacterProgressionComponent } from "~type/bungie-api.types";
 import { SingleComponentResponseOfDestinyInventoryComponent } from "~type/bungie-api.types";
 import { DictionaryComponentResponseOfuint32AndDestinyVendorComponent } from "~type/bungie-api.types";
+import { DictionaryComponentResponseOfint64AndDestinyInventoryComponent } from "~type/bungie-api.types";
 import { DictionaryComponentResponseOfint64AndDestinyCharacterComponent } from "~type/bungie-api.types";
 import { SingleComponentResponseOfDestinyItemInstanceComponent } from "~type/bungie-api.types";
 import { SingleComponentResponseOfDestinyPlugSetsComponent } from "~type/bungie-api.types";
@@ -30,6 +31,8 @@ export type DestinyProfileResponse = {
   itemComponents?: DestinyItemComponentSetOfint64;
   profilePlugSets?: SingleComponentResponseOfDestinyPlugSetsComponent;
   characterPlugSets?: DictionaryComponentResponseOfint64AndDestinyPlugSetsComponent;
+  characterInventories?: DictionaryComponentResponseOfint64AndDestinyInventoryComponent;
+  characterEquipment?: DictionaryComponentResponseOfint64AndDestinyInventoryComponent;
 };
 
 export type DestinyVendorsResponse = {

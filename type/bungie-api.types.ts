@@ -66,8 +66,15 @@ export type DictionaryComponentResponseOfint64AndDestinyItemInstanceComponent = 
   disabled?: boolean;
 };
 
+export type DictionaryComponentResponseOfint64AndDestinyItemSocketsComponent = {
+  data: { [key: string]: DestinyItemSocketsComponent };
+  privacy: number;
+  disabled?: boolean;
+};
+
 export type DestinyItemComponentSetOfint64 = {
   instances?: DictionaryComponentResponseOfint64AndDestinyItemInstanceComponent;
+  sockets?: DictionaryComponentResponseOfint64AndDestinyItemSocketsComponent;
 };
 
 export type SingleComponentResponseOfDestinyPlugSetsComponent = {
@@ -84,6 +91,12 @@ export type DictionaryComponentResponseOfint64AndDestinyPlugSetsComponent = {
 
 export type SingleComponentResponseOfDestinyItemSocketsComponent = {
   data: DestinyItemSocketsComponent;
+  privacy: number;
+  disabled?: boolean;
+};
+
+export type DictionaryComponentResponseOfint64AndDestinyInventoryComponent = {
+  data: { [key: string]: DestinyInventoryComponent };
   privacy: number;
   disabled?: boolean;
 };
