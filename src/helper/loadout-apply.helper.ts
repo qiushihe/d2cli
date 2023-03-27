@@ -265,6 +265,8 @@ const getItemIsExotic = (
   return itemDefinitions[itemHash]?.inventory.tierTypeHash === EXOTIC_TIER_TYPE_HASH;
 };
 
+// TODO: For armour pieces, need to check if they're compatible with the
+//       current character.
 export const resolveDeExoticActions = (
   itemDefinitions: Record<number, DestinyInventoryItemDefinition>,
   characterId: string,

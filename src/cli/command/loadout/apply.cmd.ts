@@ -476,7 +476,13 @@ const cmd: CommandDefinition = {
             allItemDefinitions,
             characterInfo.characterId,
             loadoutExtraEquipments,
-            otherCharactersItems,
+            // It's not possible to de-exotic using other classes' armour
+            // pieces, so we just pass in an empty collection here, so we'll
+            // only use items in the vault.
+            // We _can_ use other characters' inventory for de-exotic armour
+            // after the `resolveDeExoticActions` function is updated to check
+            // for armours' compatibility with the current character.
+            {},
             vaultItems,
             exoticArmour
           );
