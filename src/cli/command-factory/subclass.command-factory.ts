@@ -7,7 +7,7 @@ import { ShowAllCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
-import { makeTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
@@ -260,237 +260,66 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
         }
         tableData.push(subClassColumns);
 
-        const equippedSuper =
-          subclassRecord.sockets["SUPER"].flat().find((superRecord) => superRecord.isEquipped) ||
-          null;
-        if (equippedSuper) {
-          const superColumns = ["Super", `${equippedSuper.socketIndex + 1}`, equippedSuper.name];
-          if (verbose) {
-            superColumns.push(`${equippedSuper.itemHash}`);
-          }
-          if (showAll) {
-            const unequippedSupers = subclassRecord.sockets["SUPER"]
-              .flat()
-              .filter((superRecord) => !superRecord.isEquipped)
-              .sort((a, b) => a.sortOrder - b.sortOrder);
-            superColumns.push(unequippedSupers.map((superRecord) => superRecord.name).join("\n"));
-            if (verbose) {
-              superColumns.push(
-                unequippedSupers.map((superRecord) => `${superRecord.itemHash}`).join("\n")
-              );
-            }
-          }
-
-          tableData.push(superColumns);
-        }
-
-        const equippedClassAbility = (subclassRecord.sockets["ABILITIES"][0] || []).find(
-          (abilityRecord) => abilityRecord.isEquipped
-        );
-        if (equippedClassAbility) {
-          const classAbilityColumns = [
-            "Class Ability",
-            `${equippedClassAbility.socketIndex + 1}`,
-            equippedClassAbility.name
-          ];
-          if (verbose) {
-            classAbilityColumns.push(`${equippedClassAbility.itemHash}`);
-          }
-          if (showAll) {
-            const unequippedClassAbility = (subclassRecord.sockets["ABILITIES"][0] || [])
-              .filter((abilityRecord) => !abilityRecord.isEquipped)
-              .sort((a, b) => a.sortOrder - b.sortOrder);
-            classAbilityColumns.push(
-              unequippedClassAbility.map((abilityRecord) => abilityRecord.name).join("\n")
-            );
-            if (verbose) {
-              classAbilityColumns.push(
-                unequippedClassAbility
-                  .map((abilityRecord) => `${abilityRecord.itemHash}`)
-                  .join("\n")
-              );
-            }
-          }
-
-          tableData.push(classAbilityColumns);
-        }
-
-        const equippedMovementAbility = (subclassRecord.sockets["ABILITIES"][1] || []).find(
-          (abilityRecord) => abilityRecord.isEquipped
-        );
-        if (equippedMovementAbility) {
-          const movementAbilityColumns = [
-            "Movement",
-            `${equippedMovementAbility.socketIndex + 1}`,
-            equippedMovementAbility.name
-          ];
-          if (verbose) {
-            movementAbilityColumns.push(`${equippedMovementAbility.itemHash}`);
-          }
-          if (showAll) {
-            const unequippedMovementAbility = (subclassRecord.sockets["ABILITIES"][1] || [])
-              .filter((abilityRecord) => !abilityRecord.isEquipped)
-              .sort((a, b) => a.sortOrder - b.sortOrder);
-            movementAbilityColumns.push(
-              unequippedMovementAbility.map((abilityRecord) => abilityRecord.name).join("\n")
-            );
-            if (verbose) {
-              movementAbilityColumns.push(
-                unequippedMovementAbility
-                  .map((abilityRecord) => `${abilityRecord.itemHash}`)
-                  .join("\n")
-              );
-            }
-          }
-
-          tableData.push(movementAbilityColumns);
-        }
-
-        const equippedMeleeAbility = (subclassRecord.sockets["ABILITIES"][2] || []).find(
-          (abilityRecord) => abilityRecord.isEquipped
-        );
-        if (equippedMeleeAbility) {
-          const meleeAbilityColumns = [
-            "Melee",
-            `${equippedMeleeAbility.socketIndex + 1}`,
-            equippedMeleeAbility.name
-          ];
-          if (verbose) {
-            meleeAbilityColumns.push(`${equippedMeleeAbility.itemHash}`);
-          }
-          if (showAll) {
-            const unequippedMeleeAbility = (subclassRecord.sockets["ABILITIES"][2] || [])
-              .filter((abilityRecord) => !abilityRecord.isEquipped)
-              .sort((a, b) => a.sortOrder - b.sortOrder);
-            meleeAbilityColumns.push(
-              unequippedMeleeAbility.map((abilityRecord) => abilityRecord.name).join("\n")
-            );
-            if (verbose) {
-              meleeAbilityColumns.push(
-                unequippedMeleeAbility
-                  .map((abilityRecord) => `${abilityRecord.itemHash}`)
-                  .join("\n")
-              );
-            }
-          }
-
-          tableData.push(meleeAbilityColumns);
-        }
-
-        const equippedGrenadeAbility = (subclassRecord.sockets["ABILITIES"][3] || []).find(
-          (abilityRecord) => abilityRecord.isEquipped
-        );
-        if (equippedGrenadeAbility) {
-          const grenadeAbilityColumns = [
-            "Grenade",
-            `${equippedGrenadeAbility.socketIndex + 1}`,
-            equippedGrenadeAbility.name
-          ];
-          if (verbose) {
-            grenadeAbilityColumns.push(`${equippedGrenadeAbility.itemHash}`);
-          }
-          if (showAll) {
-            const unequippedGrenadeAbility = (subclassRecord.sockets["ABILITIES"][3] || [])
-              .filter((abilityRecord) => !abilityRecord.isEquipped)
-              .sort((a, b) => a.sortOrder - b.sortOrder);
-            grenadeAbilityColumns.push(
-              unequippedGrenadeAbility.map((abilityRecord) => abilityRecord.name).join("\n")
-            );
-            if (verbose) {
-              grenadeAbilityColumns.push(
-                unequippedGrenadeAbility
-                  .map((abilityRecord) => `${abilityRecord.itemHash}`)
-                  .join("\n")
-              );
-            }
-          }
-
-          tableData.push(grenadeAbilityColumns);
-        }
-
-        const equippedAspects = subclassRecord.sockets["ASPECTS"]
-          .flat()
-          .filter((aspectRecord) => aspectRecord.isEquipped)
-          .sort((a, b) => a.sortOrder - b.sortOrder);
-        const aspectsColumns = [
-          "Aspects",
-          `${equippedAspects[0].socketIndex + 1}`,
-          equippedAspects.map((aspectRecord) => aspectRecord.name).join("\n")
-        ];
-        if (verbose) {
-          aspectsColumns.push(
-            equippedAspects.map((aspectRecord) => `${aspectRecord.itemHash}`).join("\n")
+        [
+          { name: "Super", records: subclassRecord.sockets["SUPER"].flat() },
+          { name: "Class Ability", records: subclassRecord.sockets["ABILITIES"][0] || [] },
+          { name: "Movement", records: subclassRecord.sockets["ABILITIES"][1] || [] },
+          { name: "Melee", records: subclassRecord.sockets["ABILITIES"][2] || [] },
+          { name: "Grenade", records: subclassRecord.sockets["ABILITIES"][3] || [] },
+          { name: "Aspects", records: subclassRecord.sockets["ASPECTS"].flat() },
+          { name: "Fragments", records: subclassRecord.sockets["FRAGMENTS"].flat() }
+        ].forEach((plugSet) => {
+          const [_equippedRecords, _unequippedRecords] = plugSet.records.reduce(
+            (acc, plugRecord) => {
+              acc[plugRecord.isEquipped ? 0 : 1].push(plugRecord);
+              return acc;
+            },
+            [[], []] as [SubclassPlugRecord[], SubclassPlugRecord[]]
           );
-        }
-        if (showAll) {
-          const equippedAspectHashes = equippedAspects.map((aspectRecord) => aspectRecord.itemHash);
-          const unequippedAspects = Object.values(
-            subclassRecord.sockets["ASPECTS"]
-              .flat()
-              .filter(
-                (aspectRecord) =>
-                  !aspectRecord.isEquipped && !equippedAspectHashes.includes(aspectRecord.itemHash)
-              )
+
+          const equippedRecords = _equippedRecords.sort((a, b) => a.sortOrder - b.sortOrder);
+
+          // We need to do some de-duping here to remove extra entries from subclass plug sets that
+          // can have multiple sockets and each socket can have the same set of available plugs to
+          // choose from (i.e. the "Aspects" and "Fragments" plug sets are like that).
+          const equippedRecordHashes = _equippedRecords.map((record) => record.itemHash);
+          const unequippedRecords = Object.values(
+            _unequippedRecords
+              .filter((record) => !equippedRecordHashes.includes(record.itemHash))
               .reduce(
                 (acc, record) => ({ ...acc, [record.itemHash]: record }),
                 {} as Record<number, SubclassPlugRecord>
               )
           ).sort((a, b) => a.sortOrder - b.sortOrder);
-          aspectsColumns.push(
-            unequippedAspects.map((aspectRecord) => aspectRecord.name).join("\n")
-          );
-          if (verbose) {
-            aspectsColumns.push(
-              unequippedAspects.map((aspectRecord) => `${aspectRecord.itemHash}`).join("\n")
-            );
-          }
-        }
-        tableData.push(aspectsColumns);
 
-        const equippedFragments = subclassRecord.sockets["FRAGMENTS"]
-          .flat()
-          .filter((fragmentRecord) => fragmentRecord.isEquipped)
-          .sort((a, b) => a.sortOrder - b.sortOrder);
-        const fragmentsColumns = [
-          "Fragments",
-          `${equippedFragments[0].socketIndex + 1}`,
-          equippedFragments.map((fragmentRecord) => fragmentRecord.name).join("\n")
-        ];
-        if (verbose) {
-          fragmentsColumns.push(
-            equippedFragments.map((fragmentRecord) => `${fragmentRecord.itemHash}`).join("\n")
-          );
-        }
-        if (showAll) {
-          const equippedFragmentHashes = equippedFragments.map(
-            (aspectRecord) => aspectRecord.itemHash
-          );
-          const unequippedFragments = Object.values(
-            subclassRecord.sockets["FRAGMENTS"]
-              .flat()
-              .filter(
-                (fragmentRecord) =>
-                  !fragmentRecord.isEquipped &&
-                  !equippedFragmentHashes.includes(fragmentRecord.itemHash)
-              )
-              .reduce(
-                (acc, record) => ({ ...acc, [record.itemHash]: record }),
-                {} as Record<number, SubclassPlugRecord>
-              )
-          ).sort((a, b) => a.sortOrder - b.sortOrder);
-          fragmentsColumns.push(
-            unequippedFragments.map((fragmentRecord) => fragmentRecord.name).join("\n")
-          );
-          if (verbose) {
-            fragmentsColumns.push(
-              unequippedFragments.map((fragmentRecord) => `${fragmentRecord.itemHash}`).join("\n")
-            );
+          for (
+            let plugIndex = 0;
+            plugIndex < Math.max(equippedRecords.length, unequippedRecords.length);
+            plugIndex++
+          ) {
+            const equippedPlug = equippedRecords[plugIndex] || null;
+            const unequippedPlug = unequippedRecords[plugIndex] || null;
+
+            const rowColumns = [plugIndex === 0 ? plugSet.name : ""];
+
+            rowColumns.push(equippedPlug ? `${equippedPlug.socketIndex + 1}` : "");
+            rowColumns.push(equippedPlug ? equippedPlug.name : "");
+            if (verbose) {
+              rowColumns.push(equippedPlug ? `${equippedPlug.itemHash}` : "");
+            }
+            if (showAll) {
+              rowColumns.push(unequippedPlug ? `${unequippedPlug.name}` : "");
+              if (verbose) {
+                rowColumns.push(unequippedPlug ? `${unequippedPlug.itemHash}` : "");
+              }
+            }
+
+            tableData.push(rowColumns);
           }
-        }
-        tableData.push(fragmentsColumns);
+        });
       });
 
-      logger.log(makeTable(tableData));
+      logger.log(makeTable2(tableData));
     }
   };
 };
