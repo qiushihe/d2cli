@@ -6,11 +6,9 @@ import { itemInstanceIdsOption } from "~src/cli/command-option/item.option";
 import { ItemInstanceIdsCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
-import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemInstanceIdsCommandOptions;
@@ -18,29 +16,21 @@ type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions & ItemInstance
 const cmd: CommandDefinition = {
   description: "Equip an item",
   options: [sessionIdOption, verboseOption, itemInstanceIdsOption],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:equipment:equip");
-
+  action: async (_, opts, { app, logger }) => {
     const { session: sessionId, verbose, itemInstanceIds: itemInstanceIdsStr } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
+      "ManifestDefinitionService"
+    );
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
-    const inventoryService =
-      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
+    const inventoryService = app.resolve<InventoryService>("InventoryService");
 
-    const destiny2ActionService =
-      AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
+    const destiny2ActionService = app.resolve<Destiny2ActionService>("Destiny2ActionService");
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

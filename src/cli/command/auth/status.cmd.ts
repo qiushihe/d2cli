@@ -4,9 +4,7 @@ import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { BungieMembershipService } from "~src/service/bungie-membership/bungie-membership.service";
-import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
@@ -14,18 +12,13 @@ type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 const cmd: CommandDefinition = {
   description: "Display authentication status with Bungie.net",
   options: [sessionIdOption, verboseOption],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:auth:status");
-
+  action: async (_, opts, { app, logger }) => {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
+    const sessionService = app.resolve<SessionService>("SessionService");
 
-    const bungieMembershipService =
-      AppModule.getDefaultInstance().resolve<BungieMembershipService>("BungieMembershipService");
+    const bungieMembershipService = app.resolve<BungieMembershipService>("BungieMembershipService");
 
     logger.info("Retrieving authorization status ...");
     const [loginStatusErr, loginStatus] = await sessionService.getLoginStatus(sessionId);

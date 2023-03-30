@@ -19,13 +19,11 @@ import { promisedFn } from "~src/helper/promise.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { getLoadoutPlugRecords } from "~src/helper/subclass.helper";
 import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
-import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PastebinService } from "~src/service/pastebin/pastebin.service";
 import { PlugService } from "~src/service/plug/plug.service";
@@ -63,11 +61,7 @@ const cmd: CommandDefinition = {
       defaultValue: false
     }
   ],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:loadout:export");
-
+  action: async (_, opts, { app, logger }) => {
     const {
       session: sessionId,
       loadoutName,
@@ -78,27 +72,23 @@ const cmd: CommandDefinition = {
     } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const configService = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+    const configService = app.resolve<ConfigService>("ConfigService");
 
-    const manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
+      "ManifestDefinitionService"
+    );
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
-    const inventoryService =
-      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
+    const inventoryService = app.resolve<InventoryService>("InventoryService");
 
-    const pastebinService =
-      AppModule.getDefaultInstance().resolve<PastebinService>("PastebinService");
+    const pastebinService = app.resolve<PastebinService>("PastebinService");
 
-    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const plugService = app.resolve<PlugService>("PlugService");
 
-    const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
+    const itemService = app.resolve<ItemService>("ItemService");
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

@@ -8,9 +8,7 @@ import { plugIHashOption } from "~src/cli/command-option/socket.option";
 import { PlugHashCommandOptions } from "~src/cli/command-option/socket.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { parseItemIdentifier } from "~src/helper/item.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
-import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PlugService } from "~src/service/plug/plug.service";
 
@@ -22,11 +20,7 @@ type CmdOptions = SessionIdCommandOptions &
 const cmd: CommandDefinition = {
   description: "Install a mod into an socket",
   options: [sessionIdOption, itemIdentifierOption, socketNumberOption, plugIHashOption],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:mod:insert");
-
+  action: async (_, opts, { app, logger }) => {
     const { session: sessionId, item, socket, plugHash } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
@@ -44,17 +38,15 @@ const cmd: CommandDefinition = {
     const socketIndex = (parseInt(socket, 10) || 0) - 1;
     const plugItemHash = parseInt(plugHash, 10) || 0;
 
-    const manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
+      "ManifestDefinitionService"
+    );
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
-    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const plugService = app.resolve<PlugService>("PlugService");
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

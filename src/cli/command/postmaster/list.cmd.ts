@@ -4,9 +4,7 @@ import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
-import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PostmasterService } from "~src/service/postmaster/postmaster.service";
 
@@ -15,26 +13,19 @@ type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 const cmd: CommandDefinition = {
   description: "List items in Vanguard mailbox",
   options: [sessionIdOption, verboseOption],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:postmaster:list");
-
+  action: async (_, opts, { app, logger }) => {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
+      "ManifestDefinitionService"
+    );
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
-    const postmasterService =
-      AppModule.getDefaultInstance().resolve<PostmasterService>("PostmasterService");
+    const postmasterService = app.resolve<PostmasterService>("PostmasterService");
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

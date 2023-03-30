@@ -20,7 +20,6 @@ import { applyLoadoutAction } from "~src/helper/loadout-apply.helper";
 import { promisedFn } from "~src/helper/promise.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { ConfigService } from "~src/service/config/config.service";
@@ -28,7 +27,6 @@ import { AppConfigName } from "~src/service/config/config.types";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
 import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
 import { resolveProfileAllItems } from "~src/service/destiny2-component-data/profile.resolver";
-import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PastebinService } from "~src/service/pastebin/pastebin.service";
 import { PlugService } from "~src/service/plug/plug.service";
@@ -72,11 +70,7 @@ const cmd: CommandDefinition = {
       defaultValue: ""
     }
   ],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:loadout:apply");
-
+  action: async (_, opts, { app, logger }) => {
     const {
       session: sessionId,
       verbose,
@@ -87,35 +81,29 @@ const cmd: CommandDefinition = {
     } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const configService = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+    const configService = app.resolve<ConfigService>("ConfigService");
 
-    const manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
+      "ManifestDefinitionService"
+    );
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
-    const characterDescriptionService =
-      AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
-        "CharacterDescriptionService"
-      );
+    const characterDescriptionService = app.resolve<CharacterDescriptionService>(
+      "CharacterDescriptionService"
+    );
 
-    const destiny2ActionService =
-      AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
+    const destiny2ActionService = app.resolve<Destiny2ActionService>("Destiny2ActionService");
 
-    const destiny2ComponentDataService =
-      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
-        "Destiny2ComponentDataService"
-      );
+    const destiny2ComponentDataService = app.resolve<Destiny2ComponentDataService>(
+      "Destiny2ComponentDataService"
+    );
 
-    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const plugService = app.resolve<PlugService>("PlugService");
 
-    const pastebinService =
-      AppModule.getDefaultInstance().resolve<PastebinService>("PastebinService");
+    const pastebinService = app.resolve<PastebinService>("PastebinService");
 
     let loadoutContent: string;
 

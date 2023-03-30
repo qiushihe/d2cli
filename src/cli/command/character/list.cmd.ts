@@ -4,38 +4,29 @@ import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterService } from "~src/service/character/character.service";
 import { CharacterReference } from "~src/service/character/character.types";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
-import { LogService } from "~src/service/log/log.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
 const cmd: CommandDefinition = {
   description: "List Destiny 2 characters",
   options: [sessionIdOption, verboseOption],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:character:list");
-
+  action: async (_, opts, { app, logger }) => {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const characterService =
-      AppModule.getDefaultInstance().resolve<CharacterService>("CharacterService");
+    const characterService = app.resolve<CharacterService>("CharacterService");
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
-    const characterDescriptionService =
-      AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
-        "CharacterDescriptionService"
-      );
+    const characterDescriptionService = app.resolve<CharacterDescriptionService>(
+      "CharacterDescriptionService"
+    );
 
     const [hasCharacterInfoErr, hasCharacterInfo] =
       await characterSelectionService.hasSelectedCharacter(sessionId);

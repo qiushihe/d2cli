@@ -4,9 +4,7 @@ import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
-import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PostmasterService } from "~src/service/postmaster/postmaster.service";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
@@ -23,11 +21,7 @@ const cmd: CommandDefinition = {
       description: "Specific item number to pull"
     }
   ],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:postmaster:pull");
-
+  action: async (_, opts, { app, logger }) => {
     const { session: sessionId, verbose, itemNumber: itemNumberStr } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
@@ -38,18 +32,15 @@ const cmd: CommandDefinition = {
       logger.debug(`Should pull all items`);
     }
 
-    const manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
+      "ManifestDefinitionService"
+    );
 
-    const destiny2PostmasterService =
-      AppModule.getDefaultInstance().resolve<PostmasterService>("PostmasterService");
+    const destiny2PostmasterService = app.resolve<PostmasterService>("PostmasterService");
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

@@ -1,15 +1,21 @@
 import { Command } from "commander";
 
 import { CommandDefinitions } from "~src/cli/d2cli.types";
+import { AppModule } from "~src/module/app.module";
+import { LogService } from "~src/service/log/log.service";
 
 const required = (name: string) => `<${name}>`;
 
 const optional = (name: string) => `[${name}]`;
 
-export const buildCommands = (program: Command, commands: CommandDefinitions) => {
+const buildNestedCommands = (
+  program: Command,
+  commands: CommandDefinitions,
+  parentName: string
+) => {
   Object.entries(commands).forEach(
     ([
-      cmdName,
+      name,
       {
         description: cmdDescription,
         options: cmdOptions,
@@ -18,7 +24,8 @@ export const buildCommands = (program: Command, commands: CommandDefinitions) =>
         commands: subCommands
       }
     ]) => {
-      const cmd = program.command(cmdName);
+      const cmd = program.command(name);
+      const cmdName = `${parentName}:${name}`;
 
       if (cmdDescription) {
         cmd.description(cmdDescription);
@@ -64,11 +71,19 @@ export const buildCommands = (program: Command, commands: CommandDefinitions) =>
             cmdOptions = cmdArgv.slice(cmdArgv.length - 1)[0] || {};
           }
 
-          await cmdAction(cmdArguments, cmdOptions);
+          const appModule = AppModule.getDefaultInstance();
+
+          const cmdLogger = appModule.resolve<LogService>("LogService").getLogger(cmdName);
+
+          await cmdAction(cmdArguments, cmdOptions, { app: appModule, logger: cmdLogger });
         });
       }
 
-      buildCommands(cmd, subCommands || {});
+      buildNestedCommands(cmd, subCommands || {}, cmdName);
     }
   );
+};
+
+export const buildCommands = (program: Command, commands: CommandDefinitions, name: string) => {
+  buildNestedCommands(program, commands, name);
 };

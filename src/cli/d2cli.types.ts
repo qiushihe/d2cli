@@ -1,3 +1,6 @@
+import { AppModule } from "~src/module/app.module";
+import { Logger } from "~src/service/log/log.types";
+
 export type CommandOptionDefinition = {
   flags: string[];
   stringPlaceholder?: string;
@@ -11,7 +14,16 @@ export type CommandArgumentDefinition = {
   isRequired: boolean;
 };
 
-export type CommandAction = (args: string[], opts: Record<string, string | boolean>) => any;
+export type CommandActionContext = {
+  app: AppModule;
+  logger: Logger;
+};
+
+export type CommandAction = (
+  args: string[],
+  opts: Record<string, string | boolean>,
+  ctx: CommandActionContext
+) => any;
 
 export type CommandDefinition = {
   description?: string;

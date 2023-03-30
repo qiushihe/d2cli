@@ -5,7 +5,7 @@ import { Socket } from "net";
 import { AppModule } from "~src/module/app.module";
 import { BungieOauthService } from "~src/service/bungie-oauth/bungie-oauth.service";
 import { OAuthAccessToken, OAuthState } from "~src/service/bungie-oauth/bungie-oauth.types";
-import { LogService } from "~src/service/log/log.service";
+import { Logger } from "~src/service/log/log.types";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
 
@@ -17,7 +17,14 @@ const parseUrl = (url: string): [Error, null] | [null, URL] => {
   }
 };
 
-const handleOAuthReturn = async (oauthReturnUrl: string): Promise<[string[], boolean]> => {
+type HandleOAuthReturnOptions = {
+  app: AppModule;
+};
+
+const handleOAuthReturn = async (
+  oauthReturnUrl: string,
+  options: HandleOAuthReturnOptions
+): Promise<[string[], boolean]> => {
   const urlMatch = `${oauthReturnUrl}`.trim().match(/originalOAuthReturnUrl=([^&]*)/);
   if (urlMatch) {
     const messages: string[] = [];
@@ -46,11 +53,9 @@ const handleOAuthReturn = async (oauthReturnUrl: string): Promise<[string[], boo
 
         const { t: timestamp, s: sessionId } = state;
 
-        const sessionService =
-          AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
+        const sessionService = options.app.resolve<SessionService>("SessionService");
 
-        const bungieOauthService =
-          AppModule.getDefaultInstance().resolve<BungieOauthService>("BungieOauthService");
+        const bungieOauthService = options.app.resolve<BungieOauthService>("BungieOauthService");
 
         messages.push("Obtaining Bungie.net OAuth access token ...");
         const [accessTokenErr, accessToken] = await bungieOauthService.getAccessToken(
@@ -91,11 +96,16 @@ const handleOAuthReturn = async (oauthReturnUrl: string): Promise<[string[], boo
   }
 };
 
-export const startOAuthReturnHandlerServer = async (host: string, port: number) => {
-  const logger = AppModule.getDefaultInstance()
-    .resolve<LogService>("LogService")
-    .getLogger("cmd:auth:login:oauth-return");
+export type StartOAuthReturnHandlerServerOptions = {
+  host: string;
+  port: number;
+  app: AppModule;
+  logger: Logger;
+};
 
+export const startOAuthReturnHandlerServer = async (
+  options: StartOAuthReturnHandlerServerOptions
+) => {
   const sockets: Socket[] = [];
 
   const server = http.createServer(async (req, res) => {
@@ -104,7 +114,9 @@ export const startOAuthReturnHandlerServer = async (host: string, port: number) 
       return res.end();
     }
 
-    const [oauthMessages, oauthSuccess] = await handleOAuthReturn(req.url || "");
+    const [oauthMessages, oauthSuccess] = await handleOAuthReturn(req.url || "", {
+      app: options.app
+    });
 
     res.writeHead(200);
     res.write("<!doctype html>");
@@ -121,11 +133,11 @@ export const startOAuthReturnHandlerServer = async (host: string, port: number) 
     res.end();
 
     if (oauthSuccess) {
-      logger.info("OAuth return handled successfully; Stopping OAuth Return Handler server ...");
+      options.logger.info("OAuth returned successfully; Stopping OAuth Return Handler server ...");
       server.close();
       sockets.forEach((socket) => socket.destroy());
     } else {
-      logger.info(`Invalid OAuth return request: ${req.url}`);
+      options.logger.info(`Invalid OAuth return request: ${req.url}`);
     }
   });
 
@@ -136,5 +148,5 @@ export const startOAuthReturnHandlerServer = async (host: string, port: number) 
     });
   });
 
-  return new Promise<void>((resolve) => server.listen(port, host, resolve));
+  return new Promise<void>((resolve) => server.listen(options.port, options.host, resolve));
 };

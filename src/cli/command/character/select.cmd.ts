@@ -1,11 +1,9 @@
 import { sessionIdOption } from "~src/cli/command-option/cli.option";
 import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { AppModule } from "~src/module/app.module";
 import { CharacterService } from "~src/service/character/character.service";
 import { CharacterReference } from "~src/service/character/character.types";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
-import { LogService } from "~src/service/log/log.service";
 import { SessionService } from "~src/service/session/session.service";
 import { SessionDataName } from "~src/service/session/session.types";
 
@@ -25,23 +23,17 @@ const cmd: CommandDefinition = {
       isRequired: true
     }
   ],
-  action: async (args, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:character:select");
-
+  action: async (args, opts, { app, logger }) => {
     const { session: sessionId } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
+    const sessionService = app.resolve<SessionService>("SessionService");
 
-    const characterService =
-      AppModule.getDefaultInstance().resolve<CharacterService>("CharacterService");
+    const characterService = app.resolve<CharacterService>("CharacterService");
 
-    const characterDescriptionService =
-      AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
-        "CharacterDescriptionService"
-      );
+    const characterDescriptionService = app.resolve<CharacterDescriptionService>(
+      "CharacterDescriptionService"
+    );
 
     const [characterNumberString] = args;
     const characterNumber = parseInt(characterNumberString);

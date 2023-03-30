@@ -1,8 +1,6 @@
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
-import { LogService } from "~src/service/log/log.service";
 
 const configNames = Object.values(AppConfigName)
   .map((name) => `"${name}"`)
@@ -35,12 +33,8 @@ const cmd: CommandDefinition = {
       isRequired: false
     }
   ],
-  action: async (args) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:config");
-
-    const config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+  action: async (args, _, { app, logger }) => {
+    const config = app.resolve<ConfigService>("ConfigService");
 
     const [action, configName, configValue] = args;
 

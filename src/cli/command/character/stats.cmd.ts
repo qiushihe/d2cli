@@ -4,12 +4,10 @@ import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { resolveCharacters } from "~src/service/destiny2-component-data/character.resolver";
 import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
-import { LogService } from "~src/service/log/log.service";
 import { StatService } from "~src/service/stat/stat.service";
 
 type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
@@ -17,30 +15,23 @@ type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 const cmd: CommandDefinition = {
   description: "Show stats of the currently selected Destiny 2 character",
   options: [sessionIdOption, verboseOption],
-  action: async (args, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:character:stats");
-
+  action: async (args, opts, { app, logger }) => {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2ComponentDataService =
-      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
-        "Destiny2ComponentDataService"
-      );
+    const destiny2ComponentDataService = app.resolve<Destiny2ComponentDataService>(
+      "Destiny2ComponentDataService"
+    );
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
-    const characterDescriptionService =
-      AppModule.getDefaultInstance().resolve<CharacterDescriptionService>(
-        "CharacterDescriptionService"
-      );
+    const characterDescriptionService = app.resolve<CharacterDescriptionService>(
+      "CharacterDescriptionService"
+    );
 
-    const statService = AppModule.getDefaultInstance().resolve<StatService>("StatService");
+    const statService = app.resolve<StatService>("StatService");
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

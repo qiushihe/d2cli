@@ -9,10 +9,8 @@ import { ItemIdentifierCommandOptions } from "~src/cli/command-option/item.optio
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { parseItemIdentifier } from "~src/helper/item.helper";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { ItemService } from "~src/service/item/item.service";
-import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PlugService } from "~src/service/plug/plug.service";
 
@@ -24,11 +22,7 @@ type CmdOptions = SessionIdCommandOptions &
 const cmd: CommandDefinition = {
   description: "List available mods for an item",
   options: [sessionIdOption, verboseOption, showAllOption, itemIdentifierOption],
-  action: async (_, opts) => {
-    const logger = AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("cmd:mod:list");
-
+  action: async (_, opts, { app, logger }) => {
     const { session: sessionId, verbose, showAll, item } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
@@ -40,19 +34,17 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Missing item hash`);
     }
 
-    const manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
+      "ManifestDefinitionService"
+    );
 
-    const characterSelectionService =
-      AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+    const characterSelectionService = app.resolve<CharacterSelectionService>(
+      "CharacterSelectionService"
+    );
 
-    const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+    const plugService = app.resolve<PlugService>("PlugService");
 
-    const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
+    const itemService = app.resolve<ItemService>("ItemService");
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

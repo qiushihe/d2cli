@@ -8,11 +8,9 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { makeTable2 } from "~src/helper/table.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
-import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PlugService } from "~src/service/plug/plug.service";
 import { SocketName } from "~src/service/plug/plug.service.types";
@@ -45,30 +43,23 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       options.listEquipped ? "equipped subclass" : "unequipped subclasses"
     } of the current character`,
     options: [sessionIdOption, verboseOption, showAllOption],
-    action: async (_, opts) => {
-      const logger = AppModule.getDefaultInstance()
-        .resolve<LogService>("LogService")
-        .getLogger(`cmd:subclass:${options.listEquipped ? "equipped" : "unequipped"}`);
-
+    action: async (_, opts, { app, logger }) => {
       const { session: sessionId, verbose, showAll } = opts as CmdOptions;
       logger.debug(`Session ID: ${sessionId}`);
 
-      const manifestDefinitionService =
-        AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-          "ManifestDefinitionService"
-        );
+      const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
+        "ManifestDefinitionService"
+      );
 
-      const characterSelectionService =
-        AppModule.getDefaultInstance().resolve<CharacterSelectionService>(
-          "CharacterSelectionService"
-        );
+      const characterSelectionService = app.resolve<CharacterSelectionService>(
+        "CharacterSelectionService"
+      );
 
-      const inventoryService =
-        AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
+      const inventoryService = app.resolve<InventoryService>("InventoryService");
 
-      const plugService = AppModule.getDefaultInstance().resolve<PlugService>("PlugService");
+      const plugService = app.resolve<PlugService>("PlugService");
 
-      const itemService = AppModule.getDefaultInstance().resolve<ItemService>("ItemService");
+      const itemService = app.resolve<ItemService>("ItemService");
 
       const [characterInfoErr, characterInfo] =
         await characterSelectionService.ensureSelectedCharacter(sessionId);
