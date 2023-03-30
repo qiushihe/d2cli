@@ -22,7 +22,7 @@ import { FsStorageService } from "~src/service/storage/fs-storage.service";
 
 import { AppModule } from "./app.module";
 
-const MODULE: Record<string, new () => any> = {
+const MODULE: (new () => any)[] = [
   BungieApiService,
   BungieMembershipService,
   BungieOauthService,
@@ -44,10 +44,10 @@ const MODULE: Record<string, new () => any> = {
   SessionService,
   StatService,
   FsStorageService
-};
+];
 
 const appModule = AppModule.getDefaultInstance();
 
-Object.entries(MODULE).forEach(([name, ModuleClass]) => {
-  appModule.register(name, ModuleClass);
+MODULE.forEach((ModuleClass) => {
+  appModule.register(ModuleClass);
 });

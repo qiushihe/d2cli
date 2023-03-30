@@ -29,9 +29,8 @@ export class ManifestDefinitionService {
   private readonly cacheService: CacheService;
 
   constructor() {
-    this.destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
-    this.cacheService = AppModule.getDefaultInstance().resolve<CacheService>("CacheService");
+    this.destiny2ManifestService = AppModule.getDefaultInstance().resolve(Destiny2ManifestService);
+    this.cacheService = AppModule.getDefaultInstance().resolve(CacheService);
   }
 
   async getProgressionDefinition(
@@ -187,7 +186,7 @@ export class ManifestDefinitionService {
 
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
+      .resolve(LogService)
       .getLogger("ManifestDefinitionService");
   }
 }

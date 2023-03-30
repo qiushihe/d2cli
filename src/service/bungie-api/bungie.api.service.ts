@@ -39,9 +39,9 @@ export class BungieApiService {
   private lastRequestTime: number;
 
   constructor() {
-    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
-    this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
-    this.cacheService = AppModule.getDefaultInstance().resolve<CacheService>("CacheService");
+    this.config = AppModule.getDefaultInstance().resolve(ConfigService);
+    this.sessionService = AppModule.getDefaultInstance().resolve(SessionService);
+    this.cacheService = AppModule.getDefaultInstance().resolve(CacheService);
     this.lastRequestTime = 0;
   }
 
@@ -176,8 +176,6 @@ export class BungieApiService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("BungieApiService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("BungieApiService");
   }
 }

@@ -38,15 +38,11 @@ const cmd: CommandDefinition = {
     const socketIndex = (parseInt(socket, 10) || 0) - 1;
     const plugItemHash = parseInt(plugHash, 10) || 0;
 
-    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
-      "ManifestDefinitionService"
-    );
+    const manifestDefinitionService = app.resolve(ManifestDefinitionService);
 
-    const characterSelectionService = app.resolve<CharacterSelectionService>(
-      "CharacterSelectionService"
-    );
+    const characterSelectionService = app.resolve(CharacterSelectionService);
 
-    const plugService = app.resolve<PlugService>("PlugService");
+    const plugService = app.resolve(PlugService);
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

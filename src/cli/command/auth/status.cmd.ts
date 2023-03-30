@@ -16,9 +16,9 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const sessionService = app.resolve<SessionService>("SessionService");
+    const sessionService = app.resolve(SessionService);
 
-    const bungieMembershipService = app.resolve<BungieMembershipService>("BungieMembershipService");
+    const bungieMembershipService = app.resolve(BungieMembershipService);
 
     logger.info("Retrieving authorization status ...");
     const [loginStatusErr, loginStatus] = await sessionService.getLoginStatus(sessionId);

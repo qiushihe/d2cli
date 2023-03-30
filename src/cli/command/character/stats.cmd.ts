@@ -19,19 +19,13 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const destiny2ComponentDataService = app.resolve<Destiny2ComponentDataService>(
-      "Destiny2ComponentDataService"
-    );
+    const destiny2ComponentDataService = app.resolve(Destiny2ComponentDataService);
 
-    const characterSelectionService = app.resolve<CharacterSelectionService>(
-      "CharacterSelectionService"
-    );
+    const characterSelectionService = app.resolve(CharacterSelectionService);
 
-    const characterDescriptionService = app.resolve<CharacterDescriptionService>(
-      "CharacterDescriptionService"
-    );
+    const characterDescriptionService = app.resolve(CharacterDescriptionService);
 
-    const statService = app.resolve<StatService>("StatService");
+    const statService = app.resolve(StatService);
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

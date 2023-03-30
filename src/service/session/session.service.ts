@@ -20,10 +20,8 @@ export class SessionService {
   private readonly bungieOauthService: BungieOauthService;
 
   constructor() {
-    this.storageService =
-      AppModule.getDefaultInstance().resolve<FsStorageService>("FsStorageService");
-    this.bungieOauthService =
-      AppModule.getDefaultInstance().resolve<BungieOauthService>("BungieOauthService");
+    this.storageService = AppModule.getDefaultInstance().resolve(FsStorageService);
+    this.bungieOauthService = AppModule.getDefaultInstance().resolve(BungieOauthService);
   }
 
   async getUpToDateAccessToken(sessionId: string): Promise<[Error, null] | [null, string]> {
@@ -250,8 +248,6 @@ export class SessionService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("SessionService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("SessionService");
   }
 }

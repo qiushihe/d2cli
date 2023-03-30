@@ -27,13 +27,11 @@ const cmd: CommandDefinition = {
     const { session: sessionId } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const sessionService = app.resolve<SessionService>("SessionService");
+    const sessionService = app.resolve(SessionService);
 
-    const characterService = app.resolve<CharacterService>("CharacterService");
+    const characterService = app.resolve(CharacterService);
 
-    const characterDescriptionService = app.resolve<CharacterDescriptionService>(
-      "CharacterDescriptionService"
-    );
+    const characterDescriptionService = app.resolve(CharacterDescriptionService);
 
     const [characterNumberString] = args;
     const characterNumber = parseInt(characterNumberString);

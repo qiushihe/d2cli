@@ -21,7 +21,7 @@ export class BungieOauthService {
   private readonly config: ConfigService;
 
   constructor() {
-    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+    this.config = AppModule.getDefaultInstance().resolve(ConfigService);
   }
 
   async getRefreshedAccessToken(
@@ -154,8 +154,6 @@ export class BungieOauthService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("BungieOauthService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("BungieOauthService");
   }
 }

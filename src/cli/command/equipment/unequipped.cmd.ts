@@ -22,15 +22,11 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
-      "ManifestDefinitionService"
-    );
+    const manifestDefinitionService = app.resolve(ManifestDefinitionService);
 
-    const characterSelectionService = app.resolve<CharacterSelectionService>(
-      "CharacterSelectionService"
-    );
+    const characterSelectionService = app.resolve(CharacterSelectionService);
 
-    const inventoryService = app.resolve<InventoryService>("InventoryService");
+    const inventoryService = app.resolve(InventoryService);
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

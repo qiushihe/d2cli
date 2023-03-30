@@ -11,11 +11,9 @@ export class PostmasterService {
   private readonly inventoryService: InventoryService;
 
   constructor() {
-    this.destiny2ActionService =
-      AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
+    this.destiny2ActionService = AppModule.getDefaultInstance().resolve(Destiny2ActionService);
 
-    this.inventoryService =
-      AppModule.getDefaultInstance().resolve<InventoryService>("InventoryService");
+    this.inventoryService = AppModule.getDefaultInstance().resolve(InventoryService);
   }
 
   async getItems(
@@ -71,8 +69,6 @@ export class PostmasterService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("PostmasterService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("PostmasterService");
   }
 }

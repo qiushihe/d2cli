@@ -13,7 +13,7 @@ export class PastebinService {
   private readonly config: ConfigService;
 
   constructor() {
-    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+    this.config = AppModule.getDefaultInstance().resolve(ConfigService);
   }
 
   async createPaste(name: string, content: string): Promise<[Error, null] | [null, string]> {
@@ -93,8 +93,6 @@ export class PastebinService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("PastebinService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("PastebinService");
   }
 }

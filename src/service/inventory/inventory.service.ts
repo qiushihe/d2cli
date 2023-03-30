@@ -19,13 +19,11 @@ export class InventoryService {
   private readonly destiny2ComponentDataService: Destiny2ComponentDataService;
 
   constructor() {
-    this.destiny2ManifestService =
-      AppModule.getDefaultInstance().resolve<Destiny2ManifestService>("Destiny2ManifestService");
+    this.destiny2ManifestService = AppModule.getDefaultInstance().resolve(Destiny2ManifestService);
 
-    this.destiny2ComponentDataService =
-      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
-        "Destiny2ComponentDataService"
-      );
+    this.destiny2ComponentDataService = AppModule.getDefaultInstance().resolve(
+      Destiny2ComponentDataService
+    );
   }
 
   async getVaultItems(
@@ -164,8 +162,6 @@ export class InventoryService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("InventoryService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("InventoryService");
   }
 }

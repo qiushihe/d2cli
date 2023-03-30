@@ -18,15 +18,11 @@ const cmd: CommandDefinition = {
     const { session: sessionId, verbose } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const characterService = app.resolve<CharacterService>("CharacterService");
+    const characterService = app.resolve(CharacterService);
 
-    const characterSelectionService = app.resolve<CharacterSelectionService>(
-      "CharacterSelectionService"
-    );
+    const characterSelectionService = app.resolve(CharacterSelectionService);
 
-    const characterDescriptionService = app.resolve<CharacterDescriptionService>(
-      "CharacterDescriptionService"
-    );
+    const characterDescriptionService = app.resolve(CharacterDescriptionService);
 
     const [hasCharacterInfoErr, hasCharacterInfo] =
       await characterSelectionService.hasSelectedCharacter(sessionId);

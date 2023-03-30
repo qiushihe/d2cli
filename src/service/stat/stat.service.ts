@@ -11,9 +11,7 @@ export class StatService {
 
   constructor() {
     this.manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+      AppModule.getDefaultInstance().resolve(ManifestDefinitionService);
   }
 
   async getSortedCharacterStats(
@@ -54,8 +52,6 @@ export class StatService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("StatService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("StatService");
   }
 }

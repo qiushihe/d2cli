@@ -14,8 +14,7 @@ export class CacheService {
 
   constructor() {
     this.memCache = {};
-    this.storageService =
-      AppModule.getDefaultInstance().resolve<FsStorageService>("FsStorageService");
+    this.storageService = AppModule.getDefaultInstance().resolve(FsStorageService);
   }
 
   async get<T>(namespace: string, key: string): Promise<[Error, null] | [null, T | null]> {
@@ -113,8 +112,6 @@ export class CacheService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("CacheService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("CacheService");
   }
 }

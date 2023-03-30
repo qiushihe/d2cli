@@ -15,13 +15,10 @@ export class CharacterDescriptionService {
   private readonly manifestDefinitionService: ManifestDefinitionService;
 
   constructor() {
-    this.characterService =
-      AppModule.getDefaultInstance().resolve<CharacterService>("CharacterService");
+    this.characterService = AppModule.getDefaultInstance().resolve(CharacterService);
 
     this.manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+      AppModule.getDefaultInstance().resolve(ManifestDefinitionService);
   }
 
   async getDescriptions(

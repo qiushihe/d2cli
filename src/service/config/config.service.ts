@@ -138,8 +138,6 @@ export class ConfigService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("ConfigService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("ConfigService");
   }
 }

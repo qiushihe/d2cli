@@ -30,17 +30,13 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
       } = opts as CmdOptions;
       logger.debug(`Session ID: ${sessionId}`);
 
-      const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+      const manifestDefinitionService = app.resolve(ManifestDefinitionService);
 
-      const characterSelectionService = app.resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+      const characterSelectionService = app.resolve(CharacterSelectionService);
 
-      const inventoryService = app.resolve<InventoryService>("InventoryService");
+      const inventoryService = app.resolve(InventoryService);
 
-      const destiny2ActionService = app.resolve<Destiny2ActionService>("Destiny2ActionService");
+      const destiny2ActionService = app.resolve(Destiny2ActionService);
 
       const [characterInfoErr, characterInfo] =
         await characterSelectionService.ensureSelectedCharacter(sessionId);

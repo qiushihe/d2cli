@@ -8,10 +8,9 @@ export class ItemService {
   private readonly destiny2ComponentDataService: Destiny2ComponentDataService;
 
   constructor() {
-    this.destiny2ComponentDataService =
-      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
-        "Destiny2ComponentDataService"
-      );
+    this.destiny2ComponentDataService = AppModule.getDefaultInstance().resolve(
+      Destiny2ComponentDataService
+    );
   }
 
   async getItemEquippedPlugHashes(
@@ -39,8 +38,6 @@ export class ItemService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("ItemService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("ItemService");
   }
 }

@@ -81,29 +81,21 @@ const cmd: CommandDefinition = {
     } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const configService = app.resolve<ConfigService>("ConfigService");
+    const configService = app.resolve(ConfigService);
 
-    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
-      "ManifestDefinitionService"
-    );
+    const manifestDefinitionService = app.resolve(ManifestDefinitionService);
 
-    const characterSelectionService = app.resolve<CharacterSelectionService>(
-      "CharacterSelectionService"
-    );
+    const characterSelectionService = app.resolve(CharacterSelectionService);
 
-    const characterDescriptionService = app.resolve<CharacterDescriptionService>(
-      "CharacterDescriptionService"
-    );
+    const characterDescriptionService = app.resolve(CharacterDescriptionService);
 
-    const destiny2ActionService = app.resolve<Destiny2ActionService>("Destiny2ActionService");
+    const destiny2ActionService = app.resolve(Destiny2ActionService);
 
-    const destiny2ComponentDataService = app.resolve<Destiny2ComponentDataService>(
-      "Destiny2ComponentDataService"
-    );
+    const destiny2ComponentDataService = app.resolve(Destiny2ComponentDataService);
 
-    const plugService = app.resolve<PlugService>("PlugService");
+    const plugService = app.resolve(PlugService);
 
-    const pastebinService = app.resolve<PastebinService>("PastebinService");
+    const pastebinService = app.resolve(PastebinService);
 
     let loadoutContent: string;
 

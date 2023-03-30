@@ -53,9 +53,9 @@ const handleOAuthReturn = async (
 
         const { t: timestamp, s: sessionId } = state;
 
-        const sessionService = options.app.resolve<SessionService>("SessionService");
+        const sessionService = options.app.resolve(SessionService);
 
-        const bungieOauthService = options.app.resolve<BungieOauthService>("BungieOauthService");
+        const bungieOauthService = options.app.resolve(BungieOauthService);
 
         messages.push("Obtaining Bungie.net OAuth access token ...");
         const [accessTokenErr, accessToken] = await bungieOauthService.getAccessToken(

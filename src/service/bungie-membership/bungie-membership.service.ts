@@ -11,8 +11,7 @@ export class BungieMembershipService {
   private readonly bungieApiService: BungieApiService;
 
   constructor() {
-    this.bungieApiService =
-      AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
+    this.bungieApiService = AppModule.getDefaultInstance().resolve(BungieApiService);
   }
 
   async getDestiny2Membership(
@@ -76,8 +75,6 @@ export class BungieMembershipService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("BungieMembershipService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("BungieMembershipService");
   }
 }

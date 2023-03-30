@@ -17,10 +17,9 @@ export class Destiny2ManifestService {
   private readonly cacheService: CacheService;
 
   constructor() {
-    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
-    this.bungieApiService =
-      AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
-    this.cacheService = AppModule.getDefaultInstance().resolve<CacheService>("CacheService");
+    this.config = AppModule.getDefaultInstance().resolve(ConfigService);
+    this.bungieApiService = AppModule.getDefaultInstance().resolve(BungieApiService);
+    this.cacheService = AppModule.getDefaultInstance().resolve(CacheService);
   }
 
   async getManifestComponent<T>(
@@ -171,8 +170,6 @@ export class Destiny2ManifestService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("Destiny2ManifestService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("Destiny2ManifestService");
   }
 }

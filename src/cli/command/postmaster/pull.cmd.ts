@@ -32,15 +32,11 @@ const cmd: CommandDefinition = {
       logger.debug(`Should pull all items`);
     }
 
-    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
-      "ManifestDefinitionService"
-    );
+    const manifestDefinitionService = app.resolve(ManifestDefinitionService);
 
-    const destiny2PostmasterService = app.resolve<PostmasterService>("PostmasterService");
+    const destiny2PostmasterService = app.resolve(PostmasterService);
 
-    const characterSelectionService = app.resolve<CharacterSelectionService>(
-      "CharacterSelectionService"
-    );
+    const characterSelectionService = app.resolve(CharacterSelectionService);
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

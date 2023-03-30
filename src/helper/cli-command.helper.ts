@@ -73,7 +73,7 @@ const buildNestedCommands = (
 
           const appModule = AppModule.getDefaultInstance();
 
-          const cmdLogger = appModule.resolve<LogService>("LogService").getLogger(cmdName);
+          const cmdLogger = appModule.resolve(LogService).getLogger(cmdName);
 
           await cmdAction(cmdArguments, cmdOptions, { app: appModule, logger: cmdLogger });
         });

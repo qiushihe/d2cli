@@ -13,15 +13,13 @@ export class CharacterService {
   private readonly destiny2ComponentDataService: Destiny2ComponentDataService;
 
   constructor() {
-    this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
+    this.sessionService = AppModule.getDefaultInstance().resolve(SessionService);
 
-    this.bungieMembershipService =
-      AppModule.getDefaultInstance().resolve<BungieMembershipService>("BungieMembershipService");
+    this.bungieMembershipService = AppModule.getDefaultInstance().resolve(BungieMembershipService);
 
-    this.destiny2ComponentDataService =
-      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
-        "Destiny2ComponentDataService"
-      );
+    this.destiny2ComponentDataService = AppModule.getDefaultInstance().resolve(
+      Destiny2ComponentDataService
+    );
   }
 
   async getCharacters(
@@ -54,8 +52,6 @@ export class CharacterService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("CharacterService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("CharacterService");
   }
 }

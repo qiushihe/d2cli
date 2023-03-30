@@ -9,7 +9,7 @@ export class CharacterSelectionService {
   private readonly sessionService: SessionService;
 
   constructor() {
-    this.sessionService = AppModule.getDefaultInstance().resolve<SessionService>("SessionService");
+    this.sessionService = AppModule.getDefaultInstance().resolve(SessionService);
   }
 
   async ensureSelectedCharacter(
@@ -62,7 +62,7 @@ export class CharacterSelectionService {
 
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
+      .resolve(LogService)
       .getLogger("CharacterSelectionService");
   }
 }

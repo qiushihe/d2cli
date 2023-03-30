@@ -34,17 +34,13 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Missing item hash`);
     }
 
-    const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
-      "ManifestDefinitionService"
-    );
+    const manifestDefinitionService = app.resolve(ManifestDefinitionService);
 
-    const characterSelectionService = app.resolve<CharacterSelectionService>(
-      "CharacterSelectionService"
-    );
+    const characterSelectionService = app.resolve(CharacterSelectionService);
 
-    const plugService = app.resolve<PlugService>("PlugService");
+    const plugService = app.resolve(PlugService);
 
-    const itemService = app.resolve<ItemService>("ItemService");
+    const itemService = app.resolve(ItemService);
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);

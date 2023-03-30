@@ -47,19 +47,15 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       const { session: sessionId, verbose, showAll } = opts as CmdOptions;
       logger.debug(`Session ID: ${sessionId}`);
 
-      const manifestDefinitionService = app.resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+      const manifestDefinitionService = app.resolve(ManifestDefinitionService);
 
-      const characterSelectionService = app.resolve<CharacterSelectionService>(
-        "CharacterSelectionService"
-      );
+      const characterSelectionService = app.resolve(CharacterSelectionService);
 
-      const inventoryService = app.resolve<InventoryService>("InventoryService");
+      const inventoryService = app.resolve(InventoryService);
 
-      const plugService = app.resolve<PlugService>("PlugService");
+      const plugService = app.resolve(PlugService);
 
-      const itemService = app.resolve<ItemService>("ItemService");
+      const itemService = app.resolve(ItemService);
 
       const [characterInfoErr, characterInfo] =
         await characterSelectionService.ensureSelectedCharacter(sessionId);

@@ -8,30 +8,29 @@ export class AppModule {
     return AppModule.defaultInstance;
   }
 
-  private moduleClasses: Map<string, new () => any>;
-  private moduleInstances: Map<string, any>;
+  private moduleClasses: Set<new () => any>;
+  private moduleInstances: Map<new () => any, any>;
 
   constructor() {
-    this.moduleClasses = new Map();
+    this.moduleClasses = new Set();
     this.moduleInstances = new Map();
   }
 
-  register(name: string, ModuleClass: new () => any) {
-    if (!this.moduleClasses.has(name)) {
-      this.moduleClasses.set(name, ModuleClass);
+  register(ModuleClass: new () => any) {
+    if (!this.moduleClasses.has(ModuleClass)) {
+      this.moduleClasses.add(ModuleClass);
     }
   }
 
-  resolve<T>(name: string): T {
-    const ModuleClass = this.moduleClasses.get(name);
-    if (!ModuleClass) {
-      throw new Error(`Unknown module name: ${name}`);
+  resolve<T extends new () => any>(ModuleClass: T): InstanceType<T> {
+    if (!this.moduleClasses.has(ModuleClass)) {
+      throw new Error("Module class is not registered");
     }
 
-    if (!this.moduleInstances.has(name)) {
-      this.moduleInstances.set(name, new ModuleClass());
+    if (!this.moduleInstances.has(ModuleClass)) {
+      this.moduleInstances.set(ModuleClass, new ModuleClass());
     }
 
-    return this.moduleInstances.get(name);
+    return this.moduleInstances.get(ModuleClass);
   }
 }

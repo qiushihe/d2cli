@@ -19,7 +19,7 @@ export class FsStorageService implements IStorageInterface {
   private readonly config: ConfigService;
 
   constructor() {
-    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+    this.config = AppModule.getDefaultInstance().resolve(ConfigService);
   }
 
   async read<T>(
@@ -77,8 +77,6 @@ export class FsStorageService implements IStorageInterface {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("FsStorageService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("FsStorageService");
   }
 }

@@ -17,18 +17,14 @@ export class PlugService {
   private readonly manifestDefinitionService: ManifestDefinitionService;
 
   constructor() {
-    this.destiny2ActionService =
-      AppModule.getDefaultInstance().resolve<Destiny2ActionService>("Destiny2ActionService");
+    this.destiny2ActionService = AppModule.getDefaultInstance().resolve(Destiny2ActionService);
 
-    this.destiny2ComponentDataService =
-      AppModule.getDefaultInstance().resolve<Destiny2ComponentDataService>(
-        "Destiny2ComponentDataService"
-      );
+    this.destiny2ComponentDataService = AppModule.getDefaultInstance().resolve(
+      Destiny2ComponentDataService
+    );
 
     this.manifestDefinitionService =
-      AppModule.getDefaultInstance().resolve<ManifestDefinitionService>(
-        "ManifestDefinitionService"
-      );
+      AppModule.getDefaultInstance().resolve(ManifestDefinitionService);
   }
 
   async getSocketIndices(
@@ -249,8 +245,6 @@ export class PlugService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("PlugService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("PlugService");
   }
 }

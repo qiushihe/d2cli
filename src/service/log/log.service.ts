@@ -63,7 +63,7 @@ export class LogService {
   private readonly config: ConfigService;
 
   constructor() {
-    this.config = AppModule.getDefaultInstance().resolve<ConfigService>("ConfigService");
+    this.config = AppModule.getDefaultInstance().resolve(ConfigService);
   }
 
   getLogger(namespace: string): Logger {

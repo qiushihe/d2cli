@@ -19,7 +19,7 @@ const cmd: CommandDefinition = {
     const { session: sessionId } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const config = app.resolve<ConfigService>("ConfigService");
+    const config = app.resolve(ConfigService);
 
     const oauthRoot = config.getBungieOauthRoot();
     const [clientIdErr, clientId] = config.getAppConfig(AppConfigName.BungieOauthClientId);

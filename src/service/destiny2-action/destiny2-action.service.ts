@@ -13,8 +13,7 @@ export class Destiny2ActionService {
   private readonly bungieApiService: BungieApiService;
 
   constructor() {
-    this.bungieApiService =
-      AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
+    this.bungieApiService = AppModule.getDefaultInstance().resolve(BungieApiService);
   }
 
   async pullFromPostmaster(
@@ -152,8 +151,6 @@ export class Destiny2ActionService {
   }
 
   private getLogger(): Logger {
-    return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
-      .getLogger("Destiny2ActionService");
+    return AppModule.getDefaultInstance().resolve(LogService).getLogger("Destiny2ActionService");
   }
 }

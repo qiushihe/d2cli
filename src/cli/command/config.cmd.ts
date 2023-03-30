@@ -34,7 +34,7 @@ const cmd: CommandDefinition = {
     }
   ],
   action: async (args, _, { app, logger }) => {
-    const config = app.resolve<ConfigService>("ConfigService");
+    const config = app.resolve(ConfigService);
 
     const [action, configName, configValue] = args;
 

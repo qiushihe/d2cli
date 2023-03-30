@@ -13,8 +13,7 @@ export class Destiny2ComponentDataService {
   private readonly bungieApiService: BungieApiService;
 
   constructor() {
-    this.bungieApiService =
-      AppModule.getDefaultInstance().resolve<BungieApiService>("BungieApiService");
+    this.bungieApiService = AppModule.getDefaultInstance().resolve(BungieApiService);
   }
 
   async getVendorComponentsData<TData>(
@@ -120,7 +119,7 @@ export class Destiny2ComponentDataService {
 
   private getLogger(): Logger {
     return AppModule.getDefaultInstance()
-      .resolve<LogService>("LogService")
+      .resolve(LogService)
       .getLogger("Destiny2ComponentDataService");
   }
 }

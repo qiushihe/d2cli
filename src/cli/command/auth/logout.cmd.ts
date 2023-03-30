@@ -15,7 +15,7 @@ const cmd: CommandDefinition = {
     const { session: sessionId } = opts as CmdOptions;
     logger.debug(`Session ID: ${sessionId}`);
 
-    const sessionService = app.resolve<SessionService>("SessionService");
+    const sessionService = app.resolve(SessionService);
 
     logger.info("Clearing characters info ...");
     const clearCharactersErr = await sessionService.setData<CharacterReference>(
