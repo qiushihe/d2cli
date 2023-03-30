@@ -3,7 +3,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { makeTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { LogService } from "~src/service/log/log.service";
@@ -85,12 +85,11 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["#", "Description", "Pulled?"];
+    const tableHeader = ["#", "Description", "Pulled?"];
     if (verbose) {
-      tableData.push([...basicHeaders, "Message"]);
-    } else {
-      tableData.push(basicHeaders);
+      tableHeader.push("Message");
     }
+    tableData.push(tableHeader);
 
     let failedToPullCount = 0;
     for (let itemIndex = 0; itemIndex < itemsToPull.length; itemIndex++) {
@@ -113,7 +112,7 @@ const cmd: CommandDefinition = {
         itemDescription = `${itemDefinition.displayProperties.name} (${itemDefinition.itemTypeAndTierDisplayName})`;
       }
 
-      const itemCells = [`${itemNumber}`, itemDescription];
+      const rowColumns = [`${itemNumber}`, itemDescription];
 
       logger.info(
         itemsToPull.length <= 1
@@ -131,21 +130,21 @@ const cmd: CommandDefinition = {
       );
       if (pullItemErr) {
         failedToPullCount = failedToPullCount + 1;
+        rowColumns.push("No");
         if (verbose) {
-          tableData.push([...itemCells, "No", pullItemErr.message]);
-        } else {
-          tableData.push([...itemCells, "No"]);
+          rowColumns.push(pullItemErr.message);
         }
       } else {
+        rowColumns.push("Yes");
         if (verbose) {
-          tableData.push([...itemCells, "Yes", ""]);
-        } else {
-          tableData.push([...itemCells, "Yes"]);
+          rowColumns.push("");
         }
       }
+
+      tableData.push(rowColumns);
     }
 
-    logger.log(makeTable(tableData));
+    logger.log(makeTable2(tableData, { flexibleColumns: verbose ? [3] : [1] }));
 
     if (failedToPullCount > 0) {
       logger.log(`Failed to pull ${failedToPullCount} item(s)`);

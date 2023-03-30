@@ -92,7 +92,7 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to retrieve vendors: ${vendorsErr.message}`);
     }
 
-    const tableHeaders: string[] = [
+    const tableHeader: string[] = [
       "Vendor",
       "Location",
       ...(verbose ? ["ID", "Key", "Refresh"] : [])
@@ -178,7 +178,7 @@ const cmd: CommandDefinition = {
     }
 
     logger.log(
-      makeTable2([tableHeaders, ...tableRows.sort((a, b) => a[0].localeCompare(b[0]))], {
+      makeTable2([tableHeader, ...tableRows.sort((a, b) => a[0].localeCompare(b[0]))], {
         flexibleColumns: [0, 1]
       })
     );

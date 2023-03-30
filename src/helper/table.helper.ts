@@ -1,9 +1,3 @@
-import { table } from "table";
-
-export const makeTable = (data: string[][]): string => {
-  return table(data, { drawHorizontalLine: (row) => row <= 1 || row === data.length }).trim();
-};
-
 const DEFAULT_COLUMNS = 80;
 
 const getTerminalWidth = (): number => {

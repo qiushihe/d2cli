@@ -5,7 +5,7 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { ItemNameAndPowerLevel } from "~src/helper/item.helper";
 import { getItemNameAndPowerLevel } from "~src/helper/item.helper";
-import { makeTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
@@ -58,12 +58,11 @@ const cmd: CommandDefinition = {
 
     const tableData: string[][] = [];
 
-    const basicHeaders = ["Item", "Hash", "Instance ID"];
+    const tableHeader = ["Item", "Power"];
     if (verbose) {
-      tableData.push([...basicHeaders, "Power Level"]);
-    } else {
-      tableData.push(basicHeaders);
+      tableHeader.push("ID");
     }
+    tableData.push(tableHeader);
 
     for (let vaultItemIndex = 0; vaultItemIndex < vaultItems.length; vaultItemIndex++) {
       const vaultItem = vaultItems[vaultItemIndex];
@@ -82,19 +81,16 @@ const cmd: CommandDefinition = {
         vaultItemInstances[vaultItem.itemInstanceId] || null
       );
 
+      const rowColumns = [vaultItemInfo.label, vaultItemInfo.powerLevel];
+
       if (verbose) {
-        tableData.push([
-          vaultItemInfo.label,
-          `${vaultItem.itemHash}`,
-          vaultItem.itemInstanceId,
-          vaultItemInfo.powerLevel
-        ]);
-      } else {
-        tableData.push([vaultItemInfo.label, `${vaultItem.itemHash}`, vaultItem.itemInstanceId]);
+        rowColumns.push(`${vaultItem.itemHash}:${vaultItem.itemInstanceId}`);
       }
+
+      tableData.push(rowColumns);
     }
 
-    logger.log(makeTable(tableData));
+    logger.log(makeTable2(tableData, { flexibleColumns: [0] }));
   }
 };
 

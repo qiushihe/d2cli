@@ -87,7 +87,18 @@ export class BungieApiService {
       return [apiResErr, null];
     }
     if (apiRes.Response === null || apiRes.Response === undefined) {
-      return [new Error(`API response missing Response object`), null];
+      return [
+        new Error(
+          `API response missing Response object: ${apiRes.ErrorStatus} (${apiRes.ErrorCode}) -  ${apiRes.Message}`
+        ),
+        null
+      ];
+    }
+    if (apiRes.ErrorCode !== 1) {
+      return [
+        new Error(`API error: ${apiRes.ErrorStatus} (${apiRes.ErrorCode}) - ${apiRes.Message}`),
+        null
+      ];
     }
 
     return [null, apiRes.Response];
@@ -129,7 +140,7 @@ export class BungieApiService {
     const logger = this.getLogger();
 
     try {
-      const reqDescription = `${options.method} ${url} ${JSON.stringify(options.body)}`;
+      const reqDescription = `${options.method} ${url} ${JSON.stringify(options.body || null)}`;
       logger.debug(`Req => ${reqDescription} ...`);
       const response = await this.fetch(url, options);
       logger.debug(`Res => ${reqDescription} => ${response.status} (${response.statusText})`);

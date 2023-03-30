@@ -5,7 +5,7 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { itemInstanceIdsOption } from "~src/cli/command-option/item.option";
 import { ItemInstanceIdsCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { makeTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
@@ -64,12 +64,11 @@ const cmd: CommandDefinition = {
 
       const tableData: string[][] = [];
 
-      const basicHeaders = ["Item", "Equipped?"];
+      const tableHeader = ["Item", "Equipped?"];
       if (verbose) {
-        tableData.push([...basicHeaders, "Message"]);
-      } else {
-        tableData.push(basicHeaders);
+        tableHeader.push("Message");
       }
+      tableData.push(tableHeader);
 
       let failedToEquipCount = 0;
       for (
@@ -79,6 +78,8 @@ const cmd: CommandDefinition = {
       ) {
         const itemInstanceId = itemInstanceIds[itemInstanceIdIndex];
         const item = inventoryItems.find((item) => item.itemInstanceId === itemInstanceId) || null;
+
+        const rowColumns: string[] = [];
 
         if (item) {
           logger.info(`Fetching item definition for ${item.itemHash} ...`);
@@ -97,7 +98,7 @@ const cmd: CommandDefinition = {
             itemDescription = `${itemDefinition.displayProperties.name} (${itemDefinition.itemTypeAndTierDisplayName})`;
           }
 
-          const itemCells = [itemDescription];
+          rowColumns.push(itemDescription);
 
           logger.info(`Equipping item: ${itemDescription} ...`);
           const equipErr = await destiny2ActionService.equipItem(
@@ -108,29 +109,29 @@ const cmd: CommandDefinition = {
           );
           if (equipErr) {
             failedToEquipCount = failedToEquipCount + 1;
+            rowColumns.push("No");
             if (verbose) {
-              tableData.push([...itemCells, "No", equipErr.message]);
-            } else {
-              tableData.push([...itemCells, "No"]);
+              rowColumns.push(equipErr.message);
             }
           } else {
+            rowColumns.push("Yes");
             if (verbose) {
-              tableData.push([...itemCells, "Yes", ""]);
-            } else {
-              tableData.push([...itemCells, "Yes"]);
+              rowColumns.push("");
             }
           }
         } else {
           failedToEquipCount = failedToEquipCount + 1;
+          rowColumns.push(itemInstanceId);
+          rowColumns.push("No");
           if (verbose) {
-            tableData.push([itemInstanceId, "No", "Unable to find item in inventory"]);
-          } else {
-            tableData.push([itemInstanceId, "No"]);
+            rowColumns.push("Unable to find item in inventory");
           }
         }
+
+        tableData.push(rowColumns);
       }
 
-      logger.log(makeTable(tableData));
+      logger.log(makeTable2(tableData, { flexibleColumns: verbose ? [2] : [0] }));
 
       if (failedToEquipCount > 0) {
         logger.log(`Failed to equip ${failedToEquipCount} item(s)`);

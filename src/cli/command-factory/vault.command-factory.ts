@@ -5,7 +5,7 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { itemInstanceIdsOption } from "~src/cli/command-option/item.option";
 import { ItemInstanceIdsCommandOptions } from "~src/cli/command-option/item.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
-import { makeTable } from "~src/helper/table.helper";
+import { makeTable2 } from "~src/helper/table.helper";
 import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
@@ -90,12 +90,11 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
 
         const tableData: string[][] = [];
 
-        const basicHeaders = ["Item", "Transferred?"];
+        const tableHeader = ["Item", "Transferred?"];
         if (verbose) {
-          tableData.push([...basicHeaders, "Message"]);
-        } else {
-          tableData.push(basicHeaders);
+          tableHeader.push("Message");
         }
+        tableData.push(tableHeader);
 
         let failedToTransferCount = 0;
         for (
@@ -105,6 +104,8 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
         ) {
           const itemInstanceId = itemInstanceIds[itemInstanceIdIndex];
           const item = sourceItems.find((item) => item.itemInstanceId === itemInstanceId) || null;
+
+          const rowColumns: string[] = [];
 
           if (item) {
             logger.info(`Fetching item definition for ${item.itemHash} ...`);
@@ -121,7 +122,7 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
               itemDescription = `${itemDefinition.displayProperties.name} (${itemDefinition.itemTypeAndTierDisplayName})`;
             }
 
-            const itemCells = [itemDescription];
+            rowColumns.push(itemDescription);
 
             logger.info(
               itemInstanceIds.length <= 1
@@ -149,33 +150,30 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
                 ));
             if (transferFromVaultErr) {
               failedToTransferCount = failedToTransferCount + 1;
+              rowColumns.push("No");
               if (verbose) {
-                tableData.push([...itemCells, "No", transferFromVaultErr.message]);
-              } else {
-                tableData.push([...itemCells, "No"]);
+                rowColumns.push(transferFromVaultErr.message);
               }
             } else {
+              rowColumns.push("Yes");
               if (verbose) {
-                tableData.push([...itemCells, "Yes", ""]);
-              } else {
-                tableData.push([...itemCells, "Yes"]);
+                rowColumns.push("");
               }
             }
           } else {
             failedToTransferCount = failedToTransferCount + 1;
+
+            rowColumns.push(itemInstanceId);
+            rowColumns.push("No");
             if (verbose) {
-              tableData.push([
-                itemInstanceId,
-                "No",
-                `Unable to find item in ${options.toVault ? "inventory" : "vault"}`
-              ]);
-            } else {
-              tableData.push([itemInstanceId, "No"]);
+              rowColumns.push(`Unable to find item in ${options.toVault ? "inventory" : "vault"}`);
             }
           }
+
+          tableData.push(rowColumns);
         }
 
-        logger.log(makeTable(tableData));
+        logger.log(makeTable2(tableData, { flexibleColumns: verbose ? [2] : [0] }));
 
         if (failedToTransferCount > 0) {
           logger.log(`Failed to transfer ${failedToTransferCount} item(s)`);
