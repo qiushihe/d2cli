@@ -12,9 +12,9 @@ import { getEditedContent } from "~src/helper/edit.helper";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
 import { groupEquipmentItems } from "~src/helper/inventory-bucket.helper";
 import { ArmourBucketHashes } from "~src/helper/inventory-bucket.helper";
-import { LoadoutInventoryBuckets } from "~src/helper/loadout.helper";
-import { serializeItem } from "~src/helper/loadout.helper";
-import { serializeItemPlugs } from "~src/helper/loadout.helper";
+import { LoadoutInventoryBuckets } from "~src/helper/loadout-export.helper";
+import { serializeItem } from "~src/helper/loadout-export.helper";
+import { serializeItemPlugs } from "~src/helper/loadout-export.helper";
 import { promisedFn } from "~src/helper/promise.helper";
 import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { getLoadoutPlugRecords } from "~src/helper/subclass.helper";
@@ -22,11 +22,12 @@ import { LoadoutPlugRecord } from "~src/helper/subclass.helper";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
-import { InventoryService } from "~src/service/inventory/inventory.service";
-import { ItemService } from "~src/service/item/item.service";
+import { resolveCharacterItems } from "~src/service/destiny2-component-data/character.resolver";
+import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PastebinService } from "~src/service/pastebin/pastebin.service";
 import { PlugService } from "~src/service/plug/plug.service";
+import { DestinyInventoryItemDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyItemComponent } from "~type/bungie-api/destiny/entities/items.types";
 
 type CmdOptions = SessionIdCommandOptions &
@@ -78,13 +79,11 @@ const cmd: CommandDefinition = {
 
     const characterSelectionService = app.resolve(CharacterSelectionService);
 
-    const inventoryService = app.resolve(InventoryService);
-
     const pastebinService = app.resolve(PastebinService);
 
     const plugService = app.resolve(PlugService);
 
-    const itemService = app.resolve(ItemService);
+    const destiny2ComponentDataService = app.resolve(Destiny2ComponentDataService);
 
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);
@@ -92,49 +91,59 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    const allItems: DestinyItemComponent[] = [];
-    const extraItemHashes: number[] = [];
-
-    if (includeUnequipped) {
-      logger.info("Retrieving inventory items ...");
-      const [inventoryItemsErr, inventoryItems] = await inventoryService.getInventoryItems(
+    logger.info("Indexing character items ...");
+    const [characterItemsErr, characterItems] =
+      await destiny2ComponentDataService.getCharacterComponentsData(
         sessionId,
         characterInfo.membershipType,
         characterInfo.membershipId,
-        characterInfo.characterId
+        characterInfo.characterId,
+        resolveCharacterItems
       );
-      if (inventoryItemsErr) {
+    if (characterItemsErr) {
+      return logger.loggedError(`Unable to index character items: ${characterItemsErr.message}`);
+    }
+
+    const allItems = includeUnequipped
+      ? [...characterItems.equipped, ...characterItems.unequipped]
+      : characterItems.equipped;
+    const allItemsSockets = characterItems.sockets;
+
+    const equippedItemHashes = characterItems.equipped.map((item) => item.itemHash);
+    const unequippedItemHashes = includeUnequipped
+      ? characterItems.unequipped.map((item) => item.itemHash)
+      : [];
+    const allItemHashes = [...equippedItemHashes, ...unequippedItemHashes];
+
+    logger.info(`Indexing character item definitions ...`);
+    const allItemDefinitions: Record<number, DestinyInventoryItemDefinition> = {};
+    for (let itemHashIndex = 0; itemHashIndex < allItemHashes.length; itemHashIndex++) {
+      const itemHash = allItemHashes[itemHashIndex];
+
+      const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
+        itemHash
+      );
+      if (itemDefinitionErr) {
         return logger.loggedError(
-          `Unable to retrieve inventory items: ${inventoryItemsErr.message}`
+          `Unable to fetch item definition for ${itemHash}: ${itemDefinitionErr.message}`
         );
       }
-      inventoryItems.forEach((item) => {
-        allItems.push(item);
-        extraItemHashes.push(item.itemHash);
-      });
+      if (!itemDefinition) {
+        return logger.loggedError(`Unable to find item definition for: ${itemHash}`);
+      }
+
+      allItemDefinitions[itemHash] = itemDefinition;
     }
 
-    logger.info("Retrieving equipment items ...");
-    const [equipmentItemsErr, equipmentItems] = await inventoryService.getEquipmentItems(
-      sessionId,
-      characterInfo.membershipType,
-      characterInfo.membershipId,
-      characterInfo.characterId
-    );
-    if (equipmentItemsErr) {
-      return logger.loggedError(`Unable to retrieve equipment items: ${equipmentItemsErr.message}`);
-    }
-    equipmentItems.forEach((item) => allItems.push(item));
-
-    const subclass = getSubclassItems(equipmentItems)[0];
+    const subclass = getSubclassItems(characterItems.equipped)[0];
     if (!subclass) {
       return logger.loggedError(`Unable to retrieve equipped subclass items`);
     }
 
     const [subclassPlugRecordsErr, subclassPlugRecords] = await getLoadoutPlugRecords(
       logger,
-      manifestDefinitionService,
-      itemService,
+      allItemDefinitions,
+      allItemsSockets,
       plugService,
       sessionId,
       characterInfo.membershipType,
@@ -160,21 +169,13 @@ const cmd: CommandDefinition = {
 
     for (let equipmentIndex = 0; equipmentIndex < equipments.length; equipmentIndex++) {
       const equipment = equipments[equipmentIndex];
-
-      logger.info(`Fetching item definition for ${equipment.itemHash} ...`);
-      const [equipmentDefinitionErr, equipmentDefinition] =
-        await manifestDefinitionService.getItemDefinition(equipment.itemHash);
-      if (equipmentDefinitionErr) {
-        return logger.loggedError(
-          `Unable to fetch item definition for ${equipment.itemHash}: ${equipmentDefinitionErr.message}`
-        );
-      }
+      const equipmentDefinition = allItemDefinitions[equipment.itemHash];
 
       if (ArmourBucketHashes.includes(equipment.bucketHash)) {
         const [equipmentPlugRecordsErr, equipmentPlugRecords] = await getLoadoutPlugRecords(
           logger,
-          manifestDefinitionService,
-          itemService,
+          allItemDefinitions,
+          allItemsSockets,
           plugService,
           sessionId,
           characterInfo.membershipType,
@@ -201,14 +202,7 @@ const cmd: CommandDefinition = {
 
     const exportLinesGroups: string[][] = [];
 
-    logger.info(`Fetching item definition for ${subclass.itemHash} ...`);
-    const [subclassDefinitionErr, subclassDefinition] =
-      await manifestDefinitionService.getItemDefinition(subclass.itemHash);
-    if (subclassDefinitionErr) {
-      return logger.loggedError(
-        `Unable to fetch item definition for ${subclass.itemHash}: ${subclassDefinitionErr.message}`
-      );
-    }
+    const subclassDefinition = allItemDefinitions[subclass.itemHash];
 
     const exportedLoadoutName =
       loadoutName || `${subclassDefinition?.displayProperties.name || "UNKNOWN SUBCLASS"} Loadout`;
@@ -217,7 +211,7 @@ const cmd: CommandDefinition = {
 
     const subclassExportLines: string[] = [];
     const [serializeSubclassErr, serializedSubclass] = await serializeItem(
-      manifestDefinitionService,
+      allItemDefinitions,
       subclass,
       true
     );
@@ -247,7 +241,7 @@ const cmd: CommandDefinition = {
         separateEquipments: false,
         equipments: equipments.filter(
           (equipment) =>
-            !extraItemHashes.includes(equipment.itemHash) &&
+            !unequippedItemHashes.includes(equipment.itemHash) &&
             !ArmourBucketHashes.includes(equipment.bucketHash)
         )
       },
@@ -256,7 +250,7 @@ const cmd: CommandDefinition = {
         separateEquipments: true,
         equipments: equipments.filter(
           (equipment) =>
-            !extraItemHashes.includes(equipment.itemHash) &&
+            !unequippedItemHashes.includes(equipment.itemHash) &&
             ArmourBucketHashes.includes(equipment.bucketHash)
         )
       },
@@ -265,7 +259,7 @@ const cmd: CommandDefinition = {
         separateEquipments: false,
         equipments: equipments.filter(
           (equipment) =>
-            extraItemHashes.includes(equipment.itemHash) &&
+            unequippedItemHashes.includes(equipment.itemHash) &&
             !ArmourBucketHashes.includes(equipment.bucketHash)
         )
       },
@@ -274,7 +268,7 @@ const cmd: CommandDefinition = {
         separateEquipments: true,
         equipments: equipments.filter(
           (equipment) =>
-            extraItemHashes.includes(equipment.itemHash) &&
+            unequippedItemHashes.includes(equipment.itemHash) &&
             ArmourBucketHashes.includes(equipment.bucketHash)
         )
       }
@@ -288,7 +282,7 @@ const cmd: CommandDefinition = {
       const lines: string[] = [];
 
       const [serializeEquipmentErr, serializedEquipment] = await serializeItem(
-        manifestDefinitionService,
+        allItemDefinitions,
         equipment,
         !isExtra
       );

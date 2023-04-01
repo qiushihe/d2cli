@@ -26,7 +26,7 @@ import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
 import { Destiny2ActionService } from "~src/service/destiny2-action/destiny2-action.service";
 import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
-import { resolveProfileAllItems } from "~src/service/destiny2-component-data/profile.resolver";
+import { resolveProfileCharacterItemsAndVaultItemsAndItemPlugHashes } from "~src/service/destiny2-component-data/profile.resolver";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PastebinService } from "~src/service/pastebin/pastebin.service";
 import { PlugService } from "~src/service/plug/plug.service";
@@ -261,7 +261,7 @@ const cmd: CommandDefinition = {
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId,
-      resolveProfileAllItems
+      resolveProfileCharacterItemsAndVaultItemsAndItemPlugHashes
     );
     if (allItemsErr) {
       return logger.loggedError(`Unable to index items: ${allItemsErr.message}`);

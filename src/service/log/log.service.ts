@@ -1,63 +1,12 @@
 import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 
+import { errorLogger } from "./log.logger";
+import { warningLogger } from "./log.logger";
+import { infoLogger } from "./log.logger";
+import { debugLogger } from "./log.logger";
+import { messageLogger } from "./log.logger";
 import { Logger } from "./log.types";
-
-export const LOG_LEVEL = {
-  error: 100,
-  warning: 200,
-  info: 300,
-  debug: 400
-};
-
-export const errorLogger =
-  (namespace: string, logLevel: number) =>
-  (...args: any[]) => {
-    if (logLevel >= LOG_LEVEL.error) {
-      if (logLevel >= LOG_LEVEL.debug) {
-        console.error(`- ERR - [${namespace}]`, ...args);
-      } else {
-        console.error(`- ERR -`, ...args);
-      }
-    }
-  };
-
-export const warningLogger =
-  (namespace: string, logLevel: number) =>
-  (...args: any[]) => {
-    if (logLevel >= LOG_LEVEL.warning) {
-      if (logLevel >= LOG_LEVEL.debug) {
-        console.warn(`- WRN - [${namespace}]`, ...args);
-      } else {
-        console.warn(`- WRN -`, ...args);
-      }
-    }
-  };
-export const infoLogger =
-  (namespace: string, logLevel: number) =>
-  (...args: any[]) => {
-    if (logLevel >= LOG_LEVEL.info) {
-      if (logLevel >= LOG_LEVEL.debug) {
-        console.log(`- INF - [${namespace}]`, ...args);
-      } else {
-        console.log(`- INF -`, ...args);
-      }
-    }
-  };
-
-export const debugLogger =
-  (namespace: string, logLevel: number) =>
-  (...args: any[]) => {
-    if (logLevel >= LOG_LEVEL.debug) {
-      console.log(`- DBG - [${namespace}]`, ...args);
-    }
-  };
-
-export const messageLogger =
-  () =>
-  (...args: any[]) => {
-    console.log(...args);
-  };
 
 export class LogService {
   private readonly config: ConfigService;

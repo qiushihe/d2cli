@@ -4,10 +4,8 @@ import * as path from "path";
 
 import { ensureDirectoryExistSync } from "~src/helper/fs.helper";
 import { triedFn } from "~src/helper/function.helper";
-import { AppModule } from "~src/module/app.module";
-import { errorLogger, LogService } from "~src/service/log/log.service";
-import { LOG_LEVEL } from "~src/service/log/log.service";
-import { Logger } from "~src/service/log/log.types";
+import { LOG_LEVEL } from "~src/service/log/log.enum";
+import { errorLogger } from "~src/service/log/log.logger";
 
 import { AppConfigName } from "./config.types";
 
@@ -135,9 +133,5 @@ export class ConfigService {
 
   private getConfigRootPath(): string {
     return path.resolve(homedir(), ".d2cli");
-  }
-
-  private getLogger(): Logger {
-    return AppModule.getDefaultInstance().resolve(LogService).getLogger("ConfigService");
   }
 }

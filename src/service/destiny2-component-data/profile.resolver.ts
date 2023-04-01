@@ -71,7 +71,7 @@ export const resolveProfileInventoryItemInstances: ComponentDataResolver<
   }
 };
 
-export const resolveProfileAllItems: ComponentDataResolver<
+export const resolveProfileCharacterItemsAndVaultItemsAndItemPlugHashes: ComponentDataResolver<
   DestinyProfileResponse,
   {
     charactersItems: Record<
@@ -79,7 +79,6 @@ export const resolveProfileAllItems: ComponentDataResolver<
       { equipped: DestinyItemComponent[]; unequipped: DestinyItemComponent[] }
     >;
     vaultItems: DestinyItemComponent[];
-    itemInstances: Record<string, DestinyItemInstanceComponent>;
     itemPlugHashes: Record<string, number[]>;
   }
 > = {
@@ -87,7 +86,6 @@ export const resolveProfileAllItems: ComponentDataResolver<
     DestinyComponentType.ProfileInventories,
     DestinyComponentType.CharacterInventories,
     DestinyComponentType.CharacterEquipment,
-    DestinyComponentType.ItemInstances,
     DestinyComponentType.ItemSockets
   ],
   resolve: (res) => {
@@ -114,8 +112,6 @@ export const resolveProfileAllItems: ComponentDataResolver<
 
     const vaultItems = res?.profileInventory?.data?.items || [];
 
-    const itemInstances = res?.itemComponents?.instances?.data || {};
-
     const itemPlugHashes = Object.entries(res?.itemComponents?.sockets?.data || {}).reduce(
       (acc, [itemInstanceId, data]) => ({
         ...acc,
@@ -124,6 +120,6 @@ export const resolveProfileAllItems: ComponentDataResolver<
       {} as Record<string, number[]>
     );
 
-    return [null, { charactersItems, vaultItems, itemInstances, itemPlugHashes }];
+    return [null, { charactersItems, vaultItems, itemPlugHashes }];
   }
 };
