@@ -275,7 +275,10 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
 
           for (
             let plugIndex = 0;
-            plugIndex < Math.max(equippedRecords.length, unequippedRecords.length);
+            plugIndex <
+            (showAll
+              ? Math.max(equippedRecords.length, unequippedRecords.length)
+              : equippedRecords.length);
             plugIndex++
           ) {
             const equippedPlug = equippedRecords[plugIndex] || null;
