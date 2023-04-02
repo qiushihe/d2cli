@@ -1,9 +1,8 @@
+import { ArmourBucketHashes, WeaponBucketHashes } from "~src/enum/inventory.enum";
 import { SUBCLASS_SOCKET_NAMES } from "~src/enum/loadout.enum";
 import { ARMOUR_SOCKET_NAMES } from "~src/enum/loadout.enum";
 import { WEAPON_SOCKET_NAMES } from "~src/enum/loadout.enum";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
-import { WeaponBucketHashes } from "~src/helper/inventory-bucket.helper";
-import { ArmourBucketHashes } from "~src/helper/inventory-bucket.helper";
 import { AppModule } from "~src/module/app.module";
 import { resolveCharacterItems } from "~src/service/destiny2-component-data/character.resolver";
 import { Destiny2ComponentDataService } from "~src/service/destiny2-component-data/destiny2-component-data.service";
@@ -14,22 +13,8 @@ import { PlugService } from "~src/service/plug/plug.service";
 import { SocketName } from "~src/service/plug/plug.service.types";
 import { DestinyItemSocketsComponent } from "~type/bungie-api/destiny/entities/items.types";
 
-export type ExportedItemType = "SUBCLASS" | "WEAPON" | "ARMOUR";
-
-export type ExportedItem = {
-  type: ExportedItemType;
-  isExtra: boolean;
-  itemHash: number;
-  itemInstanceId: string;
-  itemName: string;
-  plugs: ExportedPlug[];
-};
-
-export type ExportedPlug = {
-  itemHash: number;
-  itemName: string;
-  socketIndex: number;
-};
+import { ExportedItem } from "./loadout-export.types";
+import { ExportedPlug } from "./loadout-export.types";
 
 export class LoadoutExportService {
   private readonly manifestDefinitionService: ManifestDefinitionService;
@@ -45,6 +30,99 @@ export class LoadoutExportService {
     );
 
     this.plugService = AppModule.getDefaultInstance().resolve(PlugService);
+  }
+
+  serializeExportedItems(loadoutName: string, exportedItems: ExportedItem[]): [string, string] {
+    const loadoutLinesGroups: string[][] = [];
+
+    const exportedLoadoutName = loadoutName || "Exported Loadout";
+    loadoutLinesGroups.push([`LOADOUT // ${exportedLoadoutName}`]);
+
+    exportedItems
+      .filter((item) => item.type === "SUBCLASS")
+      .forEach((item) => {
+        const loadoutSubclassGroup: string[] = [];
+
+        loadoutSubclassGroup.push(
+          `EQUIP // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
+        );
+
+        item.plugs.forEach((plug) => {
+          loadoutSubclassGroup.push(
+            `SOCKET // ${item.itemHash}:${item.itemInstanceId}::index:${plug.socketIndex}::plug:${plug.itemHash} // ${plug.itemName}`
+          );
+        });
+
+        loadoutLinesGroups.push(loadoutSubclassGroup);
+      });
+
+    const loadoutWeaponsGroup: string[] = [];
+
+    exportedItems
+      .filter((item) => !item.isExtra && item.type === "WEAPON")
+      .forEach((item) => {
+        loadoutWeaponsGroup.push(
+          `EQUIP // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
+        );
+      });
+
+    loadoutLinesGroups.push(loadoutWeaponsGroup);
+
+    exportedItems
+      .filter((item) => !item.isExtra && item.type === "ARMOUR")
+      .forEach((item) => {
+        const loadoutArmourGroup: string[] = [];
+
+        loadoutArmourGroup.push(
+          `EQUIP // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
+        );
+
+        item.plugs.forEach((plug) => {
+          loadoutArmourGroup.push(
+            `SOCKET // ${item.itemHash}:${item.itemInstanceId}::index:${plug.socketIndex}::plug:${plug.itemHash} // ${plug.itemName}`
+          );
+        });
+
+        loadoutLinesGroups.push(loadoutArmourGroup);
+      });
+
+    const loadoutExtraWeaponsGroup: string[] = [];
+
+    exportedItems
+      .filter((item) => item.isExtra && item.type === "WEAPON")
+      .forEach((item) => {
+        loadoutExtraWeaponsGroup.push(
+          `EXTRA // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
+        );
+      });
+
+    loadoutLinesGroups.push(loadoutExtraWeaponsGroup);
+
+    exportedItems
+      .filter((item) => item.isExtra && item.type === "ARMOUR")
+      .forEach((item) => {
+        const loadoutExtraArmourGroup: string[] = [];
+
+        loadoutExtraArmourGroup.push(
+          `EXTRA // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
+        );
+
+        item.plugs.forEach((plug) => {
+          loadoutExtraArmourGroup.push(
+            `SOCKET // ${item.itemHash}:${item.itemInstanceId}::index:${plug.socketIndex}::plug:${plug.itemHash} // ${plug.itemName}`
+          );
+        });
+
+        loadoutLinesGroups.push(loadoutExtraArmourGroup);
+      });
+
+    return [
+      exportedLoadoutName,
+      loadoutLinesGroups
+        .filter((loadoutLinesGroup) => loadoutLinesGroup.length > 0)
+        .map((loadoutLinesGroup) => loadoutLinesGroup.join("\n"))
+        .join("\n\n")
+    ];
   }
 
   async exportLoadout(

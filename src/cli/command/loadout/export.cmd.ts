@@ -10,7 +10,6 @@ import { IncludeUnequippedCommandOptions } from "~src/cli/command-option/loadout
 import { CommandDefinition } from "~src/cli/d2cli.types";
 import { getEditedContent } from "~src/helper/edit.helper";
 import { promisedFn } from "~src/helper/promise.helper";
-import { AppModule } from "~src/module/app.module";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { ConfigService } from "~src/service/config/config.service";
 import { AppConfigName } from "~src/service/config/config.types";
@@ -60,6 +59,8 @@ const cmd: CommandDefinition = {
 
     const pastebinService = app.resolve(PastebinService);
 
+    const loadoutExportService = app.resolve(LoadoutExportService);
+
     const [characterInfoErr, characterInfo] =
       await characterSelectionService.ensureSelectedCharacter(sessionId);
     if (characterInfoErr) {
@@ -67,108 +68,22 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Exporting loadout ...");
-    const [exportedItemsErr, exportedItems] = await AppModule.getDefaultInstance()
-      .resolve(LoadoutExportService)
-      .exportLoadout(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId,
-        includeUnequipped
-      );
+    const [exportedItemsErr, exportedItems] = await loadoutExportService.exportLoadout(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId,
+      includeUnequipped
+    );
     if (exportedItemsErr) {
       return logger.loggedError(`Unable to export loadout: ${exportedItemsErr.message}`);
     }
 
     logger.info("Serializing loadout ...");
-
-    const loadoutLinesGroups: string[][] = [];
-
-    const exportedLoadoutName = loadoutName || "Exported Loadout";
-    loadoutLinesGroups.push([`LOADOUT // ${exportedLoadoutName}`]);
-
-    exportedItems
-      .filter((item) => item.type === "SUBCLASS")
-      .forEach((item) => {
-        const loadoutSubclassGroup: string[] = [];
-
-        loadoutSubclassGroup.push(
-          `EQUIP // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
-        );
-
-        item.plugs.forEach((plug) => {
-          loadoutSubclassGroup.push(
-            `SOCKET // ${item.itemHash}:${item.itemInstanceId}::index:${plug.socketIndex}::plug:${plug.itemHash} // ${plug.itemName}`
-          );
-        });
-
-        loadoutLinesGroups.push(loadoutSubclassGroup);
-      });
-
-    const loadoutWeaponsGroup: string[] = [];
-
-    exportedItems
-      .filter((item) => !item.isExtra && item.type === "WEAPON")
-      .forEach((item) => {
-        loadoutWeaponsGroup.push(
-          `EQUIP // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
-        );
-      });
-
-    loadoutLinesGroups.push(loadoutWeaponsGroup);
-
-    exportedItems
-      .filter((item) => !item.isExtra && item.type === "ARMOUR")
-      .forEach((item) => {
-        const loadoutArmourGroup: string[] = [];
-
-        loadoutArmourGroup.push(
-          `EQUIP // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
-        );
-
-        item.plugs.forEach((plug) => {
-          loadoutArmourGroup.push(
-            `SOCKET // ${item.itemHash}:${item.itemInstanceId}::index:${plug.socketIndex}::plug:${plug.itemHash} // ${plug.itemName}`
-          );
-        });
-
-        loadoutLinesGroups.push(loadoutArmourGroup);
-      });
-
-    const loadoutExtraWeaponsGroup: string[] = [];
-
-    exportedItems
-      .filter((item) => item.isExtra && item.type === "WEAPON")
-      .forEach((item) => {
-        loadoutExtraWeaponsGroup.push(
-          `EXTRA // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
-        );
-      });
-
-    loadoutLinesGroups.push(loadoutExtraWeaponsGroup);
-
-    exportedItems
-      .filter((item) => item.isExtra && item.type === "ARMOUR")
-      .forEach((item) => {
-        const loadoutExtraArmourGroup: string[] = [];
-
-        loadoutExtraArmourGroup.push(
-          `EXTRA // ${item.itemHash}:${item.itemInstanceId} // ${item.itemName}`
-        );
-
-        item.plugs.forEach((plug) => {
-          loadoutExtraArmourGroup.push(
-            `SOCKET // ${item.itemHash}:${item.itemInstanceId}::index:${plug.socketIndex}::plug:${plug.itemHash} // ${plug.itemName}`
-          );
-        });
-
-        loadoutLinesGroups.push(loadoutExtraArmourGroup);
-      });
-
-    const exportedLoadout = loadoutLinesGroups
-      .filter((loadoutLinesGroup) => loadoutLinesGroup.length > 0)
-      .map((loadoutLinesGroup) => loadoutLinesGroup.join("\n"))
-      .join("\n\n");
+    const [exportedLoadoutName, exportedLoadout] = loadoutExportService.serializeExportedItems(
+      loadoutName,
+      exportedItems
+    );
 
     let editedExportedLoadout: string;
     if (editBeforeExport) {

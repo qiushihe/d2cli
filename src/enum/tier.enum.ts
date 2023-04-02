@@ -1,0 +1,1 @@
+export const EXOTIC_TIER_TYPE_HASH = 2759499571;
