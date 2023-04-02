@@ -82,7 +82,6 @@ const cmd: CommandDefinition = {
     for (let itemIndex = 0; itemIndex < itemsToPull.length; itemIndex++) {
       const { itemNumber, item } = itemsToPull[itemIndex];
 
-      logger.info(`Fetching item definition for ${item.itemHash} ...`);
       const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
         item.itemHash
       );

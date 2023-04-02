@@ -50,7 +50,6 @@ const cmd: CommandDefinition = {
       return logger.loggedError(`Unable to get character info: ${characterInfoErr.message}`);
     }
 
-    logger.info(`Fetching item definition for ${itemIdentifier.itemHash} ...`);
     const [itemDefinitionErr, itemDefinition] = await manifestDefinitionService.getItemDefinition(
       itemIdentifier.itemHash
     );
@@ -60,7 +59,6 @@ const cmd: CommandDefinition = {
       );
     }
 
-    logger.info(`Fetching item definition for ${plugItemHash} ...`);
     const [plugItemDefinitionErr, plugItemDefinition] =
       await manifestDefinitionService.getItemDefinition(plugItemHash);
     if (plugItemDefinitionErr) {

@@ -1,0 +1,5 @@
+export const SUBCLASS_SOCKET_NAMES = ["ABILITIES", "SUPER", "ASPECTS", "FRAGMENTS"];
+
+export const WEAPON_SOCKET_NAMES = [];
+
+export const ARMOUR_SOCKET_NAMES = ["ARMOR MODS"];

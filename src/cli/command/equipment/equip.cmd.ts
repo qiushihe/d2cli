@@ -68,7 +68,6 @@ const cmd: CommandDefinition = {
         const rowColumns: string[] = [];
 
         if (item) {
-          logger.info(`Fetching item definition for ${item.itemHash} ...`);
           const [itemDefinitionErr, itemDefinition] =
             await manifestDefinitionService.getItemDefinition(item.itemHash);
           if (itemDefinitionErr) {

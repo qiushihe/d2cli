@@ -140,11 +140,11 @@ export class ManifestDefinitionService {
     }
 
     if (cachedItemDefinition) {
-      logger.debug(`Cache hit for ${typeName} for ${hash}`);
+      logger.debug(`Cache hit for ${typeName} manifest component for ${hash}`);
       return [null, cachedItemDefinition];
     } else {
-      logger.debug(`Cache miss for ${typeName} for ${hash}`);
-
+      logger.debug(`Cache miss for ${typeName} manifest component for ${hash}`);
+      logger.debug(`Retrieving ${typeName} manifest component for ${hash} ...`);
       const [itemDefinitionsErr, itemDefinitions] =
         await this.destiny2ManifestService.getManifestComponent<TManifestComponent>(
           language,
@@ -156,6 +156,7 @@ export class ManifestDefinitionService {
 
       const itemDefinition = itemDefinitions[hash];
 
+      logger.debug(`Writing ${typeName} manifest component cache for ${hash}`);
       const writeCacheErr = await this.cacheService.set(
         cacheNamespace,
         cacheKey,

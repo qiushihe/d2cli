@@ -57,7 +57,6 @@ const cmd: CommandDefinition = {
     ) {
       const postmasterItem = postmasterItems[postmasterItemIndex];
 
-      logger.info(`Fetching item definition for ${postmasterItem.itemHash} ...`);
       const [postmasterItemDefinitionErr, postmasterItemDefinition] =
         await manifestDefinitionService.getItemDefinition(postmasterItem.itemHash);
       if (postmasterItemDefinitionErr) {

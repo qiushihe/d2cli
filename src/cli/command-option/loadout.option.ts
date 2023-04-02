@@ -11,7 +11,7 @@ export const loadoutNameOption: CommandOptionDefinition = {
 };
 
 export type IncludeUnequippedCommandOptions = {
-  includeUnequipped: string;
+  includeUnequipped: boolean;
 };
 
 export const includeUnequippedOption: CommandOptionDefinition = {

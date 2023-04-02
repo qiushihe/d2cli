@@ -5,8 +5,8 @@ import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { showAllOption } from "~src/cli/command-option/cli.option";
 import { ShowAllCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
+import { SUBCLASS_SOCKET_NAMES } from "~src/enum/loadout.enum";
 import { getSubclassItems } from "~src/helper/inventory-bucket.helper";
-import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { makeTable2 } from "~src/helper/table.helper";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
@@ -99,7 +99,6 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
       for (let subClassIndex = 0; subClassIndex < allSubclasses.length; subClassIndex++) {
         const subclass = allSubclasses[subClassIndex];
 
-        logger.info(`Retrieving subclass definitions for ${subclass.itemHash} ...`);
         const [subclassDefinitionErr, subclassDefinition] =
           await manifestDefinitionService.getItemDefinition(subclass.itemHash);
         if (subclassDefinitionErr) {
@@ -141,11 +140,7 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
           logger.info(
             `Fetching ${subclassName} ${socketName.toLocaleLowerCase()} socket indices ...`
           );
-          const [socketIndicesErr, socketIndices] = await plugService.getSocketIndices(
-            sessionId,
-            characterInfo.membershipType,
-            characterInfo.membershipId,
-            characterInfo.characterId,
+          const [socketIndicesErr, socketIndices] = await plugService.getItemSocketIndices(
             subclass.itemHash,
             socketName
           );
@@ -191,7 +186,6 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
             ) {
               const plugItemHash = slotPlugItemHashes[plugItemIndex];
 
-              logger.info(`Retrieving plug item definitions for ${plugItemHash} ...`);
               const [plugItemDefinitionErr, plugItemDefinition] =
                 await manifestDefinitionService.getItemDefinition(plugItemHash);
               if (plugItemDefinitionErr) {

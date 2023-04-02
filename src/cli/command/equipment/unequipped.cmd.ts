@@ -68,7 +68,6 @@ const cmd: CommandDefinition = {
       ) {
         const unEquippedItem = bucketItems[unEquippedItemIndex];
 
-        logger.info(`Fetching item definition for ${unEquippedItem.itemHash} ...`);
         const [unEquippedItemDefinitionErr, unEquippedItemDefinition] =
           await manifestDefinitionService.getItemDefinition(unEquippedItem.itemHash);
         if (unEquippedItemDefinitionErr) {

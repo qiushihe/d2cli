@@ -87,7 +87,6 @@ const cmd: CommandDefinition = {
     ) {
       const progression = displayProgressions[progressionIndex];
 
-      logger.info(`Fetching progression definition for ${progression.progressionHash} ...`);
       const [progressionDefinitionErr, progressionDefinition] =
         await manifestDefinitionService.getProgressionDefinition(progression.progressionHash);
       if (progressionDefinitionErr) {

@@ -6,6 +6,7 @@ import { SessionIdCommandOptions } from "~src/cli/command-option/cli.option";
 import { verboseOption } from "~src/cli/command-option/cli.option";
 import { VerboseCommandOptions } from "~src/cli/command-option/cli.option";
 import { CommandDefinition } from "~src/cli/d2cli.types";
+import { SUBCLASS_SOCKET_NAMES } from "~src/enum/loadout.enum";
 import { getEditedContent } from "~src/helper/edit.helper";
 import { LoadoutItem } from "~src/helper/loadout-apply.helper";
 import { LoadoutPlug } from "~src/helper/loadout-apply.helper";
@@ -18,7 +19,6 @@ import { resolveEquipActions } from "~src/helper/loadout-apply.helper";
 import { resolveSocketActions } from "~src/helper/loadout-apply.helper";
 import { applyLoadoutAction } from "~src/helper/loadout-apply.helper";
 import { promisedFn } from "~src/helper/promise.helper";
-import { SUBCLASS_SOCKET_NAMES } from "~src/helper/subclass.helper";
 import { makeTable2 } from "~src/helper/table.helper";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
 import { CharacterSelectionService } from "~src/service/character-selection/character-selection.service";
@@ -524,14 +524,7 @@ const cmd: CommandDefinition = {
 
       if (itemType === "ARMOUR") {
         const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] =
-          await plugService.getSocketIndices(
-            sessionId,
-            characterInfo.membershipType,
-            characterInfo.membershipId,
-            characterInfo.characterId,
-            itemHash,
-            "ARMOR MODS"
-          );
+          await plugService.getItemSocketIndices(itemHash, "ARMOR MODS");
         if (armourPlugItemSocketIndicesErr) {
           return logger.loggedError(
             `Unable to retrieve armour mod socket indices: ${armourPlugItemSocketIndicesErr.message}`
@@ -548,11 +541,7 @@ const cmd: CommandDefinition = {
         ) {
           const socketName = SUBCLASS_SOCKET_NAMES[socketNameIndex] as SocketName;
 
-          const [socketIndicesErr, socketIndices] = await plugService.getSocketIndices(
-            sessionId,
-            characterInfo.membershipType,
-            characterInfo.membershipId,
-            characterInfo.characterId,
+          const [socketIndicesErr, socketIndices] = await plugService.getItemSocketIndices(
             itemHash,
             socketName
           );

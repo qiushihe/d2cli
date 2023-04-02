@@ -92,7 +92,6 @@ const cmd: CommandDefinition = {
     for (let vendorHashIndex = 0; vendorHashIndex < vendorHashes.length; vendorHashIndex++) {
       const vendorHash = vendorHashes[vendorHashIndex];
 
-      logger.info(`Fetching vendor definition for ${vendorHash} ...`);
       const [vendorDefinitionErr, vendorDefinition] =
         await manifestDefinitionService.getVendorDefinition(vendorHash);
       if (vendorDefinitionErr) {
@@ -119,7 +118,6 @@ const cmd: CommandDefinition = {
 
         const location = vendorDefinition.locations[vendor.vendorLocationIndex];
         if (location) {
-          logger.info(`Fetching destination definition for ${location.destinationHash} ...`);
           const [destinationDefinitionErr, destinationDefinition] =
             await manifestDefinitionService.getDestinationDefinition(location.destinationHash);
           if (destinationDefinitionErr) {
@@ -129,7 +127,6 @@ const cmd: CommandDefinition = {
           }
 
           if (destinationDefinition) {
-            logger.info(`Fetching place definition for ${destinationDefinition.placeHash} ...`);
             const [placeDefinitionErr, placeDefinition] =
               await manifestDefinitionService.getPlaceDefinition(destinationDefinition.placeHash);
             if (placeDefinitionErr) {

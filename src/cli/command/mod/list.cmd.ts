@@ -50,14 +50,7 @@ const cmd: CommandDefinition = {
 
     logger.info("Retrieving armour mod socket indices ...");
     const [armourPlugItemSocketIndicesErr, armourPlugItemSocketIndices] =
-      await plugService.getSocketIndices(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId,
-        itemIdentifier.itemHash,
-        "ARMOR MODS"
-      );
+      await plugService.getItemSocketIndices(itemIdentifier.itemHash, "ARMOR MODS");
     if (armourPlugItemSocketIndicesErr) {
       return logger.loggedError(
         `Unable to retrieve armour mod socket indices: ${armourPlugItemSocketIndicesErr.message}`
@@ -106,7 +99,6 @@ const cmd: CommandDefinition = {
         const plugItemHash = plugItemHashes[plugIndex];
         const isEquipped = equippedPlugHashes[slotIndex] === plugItemHash;
 
-        logger.info(`Retrieving plug item definition for ${plugItemHash} ...`);
         const [plugItemDefinitionErr, plugItemDefinition] =
           await manifestDefinitionService.getItemDefinition(plugItemHash);
         if (plugItemDefinitionErr) {

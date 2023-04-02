@@ -27,17 +27,10 @@ export class PlugService {
       AppModule.getDefaultInstance().resolve(ManifestDefinitionService);
   }
 
-  async getSocketIndices(
-    sessionId: string,
-    membershipType: number,
-    membershipId: string,
-    characterId: string,
+  async getItemSocketIndices(
     itemHash: number,
     socketName: SocketName
   ): Promise<[Error, null] | [null, number[]]> {
-    const logger = this.getLogger();
-
-    logger.debug(`Fetching item definition for ${itemHash} ...`);
     const [itemDefinitionErr, itemDefinition] =
       await this.manifestDefinitionService.getItemDefinition(itemHash);
     if (itemDefinitionErr) {
@@ -60,7 +53,6 @@ export class PlugService {
     ) {
       const socketCategory = itemDefinitionSocketCategories[socketCategoryIndex];
 
-      logger.debug(`Fetching socket category definition for ${itemHash} ...`);
       const [socketCategoryDefinitionErr, socketCategoryDefinition] =
         await this.manifestDefinitionService.getSocketCategoryDefinition(
           socketCategory.socketCategoryHash
@@ -89,9 +81,6 @@ export class PlugService {
     itemHash: number,
     socketName: SocketName
   ): Promise<[Error, null] | [null, number[][]]> {
-    const logger = this.getLogger();
-
-    logger.debug(`Fetching item definition for ${itemHash} ...`);
     const [itemDefinitionErr, itemDefinition] =
       await this.manifestDefinitionService.getItemDefinition(itemHash);
     if (itemDefinitionErr) {
@@ -104,14 +93,7 @@ export class PlugService {
       return [new Error(`Item has no sockets`), null];
     }
 
-    const [socketIndicesErr, socketIndices] = await this.getSocketIndices(
-      sessionId,
-      membershipType,
-      membershipId,
-      characterId,
-      itemHash,
-      socketName
-    );
+    const [socketIndicesErr, socketIndices] = await this.getItemSocketIndices(itemHash, socketName);
     if (socketIndicesErr) {
       return [socketIndicesErr, null];
     }

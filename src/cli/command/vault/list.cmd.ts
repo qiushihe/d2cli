@@ -54,7 +54,6 @@ const cmd: CommandDefinition = {
     for (let vaultItemIndex = 0; vaultItemIndex < vaultItems.length; vaultItemIndex++) {
       const vaultItem = vaultItems[vaultItemIndex];
 
-      logger.info(`Fetching item definition for ${vaultItem.itemHash} ...`);
       const [vaultItemDefinitionErr, vaultItemDefinition] =
         await manifestDefinitionService.getItemDefinition(vaultItem.itemHash);
       if (vaultItemDefinitionErr) {

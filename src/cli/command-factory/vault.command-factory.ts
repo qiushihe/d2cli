@@ -94,7 +94,6 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           const rowColumns: string[] = [];
 
           if (item) {
-            logger.info(`Fetching item definition for ${item.itemHash} ...`);
             const [itemDefinitionErr, itemDefinition] =
               await manifestDefinitionService.getItemDefinition(item.itemHash);
             if (itemDefinitionErr) {
