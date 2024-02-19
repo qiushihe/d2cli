@@ -4,7 +4,6 @@ import auth from "./auth.cmd";
 import character from "./character.cmd";
 import config from "./config.cmd";
 import equipment from "./equipment.cmd";
-import loadout from "./loadout.cmd";
 import mod from "./mod.cmd";
 import postmaster from "./postmaster.cmd";
 import progression from "./progression.cmd";
@@ -17,7 +16,6 @@ export const commands: CommandDefinitions = {
   character,
   config,
   equipment,
-  loadout,
   mod,
   postmaster,
   progression,

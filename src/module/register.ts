@@ -11,8 +11,6 @@ import { Destiny2ComponentDataService } from "~src/service/destiny2-component-da
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { InventoryService } from "~src/service/inventory/inventory.service";
 import { ItemService } from "~src/service/item/item.service";
-import { LoadoutApplyService } from "~src/service/loadout-apply/loadout-apply.service";
-import { LoadoutExportService } from "~src/service/loadout-export/loadout-export.service";
 import { LogService } from "~src/service/log/log.service";
 import { ManifestDefinitionService } from "~src/service/manifest-definition/manifest-definition.service";
 import { PastebinService } from "~src/service/pastebin/pastebin.service";
@@ -38,8 +36,6 @@ const MODULE: (new () => any)[] = [
   Destiny2ManifestService,
   InventoryService,
   ItemService,
-  LoadoutApplyService,
-  LoadoutExportService,
   LogService,
   ManifestDefinitionService,
   PastebinService,
