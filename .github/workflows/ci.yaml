@@ -26,7 +26,7 @@ jobs:
         run: npm clean-install
 
   linter:
-    needs: [setup]
+    needs: [ setup ]
     name: Linter
     runs-on: ubuntu-latest
     steps:
@@ -47,7 +47,7 @@ jobs:
         run: npm run test:lint
 
   type-check:
-    needs: [setup]
+    needs: [ setup ]
     name: Type Check
     runs-on: ubuntu-latest
     steps:
@@ -68,7 +68,7 @@ jobs:
         run: npm run test:tsc
 
   unit-tests:
-    needs: [setup]
+    needs: [ setup ]
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
@@ -88,21 +88,9 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-  # This job has no real steps, and is only there to check various conditions to see if deployment
-  # in general should happen at all. This way, deployment jobs can "need" this job, thus sharing
-  # some common pre-deployment conditions, and if those common conditions fail, then none of the
-  # deployment job would run.
-  pre-deploy:
-    name: Pre-Deployment Check
-    needs: [linter, type-check, unit-tests]
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' }}
-    steps:
-      - run: echo "Pre-Deployment Check"
-
-  deploy:
-    name: Deployment
-    needs: [pre-deploy]
+  compile-bundle:
+    name: Compile Bundle from Source
+    needs: [ linter, type-check, unit-tests ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
@@ -118,5 +106,38 @@ jobs:
       - name: Install dependencies
         if: steps.cache-working-directory.outputs.cache-hit != 'true'
         run: npm clean-install
-      - name: Do something
-        run: echo "something"
+      - uses: actions/cache@v4
+        id: cache-working-directory-with-bundle
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
+      - name: Clean working directory
+        run: |
+          npm run clean
+          npm run build:rollup
+
+  linux-binary:
+    name: Build Native Linux Binary
+    needs: [ compile-bundle ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - uses: actions/cache@v4
+        id: cache-working-directory-with-bundle
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
+      - uses: actions/checkout@v4
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+      - name: Install dependencies
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        run: npm clean-install
+      - name: Compile with Rollup
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        run: |
+          npm run clean
+          npm run build:rollup
+      - name: Build native binary
+        run: npm run build:nexe:linux
