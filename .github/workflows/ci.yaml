@@ -1,0 +1,122 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - uses: actions/cache@v3
+        id: cache-working-directory
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: npm clean-install
+
+  linter:
+    needs: [setup]
+    name: Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - uses: actions/cache@v3
+        id: cache-working-directory
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
+      - uses: actions/checkout@v3
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+      - name: Install dependencies
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        run: npm clean-install
+      - name: Run linter
+        run: npm run test:lint
+
+  type-check:
+    needs: [setup]
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - uses: actions/cache@v3
+        id: cache-working-directory
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
+      - uses: actions/checkout@v3
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+      - name: Install dependencies
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        run: npm clean-install
+      - name: Run type check
+        run: npm run test:tsc
+
+  unit-tests:
+    needs: [setup]
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - uses: actions/cache@v3
+        id: cache-working-directory
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
+      - uses: actions/checkout@v3
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+      - name: Install dependencies
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        run: npm clean-install
+      - name: Run unit tests
+        run: npm run test:unit
+
+  # This job has no real steps, and is only there to check various conditions to see if deployment
+  # in general should happen at all. This way, deployment jobs can "need" this job, thus sharing
+  # some common pre-deployment conditions, and if those common conditions fail, then none of the
+  # deployment job would run.
+  pre-deploy:
+    name: Pre-Deployment Check
+    needs: [linter, type-check, unit-tests]
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - run: echo "Pre-Deployment Check"
+
+  deploy:
+    name: Deployment
+    needs: [pre-deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - uses: actions/cache@v3
+        id: cache-working-directory
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
+      - uses: actions/checkout@v3
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+      - name: Install dependencies
+        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        run: npm clean-install
+      - name: Do something
+        run: echo "something"
