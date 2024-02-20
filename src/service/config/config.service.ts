@@ -4,8 +4,8 @@ import * as path from "path";
 
 import { ensureDirectoryExistSync } from "~src/helper/fs.helper";
 import { triedFn } from "~src/helper/function.helper";
+import { errorMessageEmitter } from "~src/service/log/log.emitter";
 import { LOG_LEVEL } from "~src/service/log/log.enum";
-import { errorLogger } from "~src/service/log/log.logger";
 
 import { AppConfigName } from "./config.types";
 
@@ -45,7 +45,7 @@ export class ConfigService {
   }
 
   getLogLevel(): number {
-    const logError = errorLogger("ConfigService", LOG_LEVEL.error);
+    const logError = errorMessageEmitter("ConfigService", LOG_LEVEL.error);
 
     let logLevelName: string;
 

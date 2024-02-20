@@ -1,11 +1,11 @@
 import { AppModule } from "~src/module/app.module";
 import { ConfigService } from "~src/service/config/config.service";
 
-import { errorLogger } from "./log.logger";
-import { warningLogger } from "./log.logger";
-import { infoLogger } from "./log.logger";
-import { debugLogger } from "./log.logger";
-import { messageLogger } from "./log.logger";
+import { errorMessageEmitter } from "./log.emitter";
+import { warningMessageEmitter } from "./log.emitter";
+import { infoMessageEmitter } from "./log.emitter";
+import { debugMessageEmitter } from "./log.emitter";
+import { messageEmitter } from "./log.emitter";
 import { Logger } from "./log.types";
 
 export class LogService {
@@ -18,14 +18,14 @@ export class LogService {
   getLogger(namespace: string): Logger {
     const logLevel = this.config.getLogLevel();
 
-    const logError = errorLogger(namespace, logLevel);
+    const logError = errorMessageEmitter(namespace, logLevel);
 
     return {
       error: logError,
-      warn: warningLogger(namespace, logLevel),
-      info: infoLogger(namespace, logLevel),
-      debug: debugLogger(namespace, logLevel),
-      log: messageLogger(),
+      warn: warningMessageEmitter(namespace, logLevel),
+      info: infoMessageEmitter(namespace, logLevel),
+      debug: debugMessageEmitter(namespace, logLevel),
+      log: messageEmitter(),
       loggedError: (message: string, attrs?: Record<string, any>): Error => {
         logError(message);
 
