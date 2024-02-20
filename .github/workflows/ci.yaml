@@ -86,11 +86,6 @@ jobs:
         with:
           path: '.'
           key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
-      - uses: actions/cache@v4
-        id: cache-working-directory-with-bundle
-        with:
-          path: '.'
-          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
       - name: Compile bundle with Rollup
         run: |
           npm run clean
@@ -108,6 +103,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20.x
+      - uses: actions/cache@v4
+        id: cache-working-directory
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
       - uses: actions/download-artifact@v4
         with:
           name: d2cli-bundle-cjs
@@ -123,6 +123,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20.x
+      - uses: actions/cache@v4
+        id: cache-working-directory
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
       - uses: actions/download-artifact@v4
         with:
           name: d2cli-bundle-cjs
@@ -138,6 +143,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20.x
+      - uses: actions/cache@v4
+        id: cache-working-directory
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
       - uses: actions/download-artifact@v4
         with:
           name: d2cli-bundle-cjs
