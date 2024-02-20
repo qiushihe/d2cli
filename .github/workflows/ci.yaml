@@ -194,4 +194,12 @@ jobs:
         with:
           name: d2cli-bin-windows
           path: ./.bin
-      - run: ls -al ./.bin
+      - uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          files: |
+            ./.bin/d2cli-linux
+            ./.bin/d2cli-macos
+            ./.bin/d2cli-windows.exe
+          generate_release_notes: true
