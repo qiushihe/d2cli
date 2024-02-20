@@ -9,8 +9,8 @@ on:
       - '**'
 
 jobs:
-  setup:
-    name: Setup
+  dependencies:
+    name: Install Dependencies
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
@@ -26,7 +26,7 @@ jobs:
         run: npm clean-install
 
   linter:
-    needs: [ setup ]
+    needs: [ dependencies ]
     name: Linter
     runs-on: ubuntu-latest
     steps:
@@ -47,7 +47,7 @@ jobs:
         run: npm run test:lint
 
   type-check:
-    needs: [ setup ]
+    needs: [ dependencies ]
     name: Type Check
     runs-on: ubuntu-latest
     steps:
@@ -68,7 +68,7 @@ jobs:
         run: npm run test:tsc
 
   unit-tests:
-    needs: [ setup ]
+    needs: [ dependencies ]
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
@@ -130,14 +130,66 @@ jobs:
           path: '.'
           key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
       - uses: actions/checkout@v4
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
       - name: Install dependencies
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
         run: npm clean-install
       - name: Compile with Rollup
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
         run: |
           npm run clean
           npm run build:rollup
       - name: Build native binary
         run: npm run build:nexe:linux
+
+  macos-binary:
+    name: Build Native macOS Binary
+    needs: [ compile-bundle ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - uses: actions/cache@v4
+        id: cache-working-directory-with-bundle
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
+      - uses: actions/checkout@v4
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
+      - name: Install dependencies
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
+        run: npm clean-install
+      - name: Compile with Rollup
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
+        run: |
+          npm run clean
+          npm run build:rollup
+      - name: Build native binary
+        run: npm run build:nexe:macos
+
+  windows-binary:
+    name: Build Native Windows Binary
+    needs: [ compile-bundle ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+      - uses: actions/cache@v4
+        id: cache-working-directory-with-bundle
+        with:
+          path: '.'
+          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
+      - uses: actions/checkout@v4
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
+      - name: Install dependencies
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
+        run: npm clean-install
+      - name: Compile with Rollup
+        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
+        run: |
+          npm run clean
+          npm run build:rollup
+      - name: Build native binary
+        run: npm run build:nexe:windows
