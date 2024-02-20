@@ -114,6 +114,10 @@ jobs:
           path: ./dist
       - name: Build native binary
         run: npm run build:nexe:linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d2cli-bin-linux
+          path: ./.bin/d2cli-linux
 
   macos-binary:
     name: Build Native macOS Binary
@@ -134,6 +138,10 @@ jobs:
           path: ./dist
       - name: Build native binary
         run: npm run build:nexe:macos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d2cli-bin-macos
+          path: ./.bin/d2cli-macos
 
   windows-binary:
     name: Build Native Windows Binary
@@ -154,3 +162,7 @@ jobs:
           path: ./dist
       - name: Build native binary
         run: npm run build:nexe:windows
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d2cli-bin-windows
+          path: ./.bin/d2cli-windows.exe
