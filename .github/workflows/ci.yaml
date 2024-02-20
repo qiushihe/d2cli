@@ -38,11 +38,6 @@ jobs:
         with:
           path: '.'
           key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
-      - uses: actions/checkout@v4
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
-      - name: Install dependencies
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
-        run: npm clean-install
       - name: Run linter
         run: npm run test:lint
 
@@ -59,11 +54,6 @@ jobs:
         with:
           path: '.'
           key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
-      - uses: actions/checkout@v4
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
-      - name: Install dependencies
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
-        run: npm clean-install
       - name: Run type check
         run: npm run test:tsc
 
@@ -80,11 +70,6 @@ jobs:
         with:
           path: '.'
           key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
-      - uses: actions/checkout@v4
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
-      - name: Install dependencies
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
-        run: npm clean-install
       - name: Run unit tests
         run: npm run test:unit
 
@@ -101,11 +86,6 @@ jobs:
         with:
           path: '.'
           key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory
-      - uses: actions/checkout@v4
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
-      - name: Install dependencies
-        if: steps.cache-working-directory.outputs.cache-hit != 'true'
-        run: npm clean-install
       - uses: actions/cache@v4
         id: cache-working-directory-with-bundle
         with:
@@ -131,6 +111,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: d2cli-bundle-cjs
+          path: ./dist
       - name: Build native binary
         run: npm run build:nexe:linux
 
@@ -145,6 +126,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: d2cli-bundle-cjs
+          path: ./dist
       - name: Build native binary
         run: npm run build:nexe:macos
 
@@ -159,5 +141,6 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: d2cli-bundle-cjs
+          path: ./dist
       - name: Build native binary
         run: npm run build:nexe:windows
