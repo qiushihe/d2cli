@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf dist .rollup.cache .bin",
-    "build": "npm-run-all clean build:rollup build:pkg",
-    "build:pkg": "pkg --out-path ./.bin ./dist/d2cli.cjs",
+    "build": "npm-run-all clean build:rollup build:nexe",
+    "build:nexe": "npm-run-all build:nexe:linux build:nexe:macos build:nexe:windows",
+    "build:nexe:linux": "nexe --input ./dist/d2cli.cjs --target linux-x64-14.15.3 --output ./.bin/d2cli-linux",
+    "build:nexe:macos": "nexe --input ./dist/d2cli.cjs --target mac-x64-14.15.3 --output ./.bin/d2cli-macos",
+    "build:nexe:windows": "nexe --input ./dist/d2cli.cjs --target windows-x64-14.15.3 --output ./.bin/d2cli-windows.exe",
     "build:rollup": "rollup --config ./rollup.config.js",
     "build:tsc": "tsc --project tsconfig.json",
     "build:tsc:alias": "tsc-alias --project tsconfig.json",
@@ -16,7 +19,6 @@
     "test:lint:fix": "eslint --ext .js --ext .ts --fix ./src ./test ./type",
     "test:unit": "jest --config jest.config.json --runInBand --logHeapUsage"
   },
-  "dependencies": {},
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@rollup/plugin-commonjs": "^24.0.1",
@@ -35,16 +37,14 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-simple-import-sort": "^8.0.0",
     "jest": "^29.3.1",
+    "nexe": "^4.0.0-rc.4",
     "node-fetch": "^2.6.7",
     "npm-run-all": "^4.1.5",
     "opener": "^1.5.2",
-    "pkg": "^5.8.1",
     "prettier": "^2.8.1",
     "rimraf": "^3.0.2",
     "rollup": "^3.20.0",
     "ts-jest": "^29.0.3",
-    "tsc-alias": "^1.8.2",
-    "tsconfig-paths": "^4.1.1",
     "tslib": "^2.5.0",
     "typescript": "^4.9.4"
   }

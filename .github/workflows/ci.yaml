@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 20.x
       - uses: actions/cache@v3
         id: cache-working-directory
         with:
@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 20.x
       - uses: actions/cache@v3
         id: cache-working-directory
         with:
@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 20.x
       - uses: actions/cache@v3
         id: cache-working-directory
         with:
@@ -74,7 +74,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 20.x
       - uses: actions/cache@v3
         id: cache-working-directory
         with:
@@ -107,7 +107,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 20.x
       - uses: actions/cache@v3
         id: cache-working-directory
         with:
