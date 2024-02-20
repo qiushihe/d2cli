@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - '**'
   pull_request:
     branches:
       - '**'
@@ -166,3 +168,30 @@ jobs:
         with:
           name: d2cli-bin-windows
           path: ./.bin/d2cli-windows.exe
+
+  pre-release:
+    name: Pre-Release Check
+    needs: [ linux-binary, macos-binary, windows-binary ]
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+    steps:
+      - run: echo "Pre-Release Check"
+
+  release:
+    name: Create Release
+    needs: [ pre-release ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: d2cli-bin-linux
+          path: ./.bin
+      - uses: actions/download-artifact@v4
+        with:
+          name: d2cli-bin-macos
+          path: ./.bin
+      - uses: actions/download-artifact@v4
+        with:
+          name: d2cli-bin-windows
+          path: ./.bin
+      - run: ls -al ./.bin
