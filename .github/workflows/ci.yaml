@@ -111,10 +111,14 @@ jobs:
         with:
           path: '.'
           key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
-      - name: Clean working directory
+      - name: Compile bundle with Rollup
         run: |
           npm run clean
           npm run build:rollup
+      - uses: actions/upload-artifact@v4
+        with:
+          name: d2cli-bundle-cjs
+          path: ./dist/d2cli.cjs
 
   linux-binary:
     name: Build Native Linux Binary
@@ -124,21 +128,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20.x
-      - uses: actions/cache@v4
-        id: cache-working-directory-with-bundle
+      - uses: actions/download-artifact@v4
         with:
-          path: '.'
-          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
-      - uses: actions/checkout@v4
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-      - name: Install dependencies
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-        run: npm clean-install
-      - name: Compile with Rollup
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-        run: |
-          npm run clean
-          npm run build:rollup
+          name: d2cli-bundle-cjs
       - name: Build native binary
         run: npm run build:nexe:linux
 
@@ -150,21 +142,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20.x
-      - uses: actions/cache@v4
-        id: cache-working-directory-with-bundle
+      - uses: actions/download-artifact@v4
         with:
-          path: '.'
-          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
-      - uses: actions/checkout@v4
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-      - name: Install dependencies
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-        run: npm clean-install
-      - name: Compile with Rollup
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-        run: |
-          npm run clean
-          npm run build:rollup
+          name: d2cli-bundle-cjs
       - name: Build native binary
         run: npm run build:nexe:macos
 
@@ -176,20 +156,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20.x
-      - uses: actions/cache@v4
-        id: cache-working-directory-with-bundle
+      - uses: actions/download-artifact@v4
         with:
-          path: '.'
-          key: ${{ github.event_name }}-${{ github.sha }}-${{ runner.os }}-working-directory-with-bundle
-      - uses: actions/checkout@v4
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-      - name: Install dependencies
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-        run: npm clean-install
-      - name: Compile with Rollup
-        if: steps.cache-working-directory-with-bundle.outputs.cache-hit != 'true'
-        run: |
-          npm run clean
-          npm run build:rollup
+          name: d2cli-bundle-cjs
       - name: Build native binary
         run: npm run build:nexe:windows
