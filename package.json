@@ -17,7 +17,10 @@
     "test:tsc": "tsc --noemit --skipLibCheck",
     "test:lint": "eslint --ext .js --ext .ts ./src ./test ./type",
     "test:lint:fix": "eslint --ext .js --ext .ts --fix ./src ./test ./type",
-    "test:unit": "jest --config jest.config.json --runInBand --logHeapUsage"
+    "test:unit": "jest --config jest.config.json --runInBand --logHeapUsage",
+    "version:major": "npm version major",
+    "version:minor": "npm version minor",
+    "version:patch": "npm version patch"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
