@@ -14,7 +14,7 @@
     "test": "npm-run-all test:tsc test:lint test:unit",
     "test:tsc": "tsc --noemit --skipLibCheck",
     "test:lint": "eslint --ext .js --ext .ts ./src ./test ./type",
-    "test:lint:fix": "eslint --ext .js --ext .ts --fix ./src ./test ./type",
+    "test:lint:fix": "npm run test:lint -- --fix",
     "test:unit": "jest --config jest.config.json --runInBand --logHeapUsage",
     "version:major": "npm version major",
     "version:minor": "npm version minor",
