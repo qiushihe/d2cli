@@ -17,6 +17,7 @@ export default {
     commonjs(),
     json(),
     typescript({
+      tsconfig: "./tsconfig.json",
       outputToFilesystem: true,
       compilerOptions: {
         declaration: false,

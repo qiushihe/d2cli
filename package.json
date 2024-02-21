@@ -11,8 +11,6 @@
     "build:nexe:macos": "nexe --input ./dist/d2cli.cjs --target mac-x64-14.15.3 --output ./.bin/d2cli-macos",
     "build:nexe:windows": "nexe --input ./dist/d2cli.cjs --target windows-x64-14.15.3 --output ./.bin/d2cli-windows.exe",
     "build:rollup": "rollup --config ./rollup.config.js",
-    "build:tsc": "tsc --project tsconfig.json",
-    "build:tsc:alias": "tsc-alias --project tsconfig.json",
     "test": "npm-run-all test:tsc test:lint test:unit",
     "test:tsc": "tsc --noemit --skipLibCheck",
     "test:lint": "eslint --ext .js --ext .ts ./src ./test ./type",
