@@ -84,35 +84,35 @@ export const reportItemsWeaponTypeTagger =
         itemDefinitionsByHash[`${reportItem.itemHash}:${reportItem.itemInstanceId}`];
 
       if (itemDefinition.itemSubType === ItemSubType.AutoRifle) {
-        reportItem.tags.push("Type:AutoRifle");
+        reportItem.tags.push("Type:Auto Rifle");
       } else if (itemDefinition.itemSubType === ItemSubType.Shotgun) {
         reportItem.tags.push("Type:Shotgun");
       } else if (itemDefinition.itemSubType === ItemSubType.Machinegun) {
-        reportItem.tags.push("Type:MachineGun");
+        reportItem.tags.push("Type:Machine Gun");
       } else if (itemDefinition.itemSubType === ItemSubType.HandCannon) {
-        reportItem.tags.push("Type:HandCannon");
+        reportItem.tags.push("Type:Hand Cannon");
       } else if (itemDefinition.itemSubType === ItemSubType.RocketLauncher) {
-        reportItem.tags.push("Type:RocketLauncher");
+        reportItem.tags.push("Type:Rocket Launcher");
       } else if (itemDefinition.itemSubType === ItemSubType.FusionRifle) {
-        reportItem.tags.push("Type:FusionRifle");
+        reportItem.tags.push("Type:Fusion Rifle");
       } else if (itemDefinition.itemSubType === ItemSubType.SniperRifle) {
-        reportItem.tags.push("Type:SniperRifle");
+        reportItem.tags.push("Type:Sniper Rifle");
       } else if (itemDefinition.itemSubType === ItemSubType.PulseRifle) {
-        reportItem.tags.push("Type:PulseRifle");
+        reportItem.tags.push("Type:Pulse Rifle");
       } else if (itemDefinition.itemSubType === ItemSubType.ScoutRifle) {
-        reportItem.tags.push("Type:ScoutRifle");
+        reportItem.tags.push("Type:Scout Rifle");
       } else if (itemDefinition.itemSubType === ItemSubType.Sidearm) {
         reportItem.tags.push("Type:Sidearm");
       } else if (itemDefinition.itemSubType === ItemSubType.Sword) {
         reportItem.tags.push("Type:Sword");
       } else if (itemDefinition.itemSubType === ItemSubType.FusionRifleLine) {
-        reportItem.tags.push("Type:LinearFusionRifle");
+        reportItem.tags.push("Type:Linear Fusion Rifle");
       } else if (itemDefinition.itemSubType === ItemSubType.GrenadeLauncher) {
-        reportItem.tags.push("Type:GrenadeLauncher");
+        reportItem.tags.push("Type:Grenade Launcher");
       } else if (itemDefinition.itemSubType === ItemSubType.SubmachineGun) {
-        reportItem.tags.push("Type:SubMachineGun");
+        reportItem.tags.push("Type:Submachine Gun");
       } else if (itemDefinition.itemSubType === ItemSubType.TraceRifle) {
-        reportItem.tags.push("Type:TraceRifle");
+        reportItem.tags.push("Type:Trace Rifle");
       } else if (itemDefinition.itemSubType === ItemSubType.Bow) {
         reportItem.tags.push("Type:Bow");
       } else if (itemDefinition.itemSubType === ItemSubType.Glaive) {
@@ -138,12 +138,7 @@ export const reportItemsWeaponFrameTagger =
         const intrinsicTraitName =
           intrinsicTraitSocketItemDefinition?.displayProperties?.name || "";
 
-        const frameName = intrinsicTraitName
-          .replace(/'/g, "")
-          .replace(/-/g, "")
-          .split(" ")
-          .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-          .join("");
+        const frameName = intrinsicTraitName.replace(/\sFrame$/, "").replace(/\sGlaive$/, "");
 
         reportItem.tags.push(`Frame:${frameName}`);
       }
@@ -160,7 +155,7 @@ export const reportItemsWeaponTierTagger =
       if (itemDefinition.inventory.tierType === TierType.Exotic) {
         reportItem.tags.push("Tier:Exotic");
       } else {
-        reportItem.tags.push("Tier:NonExotic");
+        reportItem.tags.push("Tier:Non Exotic");
       }
     }
   };
@@ -194,7 +189,7 @@ export const sortTableByColumns = (
 };
 
 export const transformTierColumn = (val: string) => {
-  if (val === "NonExotic") {
+  if (val === "Non Exotic") {
     return `0:${val}`;
   } else if (val === "Exotic") {
     return `1:${val}`;
@@ -216,10 +211,10 @@ export const transformSlotColumn = (val: string) => {
 };
 
 export const transformFrameColumn = (val: string) => {
-  if (val === "PrecisionFrame") {
-    return "PrecisionFrame:0";
-  } else if (val === "HäkkePrecisionFrame") {
-    return "PrecisionFrame:1";
+  if (val === "Precision") {
+    return "Precision Frame:0";
+  } else if (val === "Häkke Precision") {
+    return "Precision Frame:1";
   } else {
     return val;
   }
