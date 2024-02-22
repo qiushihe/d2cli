@@ -16,7 +16,7 @@ export class PastebinService {
     this.config = AppModule.getDefaultInstance().resolve(ConfigService);
   }
 
-  async createPaste(name: string, content: string): Promise<[Error, null] | [null, string]> {
+  async createPaste(name: string, content: string): Promise<ErrorXOR<string>> {
     const [apiKeyErr, apiKey] = this.config.getAppConfig(AppConfigName.PastebinApiKey);
     if (apiKeyErr) {
       return [apiKeyErr, null];
@@ -57,7 +57,7 @@ export class PastebinService {
     return [null, pasteUrl.toString()];
   }
 
-  async getPasteById(pasteId: string): Promise<[Error, null] | [null, string]> {
+  async getPasteById(pasteId: string): Promise<ErrorXOR<string>> {
     const [resErr, res] = await this.sendRequest(
       `${this.config.getPastebinApiRoot()}/raw/${pasteId}`,
       { method: "GET" }
@@ -74,7 +74,7 @@ export class PastebinService {
     return [null, resText];
   }
 
-  async sendRequest(url: string, options: any): Promise<[Error, null] | [null, Response]> {
+  async sendRequest(url: string, options: any): Promise<ErrorXOR<Response>> {
     const logger = this.getLogger();
 
     try {

@@ -32,7 +32,7 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving vault items ...");
-    const [vaultItemsErr, vaultItems, vaultItemInstances] = await inventoryService.getVaultItems(
+    const [vaultItemsErr, vaultItems] = await inventoryService.getVaultItems(
       sessionId,
       characterInfo.membershipType,
       characterInfo.membershipId
@@ -49,8 +49,8 @@ const cmd: CommandDefinition = {
     }
     tableData.push(tableHeader);
 
-    for (let vaultItemIndex = 0; vaultItemIndex < vaultItems.length; vaultItemIndex++) {
-      const vaultItem = vaultItems[vaultItemIndex];
+    for (let vaultItemIndex = 0; vaultItemIndex < vaultItems.components.length; vaultItemIndex++) {
+      const vaultItem = vaultItems.components[vaultItemIndex];
 
       const [vaultItemDefinitionErr, vaultItemDefinition] =
         await manifestDefinitionService.getItemDefinition(vaultItem.itemHash);
@@ -62,7 +62,7 @@ const cmd: CommandDefinition = {
 
       const vaultItemInfo: ItemNameAndPowerLevel = getItemNameAndPowerLevel(
         vaultItemDefinition || null,
-        vaultItemInstances[vaultItem.itemInstanceId] || null
+        vaultItems.instances[vaultItem.itemInstanceId] || null
       );
 
       const rowColumns = [vaultItemInfo.label, vaultItemInfo.powerLevel];

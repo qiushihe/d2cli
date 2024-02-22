@@ -34,18 +34,17 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving equipment items ...");
-    const [equipmentItemsErr, equipmentItems, equippedItemInstances] =
-      await inventoryService.getEquipmentItems(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId
-      );
+    const [equipmentItemsErr, equipmentItems] = await inventoryService.getEquipmentItems(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId
+    );
     if (equipmentItemsErr) {
       return logger.loggedError(`Unable to retrieve equipment items: ${equipmentItemsErr.message}`);
     }
 
-    const equippedItems = groupEquipmentItems(equipmentItems);
+    const equippedItems = groupEquipmentItems(equipmentItems.components);
 
     const tableData: string[][] = [];
 
@@ -73,7 +72,7 @@ const cmd: CommandDefinition = {
       const equippedItemInfo: ItemNameAndPowerLevel = equippedItem
         ? getItemNameAndPowerLevel(
             equippedItemDefinition || null,
-            equippedItemInstances[equippedItem.itemInstanceId] || null
+            equipmentItems.instances[equippedItem.itemInstanceId] || null
           )
         : { label: "UNKNOWN", powerLevel: "N/A" };
 

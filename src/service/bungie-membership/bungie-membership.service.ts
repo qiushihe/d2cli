@@ -16,7 +16,7 @@ export class BungieMembershipService {
 
   async getDestiny2Membership(
     bungieNetMembershipId: string
-  ): Promise<[Error, null] | [null, BungieDestiny2MembershipInfo]> {
+  ): Promise<ErrorXOR<BungieDestiny2MembershipInfo>> {
     const logger = this.getLogger();
 
     logger.debug("Fetching Bungie.net Destiny 2 memberships ...");
@@ -38,9 +38,7 @@ export class BungieMembershipService {
     return [null, { membership: memberships[0], otherMemberships: memberships.slice(1) }];
   }
 
-  async getDestiny2Memberships(
-    bungieNetMembershipId: string
-  ): Promise<[Error, null] | [null, UserInfoCard[]]> {
+  async getDestiny2Memberships(bungieNetMembershipId: string): Promise<ErrorXOR<UserInfoCard[]>> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching Destiny 2 memberships from Bungie.net membership ...`);

@@ -107,7 +107,7 @@ const cmd: CommandDefinition = {
               itemsToPull.length
             } from postmaster: ${itemDescription} ...`
       );
-      const pullItemErr = await destiny2PostmasterService.pullItem(
+      const [pullItemErr] = await destiny2PostmasterService.pullItem(
         sessionId,
         characterInfo.membershipType,
         characterInfo.characterId,

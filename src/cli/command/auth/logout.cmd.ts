@@ -18,7 +18,7 @@ const cmd: CommandDefinition = {
     const sessionService = app.resolve(SessionService);
 
     logger.info("Clearing characters info ...");
-    const clearCharactersErr = await sessionService.setData<CharacterReference>(
+    const [clearCharactersErr] = await sessionService.setData<CharacterReference>(
       sessionId,
       SessionDataName.CurrentCharacterInfo,
       null
@@ -28,7 +28,7 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Clearing Bungie.net access token ...");
-    const clearTokenErr = await sessionService.setData<OAuthAccessToken>(
+    const [clearTokenErr] = await sessionService.setData<OAuthAccessToken>(
       sessionId,
       SessionDataName.BungieAccessToken,
       null

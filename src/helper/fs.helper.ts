@@ -1,22 +1,8 @@
 import * as fs from "fs";
 
-export const exists = async (path: string): Promise<[Error, null] | [null, boolean]> => {
-  return new Promise<[Error, null] | [null, boolean]>((resolve) => {
-    fs.open(path, (err) => {
-      if (err) {
-        if (err.code === "ENOENT") {
-          resolve([null, false]);
-        } else {
-          resolve([err, null]);
-        }
-      } else {
-        resolve([null, true]);
-      }
-    });
-  });
-};
+import { promisedFn } from "~src/helper/promise.helper";
 
-export const existsSync = (path: string): [Error, null] | [null, boolean] => {
+const existsSync = (path: string): ErrorXOR<boolean> => {
   try {
     fs.openSync(path, "r");
     return [null, true];
@@ -29,31 +15,7 @@ export const existsSync = (path: string): [Error, null] | [null, boolean] => {
   }
 };
 
-export const isFile = async (path: string): Promise<[Error, null] | [null, boolean]> => {
-  return new Promise<[Error, null] | [null, boolean]>((resolve) => {
-    fs.lstat(path, (err, stats) => {
-      if (err) {
-        resolve([err, null]);
-      } else {
-        resolve([null, stats.isFile()]);
-      }
-    });
-  });
-};
-
-export const isDirectory = async (path: string): Promise<[Error, null] | [null, boolean]> => {
-  return new Promise<[Error, null] | [null, boolean]>((resolve) => {
-    fs.lstat(path, (err, stats) => {
-      if (err) {
-        resolve([err, null]);
-      } else {
-        resolve([null, stats.isDirectory()]);
-      }
-    });
-  });
-};
-
-export const isDirectorySync = (path: string): [Error, null] | [null, boolean] => {
+const isDirectorySync = (path: string): ErrorXOR<boolean> => {
   try {
     const stats = fs.lstatSync(path);
     return [null, stats.isDirectory()];
@@ -62,13 +24,7 @@ export const isDirectorySync = (path: string): [Error, null] | [null, boolean] =
   }
 };
 
-export const recursiveRemove = async (path: string): Promise<Error | null> => {
-  return new Promise<Error | null>((resolve) => {
-    fs.rm(path, { recursive: true, force: true }, resolve);
-  });
-};
-
-export const recursiveRemoveSync = (path: string): Error | null => {
+const recursiveRemoveSync = (path: string): Error | null => {
   try {
     fs.rmSync(path, { recursive: true, force: true });
     return null;
@@ -77,31 +33,7 @@ export const recursiveRemoveSync = (path: string): Error | null => {
   }
 };
 
-export const writeFile = async (path: string, content: string): Promise<Error | null> => {
-  return new Promise<Error | null>((resolve) => {
-    fs.writeFile(path, content, "utf8", resolve);
-  });
-};
-
-export const readFile = async (path: string): Promise<[Error, null] | [null, string]> => {
-  return new Promise<[Error, null] | [null, string]>((resolve) => {
-    fs.readFile(path, "utf8", (err, data) => {
-      if (err) {
-        resolve([err, null]);
-      } else {
-        resolve([null, data]);
-      }
-    });
-  });
-};
-
-export const makeDirectory = async (path: string): Promise<Error | null> => {
-  return new Promise<Error | null>((resolve) => {
-    fs.mkdir(path, { recursive: true }, resolve);
-  });
-};
-
-export const makeDirectorySync = (path: string): Error | null => {
+const makeDirectorySync = (path: string): Error | null => {
   try {
     fs.mkdirSync(path, { recursive: true });
     return null;
@@ -139,4 +71,12 @@ export const ensureDirectoryExistSync = (directoryPath: string): Error | null =>
   }
 
   return null;
+};
+
+export const writeFile = async (path: string, content: string): Promise<ErrorXOR<void>> => {
+  return promisedFn(() => fs.promises.writeFile(path, content, "utf8"));
+};
+
+export const readFile = async (path: string): Promise<ErrorXOR<string>> => {
+  return promisedFn(() => fs.promises.readFile(path, "utf8"));
 };

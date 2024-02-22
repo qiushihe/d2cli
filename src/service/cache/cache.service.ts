@@ -1,6 +1,4 @@
 import { AppModule } from "~src/module/app.module";
-import { LogService } from "~src/service/log/log.service";
-import { Logger } from "~src/service/log/log.types";
 import { FsStorageService } from "~src/service/storage/fs-storage.service";
 import { IStorageInterface } from "~src/service/storage/storage.types";
 import { StorageNamespace } from "~src/service/storage/storage.types";
@@ -17,7 +15,7 @@ export class CacheService {
     this.storageService = AppModule.getDefaultInstance().resolve(FsStorageService);
   }
 
-  async get<T>(namespace: string, key: string): Promise<[Error, null] | [null, T | null]> {
+  async get<T>(namespace: string, key: string): Promise<ErrorXOR<T | null>> {
     const memCachedFile = this.memCache[namespace];
     if (memCachedFile) {
       const cacheExpiry = memCachedFile.content.expiredAtInMilliseconds;
@@ -59,10 +57,10 @@ export class CacheService {
     key: string,
     value: T,
     expiresInMilliseconds: number | null
-  ): Promise<Error | null> {
+  ): Promise<ErrorXOR<void>> {
     const [reloadFileErr, cacheFile] = await this.reloadFile(namespace);
     if (reloadFileErr) {
-      return reloadFileErr;
+      return [reloadFileErr, null];
     }
 
     cacheFile.content.data[key] = value;
@@ -72,20 +70,18 @@ export class CacheService {
       cacheFile.content.expiredAtInMilliseconds = this.getNowTime() + expiresInMilliseconds;
     }
 
-    const writeErr = await this.storageService.write(StorageNamespace.CACHE, cacheFile);
+    const [writeErr] = await this.storageService.write(StorageNamespace.CACHE, cacheFile);
     if (writeErr) {
-      return writeErr;
+      return [writeErr, null];
     }
 
     delete this.memCache[namespace];
     this.memCache[namespace] = cacheFile;
 
-    return null;
+    return [null, undefined];
   }
 
-  private async reloadFile(
-    namespace: string
-  ): Promise<[Error, null] | [null, StorageFile<CacheData>]> {
+  private async reloadFile(namespace: string): Promise<ErrorXOR<StorageFile<CacheData>>> {
     const filename = `cache-${namespace}.json`;
     let cacheFile: StorageFile<CacheData>;
 
@@ -99,7 +95,7 @@ export class CacheService {
       cacheFile = file;
     }
 
-    const writeErr = await this.storageService.write(StorageNamespace.CACHE, cacheFile);
+    const [writeErr] = await this.storageService.write(StorageNamespace.CACHE, cacheFile);
     if (writeErr) {
       return [writeErr, null];
     }
@@ -109,9 +105,5 @@ export class CacheService {
 
   private getNowTime(): number {
     return new Date().getTime();
-  }
-
-  private getLogger(): Logger {
-    return AppModule.getDefaultInstance().resolve(LogService).getLogger("CacheService");
   }
 }

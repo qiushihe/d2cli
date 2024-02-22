@@ -16,7 +16,7 @@ export class StatService {
 
   async getSortedCharacterStats(
     character: DestinyCharacterComponent
-  ): Promise<[Error, null] | [null, CharacterStat[]]> {
+  ): Promise<ErrorXOR<CharacterStat[]>> {
     const characterStats: CharacterStat[] = [];
 
     const statEntries = Object.entries(character.stats);

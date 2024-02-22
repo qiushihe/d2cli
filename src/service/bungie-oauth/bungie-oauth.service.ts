@@ -27,7 +27,7 @@ export class BungieOauthService {
   async getRefreshedAccessToken(
     refreshToken: string,
     startTime: number
-  ): Promise<[Error, null] | [null, OAuthAccessToken]> {
+  ): Promise<ErrorXOR<OAuthAccessToken>> {
     return await this.getOAuthToken({
       type: "get-refreshed-token",
       startTime,
@@ -38,7 +38,7 @@ export class BungieOauthService {
   async getAccessToken(
     authorizationCode: string,
     startTime: number
-  ): Promise<[Error, null] | [null, OAuthAccessToken]> {
+  ): Promise<ErrorXOR<OAuthAccessToken>> {
     return await this.getOAuthToken({
       type: "get-access-token",
       startTime,
@@ -46,9 +46,7 @@ export class BungieOauthService {
     });
   }
 
-  async getOAuthToken(
-    options: GetOAuthTokenOptions
-  ): Promise<[Error, null] | [null, OAuthAccessToken]> {
+  async getOAuthToken(options: GetOAuthTokenOptions): Promise<ErrorXOR<OAuthAccessToken>> {
     const logger = this.getLogger();
 
     let isGetAccessToken: boolean;

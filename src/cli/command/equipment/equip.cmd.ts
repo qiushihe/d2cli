@@ -63,7 +63,8 @@ const cmd: CommandDefinition = {
         itemInstanceIdIndex++
       ) {
         const itemInstanceId = itemInstanceIds[itemInstanceIdIndex];
-        const item = inventoryItems.find((item) => item.itemInstanceId === itemInstanceId) || null;
+        const item =
+          inventoryItems.components.find((item) => item.itemInstanceId === itemInstanceId) || null;
 
         const rowColumns: string[] = [];
 
@@ -86,7 +87,7 @@ const cmd: CommandDefinition = {
           rowColumns.push(itemDescription);
 
           logger.info(`Equipping item: ${itemDescription} ...`);
-          const equipErr = await destiny2ActionService.equipItem(
+          const [equipErr] = await destiny2ActionService.equipItem(
             sessionId,
             characterInfo.membershipType,
             characterInfo.characterId,

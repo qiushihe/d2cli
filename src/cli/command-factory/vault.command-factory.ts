@@ -61,7 +61,7 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
               `Unable to get inventory items: ${inventoryItemsErr.message}`
             );
           }
-          sourceItems = inventoryItems;
+          sourceItems = inventoryItems.components;
         } else {
           const [vaultItemsErr, vaultItems] = await inventoryService.getVaultItems(
             sessionId,
@@ -71,7 +71,7 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
           if (vaultItemsErr) {
             return logger.loggedError(`Unable to get vault items: ${vaultItemsErr.message}`);
           }
-          sourceItems = vaultItems;
+          sourceItems = vaultItems.components;
         }
 
         const tableData: string[][] = [];
@@ -118,7 +118,7 @@ export const transferCommand = (options: TransferCommandOptions): CommandDefinit
                     options.toVault ? "to" : "from"
                   } vault: ${itemDescription} ...`
             );
-            const transferFromVaultErr = await (options.toVault
+            const [transferFromVaultErr] = await (options.toVault
               ? destiny2ActionService.transferItemToVault(
                   sessionId,
                   characterInfo.membershipType,

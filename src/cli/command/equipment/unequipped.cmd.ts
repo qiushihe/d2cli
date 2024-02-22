@@ -34,18 +34,17 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Retrieving inventory items ...");
-    const [inventoryItemsErr, inventoryItems, inventoryItemInstances] =
-      await inventoryService.getInventoryItems(
-        sessionId,
-        characterInfo.membershipType,
-        characterInfo.membershipId,
-        characterInfo.characterId
-      );
+    const [inventoryItemsErr, inventoryItems] = await inventoryService.getInventoryItems(
+      sessionId,
+      characterInfo.membershipType,
+      characterInfo.membershipId,
+      characterInfo.characterId
+    );
     if (inventoryItemsErr) {
       return logger.loggedError(`Unable to retrieve inventory items: ${inventoryItemsErr.message}`);
     }
 
-    const unequippedItems = groupEquipmentItems(inventoryItems);
+    const unequippedItems = groupEquipmentItems(inventoryItems.components);
 
     const tableData: string[][] = [];
 
@@ -77,7 +76,7 @@ const cmd: CommandDefinition = {
 
         const unEquippedItemInfo: ItemNameAndPowerLevel = getItemNameAndPowerLevel(
           unEquippedItemDefinition || null,
-          inventoryItemInstances[unEquippedItem.itemInstanceId] || null
+          inventoryItems.instances[unEquippedItem.itemInstanceId] || null
         );
 
         const rowColumns = [

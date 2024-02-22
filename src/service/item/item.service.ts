@@ -18,7 +18,7 @@ export class ItemService {
     membershipType: number,
     membershipId: string,
     itemInstanceId: string
-  ): Promise<[Error, null] | [null, number[]]> {
+  ): Promise<ErrorXOR<number[]>> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching item sockets ...`);

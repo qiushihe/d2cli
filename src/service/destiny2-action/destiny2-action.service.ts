@@ -22,24 +22,18 @@ export class Destiny2ActionService {
     characterId: string,
     itemHash: number,
     itemInstanceId: string | null
-  ): Promise<Error | null> {
-    const [pullItemErr] =
-      await this.bungieApiService.sendApiRequest<DestinyPostmasterTransferRequest>(
-        sessionId,
-        "POST",
-        "/Destiny2/Actions/Items/PullFromPostmaster",
-        {
-          itemReferenceHash: itemHash,
-          itemId: itemInstanceId,
-          characterId,
-          membershipType
-        }
-      );
-    if (pullItemErr) {
-      return pullItemErr;
-    }
-
-    return null;
+  ): Promise<ErrorXOR<void>> {
+    return await this.bungieApiService.sendApiRequest<DestinyPostmasterTransferRequest>(
+      sessionId,
+      "POST",
+      "/Destiny2/Actions/Items/PullFromPostmaster",
+      {
+        itemReferenceHash: itemHash,
+        itemId: itemInstanceId,
+        characterId,
+        membershipType
+      }
+    );
   }
 
   async insertPlug(
@@ -49,7 +43,7 @@ export class Destiny2ActionService {
     itemInstanceId: string,
     socketIndex: number,
     plugItemHash: number
-  ): Promise<Error | null> {
+  ): Promise<ErrorXOR<void>> {
     const logger = this.getLogger();
 
     logger.debug(`Inserting plug into socket ...`);
@@ -67,10 +61,10 @@ export class Destiny2ActionService {
       itemId: itemInstanceId
     });
     if (insertErr) {
-      return insertErr;
+      return [insertErr, null];
     }
 
-    return null;
+    return [null, undefined];
   }
 
   async transferItemToVault(
@@ -79,7 +73,7 @@ export class Destiny2ActionService {
     characterId: string,
     itemHash: number,
     itemInstanceId: string | null
-  ): Promise<Error | null> {
+  ): Promise<ErrorXOR<void>> {
     const [transferItemErr] =
       await this.bungieApiService.sendApiRequest<DestinyItemTransferRequest>(
         sessionId,
@@ -94,10 +88,10 @@ export class Destiny2ActionService {
         }
       );
     if (transferItemErr) {
-      return transferItemErr;
+      return [transferItemErr, null];
     }
 
-    return null;
+    return [null, undefined];
   }
 
   async transferItemFromVault(
@@ -106,7 +100,7 @@ export class Destiny2ActionService {
     characterId: string,
     itemHash: number,
     itemInstanceId: string | null
-  ): Promise<Error | null> {
+  ): Promise<ErrorXOR<void>> {
     const [transferItemErr] =
       await this.bungieApiService.sendApiRequest<DestinyItemTransferRequest>(
         sessionId,
@@ -121,10 +115,10 @@ export class Destiny2ActionService {
         }
       );
     if (transferItemErr) {
-      return transferItemErr;
+      return [transferItemErr, null];
     }
 
-    return null;
+    return [null, undefined];
   }
 
   async equipItem(
@@ -132,7 +126,7 @@ export class Destiny2ActionService {
     membershipType: number,
     characterId: string,
     itemInstanceId: string
-  ): Promise<Error | null> {
+  ): Promise<ErrorXOR<void>> {
     const [equipItemErr] = await this.bungieApiService.sendApiRequest<DestinyItemActionRequest>(
       sessionId,
       "POST",
@@ -144,10 +138,10 @@ export class Destiny2ActionService {
       }
     );
     if (equipItemErr) {
-      return equipItemErr;
+      return [equipItemErr, null];
     }
 
-    return null;
+    return [null, undefined];
   }
 
   private getLogger(): Logger {

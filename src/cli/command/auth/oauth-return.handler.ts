@@ -73,7 +73,7 @@ const handleOAuthReturn = async (
             messages.push(`Session reloaded`);
 
             messages.push("Storing Bungie.net OAuth access token ...");
-            const setTokenErr = await sessionService.setData<OAuthAccessToken>(
+            const [setTokenErr] = await sessionService.setData<OAuthAccessToken>(
               sessionId,
               SessionDataName.BungieAccessToken,
               accessToken

@@ -22,10 +22,7 @@ export class FsStorageService implements IStorageInterface {
     this.config = AppModule.getDefaultInstance().resolve(ConfigService);
   }
 
-  async read<T>(
-    namespace: StorageNamespace,
-    filePath: string
-  ): Promise<[Error, null] | [null, StorageFile<T>]> {
+  async read<T>(namespace: StorageNamespace, filePath: string): Promise<ErrorXOR<StorageFile<T>>> {
     const storageRootErr = ensureDirectoryExistSync(this.config.getFsStorageRootPath());
     if (storageRootErr) {
       return [storageRootErr, null];
@@ -61,10 +58,10 @@ export class FsStorageService implements IStorageInterface {
     return [null, file];
   }
 
-  async write<T>(namespace: StorageNamespace, file: StorageFile<T>): Promise<Error | null> {
+  async write<T>(namespace: StorageNamespace, file: StorageFile<T>): Promise<ErrorXOR<void>> {
     const storageRootErr = ensureDirectoryExistSync(this.config.getFsStorageRootPath());
     if (storageRootErr) {
-      return storageRootErr;
+      return [storageRootErr, null];
     }
 
     const rawFilename = sha1Digest(file.filename);

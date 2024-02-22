@@ -50,7 +50,7 @@ export class BungieApiService {
     method: string,
     path: string,
     body: TBody | null
-  ): Promise<[Error, null] | [null, TResponse]> {
+  ): Promise<ErrorXOR<TResponse>> {
     const logger = this.getLogger();
 
     const [apiKeyErr, apiKey] = this.config.getAppConfig(AppConfigName.BungieApiKey);
@@ -106,7 +106,7 @@ export class BungieApiService {
 
   async extractApiResponse<TResponse = any>(
     res: Response
-  ): Promise<[Error, null] | [null, ApiResponse<TResponse>]> {
+  ): Promise<ErrorXOR<ApiResponse<TResponse>>> {
     const [resJsonErr, resJson] = await this.extractResponseJson(res);
     if (resJsonErr) {
       return [resJsonErr, null];
@@ -126,7 +126,7 @@ export class BungieApiService {
     }
   }
 
-  async extractResponseJson(res: Response): Promise<[Error, null] | [null, any]> {
+  async extractResponseJson(res: Response): Promise<ErrorXOR<any>> {
     let responseJson: any;
     try {
       responseJson = await res.json();
@@ -136,7 +136,7 @@ export class BungieApiService {
     }
   }
 
-  async sendRequest(url: string, options: any): Promise<[Error, null] | [null, Response]> {
+  async sendRequest(url: string, options: any): Promise<ErrorXOR<Response>> {
     const logger = this.getLogger();
 
     try {

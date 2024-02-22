@@ -73,7 +73,7 @@ const cmd: CommandDefinition = {
     logger.info(
       `Inserting ${plugItemDescription} into slot #${socketIndex + 1} of ${itemDescription} ...`
     );
-    const insertErr = await plugService.insert(
+    const [insertErr] = await plugService.insert(
       sessionId,
       characterInfo.membershipType,
       characterInfo.characterId,
