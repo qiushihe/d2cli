@@ -1,4 +1,7 @@
-import { DestinyRaceDefinition } from "~type/bungie-api/destiny/definitions.types";
+import {
+  DestinyDamageTypeDefinition,
+  DestinyRaceDefinition
+} from "~type/bungie-api/destiny/definitions.types";
 import { DestinyPlaceDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyDestinationDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyGenderDefinition } from "~type/bungie-api/destiny/definitions.types";
@@ -27,7 +30,8 @@ export enum Destiny2ManifestComponent {
   VendorGroupDefinition = "DestinyVendorGroupDefinition",
   DestinationDefinition = "DestinyDestinationDefinition",
   PlaceDefinition = "DestinyPlaceDefinition",
-  SocketCategoryDefinition = "DestinySocketCategoryDefinition"
+  SocketCategoryDefinition = "DestinySocketCategoryDefinition",
+  DamageTypeDefinition = "DestinyDamageTypeDefinition"
 }
 
 export type Destiny2ManifestRaceDefinition = Record<number, DestinyRaceDefinition>;
@@ -57,3 +61,5 @@ export type Destiny2ManifestVendorGroupDefinitions = Record<number, DestinyVendo
 export type Destiny2ManifestDestinationDefinitions = Record<number, DestinyDestinationDefinition>;
 
 export type Destiny2ManifestPlaceDefinitions = Record<number, DestinyPlaceDefinition>;
+
+export type Destiny2ManifestDamageTypeDefinitions = Record<number, DestinyDamageTypeDefinition>;

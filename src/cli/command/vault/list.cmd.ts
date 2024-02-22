@@ -38,9 +38,7 @@ const cmd: CommandDefinition = {
       characterInfo.membershipId
     );
     if (vaultItemsErr) {
-      return logger.loggedError(
-        `Unable to retrieve profile inventory items: ${vaultItemsErr.message}`
-      );
+      return logger.loggedError(`Unable to retrieve vault items: ${vaultItemsErr.message}`);
     }
 
     const tableData: string[][] = [];

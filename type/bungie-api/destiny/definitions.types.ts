@@ -1,4 +1,4 @@
-import { ItemLocation } from "~type/bungie-api/destiny.types";
+import { DamageType, ItemLocation, TierType } from "~type/bungie-api/destiny.types";
 import { BucketScope } from "~type/bungie-api/destiny.types";
 import { BucketCategory } from "~type/bungie-api/destiny.types";
 import { DestinyDisplayPropertiesDefinition } from "~type/bungie-api/destiny/definitions/common.types";
@@ -7,8 +7,8 @@ import { DestinyIconSequenceDefinition } from "~type/bungie-api/destiny/definiti
 type AbstractDefinition<TDefinition> = TDefinition & {
   hash: number;
   index: number;
-  redacted: boolean;
-  blacklisted: boolean;
+  redacted?: boolean;
+  blacklisted?: boolean;
 };
 
 export type DestinyRaceDefinition = AbstractDefinition<{
@@ -80,7 +80,7 @@ export type DestinyItemInventoryBlockDefinition = {
   tierTypeHash: number;
   isInstanceItem: boolean;
   tierTypeName: string;
-  tierType: number;
+  tierType: TierType;
   expirationTooltip: string;
   expiredInActivityMessage: string;
   expiredInOrbitMessage: string;
@@ -228,4 +228,12 @@ export type DestinyDestinationDefinition = AbstractDefinition<{
 
 export type DestinyPlaceDefinition = AbstractDefinition<{
   displayProperties: DestinyDisplayPropertiesDefinition;
+}>;
+
+export type DestinyDamageTypeDefinition = AbstractDefinition<{
+  displayProperties: DestinyDisplayPropertiesDefinition;
+  transparentIconPath: string;
+  showIcon: boolean;
+  enumValue: DamageType;
+  color: any;
 }>;

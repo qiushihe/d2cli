@@ -7,6 +7,7 @@ import equipment from "./equipment.cmd";
 import mod from "./mod.cmd";
 import postmaster from "./postmaster.cmd";
 import progression from "./progression.cmd";
+import report from "./report.cmd";
 import subclass from "./subclass.cmd";
 import vault from "./vault.cmd";
 import vendor from "./vendor.cmd";
@@ -19,6 +20,7 @@ export const commands: CommandDefinitions = {
   mod,
   postmaster,
   progression,
+  report,
   subclass,
   vault,
   vendor

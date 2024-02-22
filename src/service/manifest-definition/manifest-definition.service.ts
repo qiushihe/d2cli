@@ -3,7 +3,10 @@ import { CacheService } from "~src/service/cache/cache.service";
 import { Destiny2ManifestService } from "~src/service/destiny2-manifest/destiny2-manifest.service";
 import { LogService } from "~src/service/log/log.service";
 import { Logger } from "~src/service/log/log.types";
-import { DestinyVendorDefinition } from "~type/bungie-api/destiny/definitions.types";
+import {
+  DestinyDamageTypeDefinition,
+  DestinyVendorDefinition
+} from "~type/bungie-api/destiny/definitions.types";
 import { DestinyProgressionDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyDestinationDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyPlaceDefinition } from "~type/bungie-api/destiny/definitions.types";
@@ -12,7 +15,10 @@ import { DestinyRaceDefinition } from "~type/bungie-api/destiny/definitions.type
 import { DestinyClassDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyStatDefinition } from "~type/bungie-api/destiny/definitions.types";
 import { DestinyInventoryItemDefinition } from "~type/bungie-api/destiny/definitions.types";
-import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
+import {
+  Destiny2ManifestDamageTypeDefinitions,
+  Destiny2ManifestLanguage
+} from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestDestinationDefinitions } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestPlaceDefinitions } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestProgressionDefinitions } from "~type/bungie-asset/destiny2.types";
@@ -115,6 +121,15 @@ export class ManifestDefinitionService {
       Destiny2ManifestInventoryItemDefinitions,
       DestinyInventoryItemDefinition
     >(Destiny2ManifestComponent.SocketCategoryDefinition, "socket-category-definition", hash);
+  }
+
+  async getDamageTypeDefinition(
+    hash: number
+  ): Promise<[Error, null] | [null, DestinyDamageTypeDefinition]> {
+    return await this.getManifestDefinition<
+      Destiny2ManifestDamageTypeDefinitions,
+      DestinyDamageTypeDefinition
+    >(Destiny2ManifestComponent.DamageTypeDefinition, "damage-type-definition", hash);
   }
 
   private async getManifestDefinition<
