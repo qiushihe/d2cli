@@ -22,9 +22,7 @@ export class CharacterService {
     );
   }
 
-  async getCharacters(
-    sessionId: string
-  ): Promise<[Error, null] | [null, DestinyCharacterComponent[]]> {
+  async getCharacters(sessionId: string): Promise<ErrorXOR<DestinyCharacterComponent[]>> {
     const [bungieNetMembershipIdErr, bungieNetMembershipId] =
       await this.sessionService.getBungieNetMembershipId(sessionId);
     if (bungieNetMembershipIdErr) {

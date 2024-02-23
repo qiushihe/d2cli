@@ -14,6 +14,11 @@ import { Destiny2ManifestInventoryBucketDefinitions } from "~type/bungie-asset/d
 import { Destiny2ManifestLanguage } from "~type/bungie-asset/destiny2.types";
 import { Destiny2ManifestComponent } from "~type/bungie-asset/destiny2.types";
 
+type ItemComponentsAndInstances = {
+  components: DestinyItemComponent[];
+  instances: Record<string, DestinyItemInstanceComponent>;
+};
+
 export class InventoryService {
   private readonly destiny2ManifestService: Destiny2ManifestService;
   private readonly destiny2ComponentDataService: Destiny2ComponentDataService;
@@ -30,31 +35,35 @@ export class InventoryService {
     sessionId: string,
     membershipType: number,
     membershipId: string
-  ): Promise<
-    | [Error, null, null]
-    | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
-  > {
+  ): Promise<ErrorXOR<ItemComponentsAndInstances>> {
     const logger = this.getLogger();
 
     logger.debug(`Getting vault buckets ...`);
     const [vaultBucketsErr, vaultBuckets] = await this.getLocationBuckets(ItemLocation.Vault);
     if (vaultBucketsErr) {
-      return [vaultBucketsErr, null, null];
+      return [vaultBucketsErr, null];
     }
 
     const vaultBucketHashes = vaultBuckets.map((vaultBucket) => vaultBucket.hash);
 
     logger.debug(`Getting profile inventory items ...`);
-    const [profileInventoryItemsErr, profileInventoryItems, profileInventoryItemInstances] =
-      await this.getProfileInventoryItems(sessionId, membershipType, membershipId);
+    const [profileInventoryItemsErr, profileInventoryItems] = await this.getProfileInventoryItems(
+      sessionId,
+      membershipType,
+      membershipId
+    );
     if (profileInventoryItemsErr) {
-      return [profileInventoryItemsErr, null, null];
+      return [profileInventoryItemsErr, null];
     }
 
     return [
       null,
-      profileInventoryItems.filter((item) => vaultBucketHashes.includes(item.bucketHash)),
-      profileInventoryItemInstances
+      {
+        components: profileInventoryItems.components.filter((item) =>
+          vaultBucketHashes.includes(item.bucketHash)
+        ),
+        instances: profileInventoryItems.instances
+      }
     ];
   }
 
@@ -62,10 +71,7 @@ export class InventoryService {
     sessionId: string,
     membershipType: number,
     membershipId: string
-  ): Promise<
-    | [Error, null, null]
-    | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
-  > {
+  ): Promise<ErrorXOR<ItemComponentsAndInstances>> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching all profile inventory items for ${membershipType}/${membershipId} ...`);
@@ -77,10 +83,13 @@ export class InventoryService {
         resolveProfileInventoryItemInstances
       );
     if (profileInventoryItemDataErr) {
-      return [profileInventoryItemDataErr, null, null];
+      return [profileInventoryItemDataErr, null];
     }
 
-    return [null, ...profileInventoryItemData];
+    return [
+      null,
+      { components: profileInventoryItemData[0], instances: profileInventoryItemData[1] }
+    ];
   }
 
   async getInventoryItems(
@@ -88,10 +97,7 @@ export class InventoryService {
     membershipType: number,
     membershipId: string,
     characterId: string
-  ): Promise<
-    | [Error, null, null]
-    | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
-  > {
+  ): Promise<ErrorXOR<ItemComponentsAndInstances>> {
     const logger = this.getLogger();
 
     logger.debug(
@@ -106,10 +112,10 @@ export class InventoryService {
         resolveCharacterInventoryItemInstances
       );
     if (inventoryItemDataErr) {
-      return [inventoryItemDataErr, null, null];
+      return [inventoryItemDataErr, null];
     }
 
-    return [null, ...inventoryItemData];
+    return [null, { components: inventoryItemData[0], instances: inventoryItemData[1] }];
   }
 
   async getEquipmentItems(
@@ -117,10 +123,7 @@ export class InventoryService {
     membershipType: number,
     membershipId: string,
     characterId: string
-  ): Promise<
-    | [Error, null, null]
-    | [null, DestinyItemComponent[], Record<string, DestinyItemInstanceComponent>]
-  > {
+  ): Promise<ErrorXOR<ItemComponentsAndInstances>> {
     const logger = this.getLogger();
 
     logger.debug(
@@ -135,15 +138,15 @@ export class InventoryService {
         resolveCharacterEquipmentItemInstances
       );
     if (equipmentItemDataErr) {
-      return [equipmentItemDataErr, null, null];
+      return [equipmentItemDataErr, null];
     }
 
-    return [null, ...equipmentItemData];
+    return [null, { components: equipmentItemData[0], instances: equipmentItemData[1] }];
   }
 
   async getLocationBuckets(
     location: ItemLocation
-  ): Promise<[Error, null] | [null, DestinyInventoryBucketDefinition[]]> {
+  ): Promise<ErrorXOR<DestinyInventoryBucketDefinition[]>> {
     const [bucketDefinitionErr, bucketDefinitions] =
       await this.destiny2ManifestService.getManifestComponent<Destiny2ManifestInventoryBucketDefinitions>(
         Destiny2ManifestLanguage.English,

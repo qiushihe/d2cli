@@ -79,7 +79,9 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
             `Unable to retrieve equipment items: ${equipmentItemsErr.message}`
           );
         }
-        getSubclassItems(equipmentItems).forEach((subclass) => allSubclasses.push(subclass));
+        getSubclassItems(equipmentItems.components).forEach((subclass) =>
+          allSubclasses.push(subclass)
+        );
       } else {
         logger.info("Retrieving inventory items ...");
         const [inventoryItemsErr, inventoryItems] = await inventoryService.getInventoryItems(
@@ -93,7 +95,9 @@ export const listCommand = (options: ListCommandOptions): CommandDefinition => {
             `Unable to retrieve inventory items: ${inventoryItemsErr.message}`
           );
         }
-        getSubclassItems(inventoryItems).forEach((subclass) => allSubclasses.push(subclass));
+        getSubclassItems(inventoryItems.components).forEach((subclass) =>
+          allSubclasses.push(subclass)
+        );
       }
 
       for (let subClassIndex = 0; subClassIndex < allSubclasses.length; subClassIndex++) {

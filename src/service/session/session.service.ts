@@ -24,7 +24,7 @@ export class SessionService {
     this.bungieOauthService = AppModule.getDefaultInstance().resolve(BungieOauthService);
   }
 
-  async getUpToDateAccessToken(sessionId: string): Promise<[Error, null] | [null, string]> {
+  async getUpToDateAccessToken(sessionId: string): Promise<ErrorXOR<string>> {
     const logger = this.getLogger();
 
     const [accessTokenErr, accessToken] = await this.getData<OAuthAccessToken>(
@@ -69,7 +69,7 @@ export class SessionService {
           }
 
           logger.debug(`Storing refreshing access token ...`);
-          const setTokenErr = await this.setData<OAuthAccessToken>(
+          const [setTokenErr] = await this.setData<OAuthAccessToken>(
             sessionId,
             SessionDataName.BungieAccessToken,
             refreshedToken
@@ -97,7 +97,7 @@ export class SessionService {
     }
   }
 
-  async getLoginStatus(sessionId: string): Promise<[Error, null] | [null, LoginStatus]> {
+  async getLoginStatus(sessionId: string): Promise<ErrorXOR<LoginStatus>> {
     const logger = this.getLogger();
 
     const status: LoginStatus = { isLoggedIn: false, isLoginExpired: false };
@@ -139,7 +139,7 @@ export class SessionService {
     return [null, status];
   }
 
-  async getBungieNetMembershipId(sessionId: string): Promise<[Error, null] | [null, string]> {
+  async getBungieNetMembershipId(sessionId: string): Promise<ErrorXOR<string>> {
     const [accessTokenErr, accessToken] = await this.getData<OAuthAccessToken>(
       sessionId,
       SessionDataName.BungieAccessToken
@@ -155,10 +155,7 @@ export class SessionService {
     return [null, accessToken.membershipId];
   }
 
-  async getData<T>(
-    sessionId: string,
-    name: SessionDataName
-  ): Promise<[Error, null] | [null, T | null]> {
+  async getData<T>(sessionId: string, name: SessionDataName): Promise<ErrorXOR<T | null>> {
     const [reloadErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadErr) {
       return [reloadErr, null];
@@ -171,23 +168,18 @@ export class SessionService {
     sessionId: string,
     name: SessionDataName,
     data: T | null
-  ): Promise<Error | null> {
+  ): Promise<ErrorXOR<void>> {
     const [reloadErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadErr) {
-      return reloadErr;
+      return [reloadErr, null];
     }
 
     sessionFile.content[name] = data;
 
-    const writeErr = await this.storageService.write(StorageNamespace.SESSIONS, sessionFile);
-    if (writeErr) {
-      return writeErr;
-    }
-
-    return null;
+    return await this.storageService.write(StorageNamespace.SESSIONS, sessionFile);
   }
 
-  async reload(sessionId: string): Promise<[Error, null] | [null, SessionData]> {
+  async reload(sessionId: string): Promise<ErrorXOR<SessionData>> {
     const [reloadFileErr, sessionFile] = await this.reloadFile(sessionId);
     if (reloadFileErr) {
       return [reloadFileErr, null];
@@ -219,9 +211,7 @@ export class SessionService {
     return status;
   }
 
-  private async reloadFile(
-    sessionId: string
-  ): Promise<[Error, null] | [null, StorageFile<SessionData>]> {
+  private async reloadFile(sessionId: string): Promise<ErrorXOR<StorageFile<SessionData>>> {
     const filename = `session-${sessionId}.json`;
     let sessionFile: StorageFile<SessionData>;
 
@@ -235,7 +225,7 @@ export class SessionService {
       sessionFile = file;
     }
 
-    const writeErr = await this.storageService.write(StorageNamespace.SESSIONS, sessionFile);
+    const [writeErr] = await this.storageService.write(StorageNamespace.SESSIONS, sessionFile);
     if (writeErr) {
       return [writeErr, null];
     }

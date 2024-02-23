@@ -1,6 +1,4 @@
-export const promisedFn = async <T>(
-  promiseFn: () => Promise<T>
-): Promise<[Error, null] | [null, T]> => {
+export const promisedFn = async <T>(promiseFn: () => Promise<T>): Promise<ErrorXOR<T>> => {
   try {
     return [null, await promiseFn()];
   } catch (err) {

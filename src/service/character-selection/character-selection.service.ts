@@ -12,9 +12,7 @@ export class CharacterSelectionService {
     this.sessionService = AppModule.getDefaultInstance().resolve(SessionService);
   }
 
-  async ensureSelectedCharacter(
-    sessionId: string
-  ): Promise<[Error, null] | [null, CharacterReference]> {
+  async ensureSelectedCharacter(sessionId: string): Promise<ErrorXOR<CharacterReference>> {
     const logger = this.getLogger();
 
     const [characterInfoErr, characterInfo] = await this.getSelectedCharacter(sessionId);
@@ -29,7 +27,7 @@ export class CharacterSelectionService {
     return [null, characterInfo];
   }
 
-  async hasSelectedCharacter(sessionId: string): Promise<[Error, null] | [null, boolean]> {
+  async hasSelectedCharacter(sessionId: string): Promise<ErrorXOR<boolean>> {
     const [characterInfoErr, characterInfo] = await this.getSelectedCharacter(sessionId);
     if (characterInfoErr) {
       return [characterInfoErr, null];
@@ -38,9 +36,7 @@ export class CharacterSelectionService {
     return [null, characterInfo !== null];
   }
 
-  async getSelectedCharacter(
-    sessionId: string
-  ): Promise<[Error, null] | [null, CharacterReference | null]> {
+  async getSelectedCharacter(sessionId: string): Promise<ErrorXOR<CharacterReference | null>> {
     const logger = this.getLogger();
 
     logger.info("Retrieving current character selection ...");

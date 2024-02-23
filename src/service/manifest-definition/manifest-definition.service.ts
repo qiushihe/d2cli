@@ -39,50 +39,42 @@ export class ManifestDefinitionService {
     this.cacheService = AppModule.getDefaultInstance().resolve(CacheService);
   }
 
-  async getProgressionDefinition(
-    hash: number
-  ): Promise<[Error, null] | [null, DestinyProgressionDefinition]> {
+  async getProgressionDefinition(hash: number): Promise<ErrorXOR<DestinyProgressionDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestProgressionDefinitions,
       DestinyProgressionDefinition
     >(Destiny2ManifestComponent.ProgressionDefinition, "progression-definition", hash);
   }
 
-  async getDestinationDefinition(
-    hash: number
-  ): Promise<[Error, null] | [null, DestinyDestinationDefinition]> {
+  async getDestinationDefinition(hash: number): Promise<ErrorXOR<DestinyDestinationDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestDestinationDefinitions,
       DestinyDestinationDefinition
     >(Destiny2ManifestComponent.DestinationDefinition, "destination-definition", hash);
   }
 
-  async getPlaceDefinition(hash: number): Promise<[Error, null] | [null, DestinyPlaceDefinition]> {
+  async getPlaceDefinition(hash: number): Promise<ErrorXOR<DestinyPlaceDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestPlaceDefinitions,
       DestinyPlaceDefinition
     >(Destiny2ManifestComponent.PlaceDefinition, "place-definition", hash);
   }
 
-  async getVendorDefinition(
-    hash: number
-  ): Promise<[Error, null] | [null, DestinyVendorDefinition]> {
+  async getVendorDefinition(hash: number): Promise<ErrorXOR<DestinyVendorDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestVendorDefinitions,
       DestinyVendorDefinition
     >(Destiny2ManifestComponent.VendorDefinition, "vendor-definition", hash);
   }
 
-  async getGenderDefinition(
-    hash: number
-  ): Promise<[Error, null] | [null, DestinyGenderDefinition]> {
+  async getGenderDefinition(hash: number): Promise<ErrorXOR<DestinyGenderDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestGenderDefinition,
       DestinyGenderDefinition
     >(Destiny2ManifestComponent.GenderDefinition, "gender-definition", hash);
   }
 
-  async getRaceDefinition(hash: number): Promise<[Error, null] | [null, DestinyRaceDefinition]> {
+  async getRaceDefinition(hash: number): Promise<ErrorXOR<DestinyRaceDefinition>> {
     return await this.getManifestDefinition<Destiny2ManifestRaceDefinition, DestinyRaceDefinition>(
       Destiny2ManifestComponent.RaceDefinition,
       "race-definition",
@@ -90,14 +82,14 @@ export class ManifestDefinitionService {
     );
   }
 
-  async getClassDefinition(hash: number): Promise<[Error, null] | [null, DestinyClassDefinition]> {
+  async getClassDefinition(hash: number): Promise<ErrorXOR<DestinyClassDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestClassDefinition,
       DestinyClassDefinition
     >(Destiny2ManifestComponent.ClassDefinition, "class-definition", hash);
   }
 
-  async getStatDefinition(hash: number): Promise<[Error, null] | [null, DestinyStatDefinition]> {
+  async getStatDefinition(hash: number): Promise<ErrorXOR<DestinyStatDefinition>> {
     return await this.getManifestDefinition<Destiny2ManifestStatDefinitions, DestinyStatDefinition>(
       Destiny2ManifestComponent.StatDefinition,
       "stat-definition",
@@ -105,9 +97,7 @@ export class ManifestDefinitionService {
     );
   }
 
-  async getItemDefinition(
-    hash: number
-  ): Promise<[Error, null] | [null, DestinyInventoryItemDefinition]> {
+  async getItemDefinition(hash: number): Promise<ErrorXOR<DestinyInventoryItemDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestInventoryItemDefinitions,
       DestinyInventoryItemDefinition
@@ -116,16 +106,14 @@ export class ManifestDefinitionService {
 
   async getSocketCategoryDefinition(
     hash: number
-  ): Promise<[Error, null] | [null, DestinyInventoryItemDefinition]> {
+  ): Promise<ErrorXOR<DestinyInventoryItemDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestInventoryItemDefinitions,
       DestinyInventoryItemDefinition
     >(Destiny2ManifestComponent.SocketCategoryDefinition, "socket-category-definition", hash);
   }
 
-  async getDamageTypeDefinition(
-    hash: number
-  ): Promise<[Error, null] | [null, DestinyDamageTypeDefinition]> {
+  async getDamageTypeDefinition(hash: number): Promise<ErrorXOR<DestinyDamageTypeDefinition>> {
     return await this.getManifestDefinition<
       Destiny2ManifestDamageTypeDefinitions,
       DestinyDamageTypeDefinition
@@ -139,7 +127,7 @@ export class ManifestDefinitionService {
     component: Destiny2ManifestComponent,
     typeName: string,
     hash: number
-  ): Promise<[Error, null] | [null, TItemType]> {
+  ): Promise<ErrorXOR<TItemType>> {
     const logger = this.getLogger();
     const language = this.getLanguage();
 
@@ -172,7 +160,7 @@ export class ManifestDefinitionService {
       const itemDefinition = itemDefinitions[hash];
 
       logger.debug(`Writing ${typeName} manifest component cache for ${hash}`);
-      const writeCacheErr = await this.cacheService.set(
+      const [writeCacheErr] = await this.cacheService.set(
         cacheNamespace,
         cacheKey,
         itemDefinition,

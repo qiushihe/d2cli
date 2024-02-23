@@ -21,7 +21,7 @@ export class PostmasterService {
     membershipType: number,
     membershipId: string,
     characterId: string
-  ): Promise<[Error, null] | [null, DestinyItemComponent[]]> {
+  ): Promise<ErrorXOR<DestinyItemComponent[]>> {
     const logger = this.getLogger();
 
     logger.debug(`Getting postmaster buckets ...`);
@@ -48,7 +48,7 @@ export class PostmasterService {
 
     return [
       null,
-      inventoryItems.filter((item) => postmasterBucketHashes.includes(item.bucketHash))
+      inventoryItems.components.filter((item) => postmasterBucketHashes.includes(item.bucketHash))
     ];
   }
 
@@ -58,7 +58,7 @@ export class PostmasterService {
     characterId: string,
     itemHash: number,
     itemInstanceId: string | null
-  ): Promise<Error | null> {
+  ): Promise<ErrorXOR<void>> {
     return await this.destiny2ActionService.pullFromPostmaster(
       sessionId,
       membershipType,

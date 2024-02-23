@@ -30,7 +30,7 @@ export class PlugService {
   async getItemSocketIndices(
     itemHash: number,
     socketName: SocketName
-  ): Promise<[Error, null] | [null, number[]]> {
+  ): Promise<ErrorXOR<number[]>> {
     const [itemDefinitionErr, itemDefinition] =
       await this.manifestDefinitionService.getItemDefinition(itemHash);
     if (itemDefinitionErr) {
@@ -80,7 +80,7 @@ export class PlugService {
     characterId: string,
     itemHash: number,
     socketName: SocketName
-  ): Promise<[Error, null] | [null, number[][]]> {
+  ): Promise<ErrorXOR<number[][]>> {
     const [itemDefinitionErr, itemDefinition] =
       await this.manifestDefinitionService.getItemDefinition(itemHash);
     if (itemDefinitionErr) {
@@ -178,7 +178,7 @@ export class PlugService {
     itemInstanceId: string,
     socketIndex: number,
     plugItemHash: number
-  ): Promise<Error | null> {
+  ): Promise<ErrorXOR<void>> {
     return await this.destiny2ActionService.insertPlug(
       sessionId,
       membershipType,
@@ -196,7 +196,7 @@ export class PlugService {
     characterId: string,
     plugSetHash: number,
     options: GetProfileCharacterPlugItemHashesOptions
-  ): Promise<[Error, null] | [null, number[]]> {
+  ): Promise<ErrorXOR<number[]>> {
     if (!options.includeProfilePlugs && !options.includeCharacterPlugs) {
       return [null, []];
     }

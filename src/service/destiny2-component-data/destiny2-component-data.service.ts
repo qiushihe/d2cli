@@ -22,7 +22,7 @@ export class Destiny2ComponentDataService {
     membershipId: string,
     characterId: string,
     resolver: ComponentDataResolver<DestinyVendorsResponse, TData>
-  ): Promise<[Error, null] | [null, TData]> {
+  ): Promise<ErrorXOR<TData>> {
     return await this.getComponentsData<DestinyVendorsResponse, TData>(
       sessionId,
       `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}/Vendors`,
@@ -35,7 +35,7 @@ export class Destiny2ComponentDataService {
     membershipType: number,
     membershipId: string,
     resolver: ComponentDataResolver<DestinyProfileResponse, TData>
-  ): Promise<[Error, null] | [null, TData]> {
+  ): Promise<ErrorXOR<TData>> {
     return await this.getComponentsData<DestinyProfileResponse, TData>(
       sessionId,
       `/Destiny2/${membershipType}/Profile/${membershipId}`,
@@ -49,7 +49,7 @@ export class Destiny2ComponentDataService {
     membershipId: string,
     characterId: string,
     resolver: ComponentDataResolver<DestinyCharacterResponse, TData>
-  ): Promise<[Error, null] | [null, TData]> {
+  ): Promise<ErrorXOR<TData>> {
     return await this.getComponentsData<DestinyCharacterResponse, TData>(
       sessionId,
       `/Destiny2/${membershipType}/Profile/${membershipId}/Character/${characterId}`,
@@ -63,7 +63,7 @@ export class Destiny2ComponentDataService {
     membershipId: string,
     itemInstanceId: string,
     resolver: ComponentDataResolver<DestinyItemResponse, TData>
-  ): Promise<[Error, null] | [null, TData]> {
+  ): Promise<ErrorXOR<TData>> {
     return await this.getComponentsData<DestinyItemResponse, TData>(
       sessionId,
       `/Destiny2/${membershipType}/Profile/${membershipId}/Item/${itemInstanceId}`,
@@ -75,7 +75,7 @@ export class Destiny2ComponentDataService {
     sessionId: string,
     url: string,
     resolver: ComponentDataResolver<TResponse, TData>
-  ): Promise<[Error, null] | [null, TData]> {
+  ): Promise<ErrorXOR<TData>> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching components (${resolver.components.join(",")}) from ${url} ...`);
@@ -100,7 +100,7 @@ export class Destiny2ComponentDataService {
     sessionId: string,
     resourceUrl: string,
     componentTypes: DestinyComponentType[]
-  ): Promise<[Error, null] | [null, TResponse]> {
+  ): Promise<ErrorXOR<TResponse>> {
     const [resourceErr, resourceRes] = await this.bungieApiService.sendApiRequest<null, TResponse>(
       sessionId,
       "GET",

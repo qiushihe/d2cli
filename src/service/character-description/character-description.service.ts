@@ -23,7 +23,7 @@ export class CharacterDescriptionService {
 
   async getDescriptions(
     sessionId: string
-  ): Promise<[Error, null] | [null, Record<string, CharacterDescription>]> {
+  ): Promise<ErrorXOR<Record<string, CharacterDescription>>> {
     const characterDescriptions: Record<string, CharacterDescription> = {};
 
     const [charactersErr, characters] = await this.characterService.getCharacters(sessionId);
@@ -46,7 +46,7 @@ export class CharacterDescriptionService {
 
   async getDescription(
     character: CharacterDescribableAttributes
-  ): Promise<[Error, null] | [null, CharacterDescription]> {
+  ): Promise<ErrorXOR<CharacterDescription>> {
     const [genderDefinitionErr, genderDefinition] =
       await this.manifestDefinitionService.getGenderDefinition(character.genderHash);
     if (genderDefinitionErr) {

@@ -64,7 +64,7 @@ const cmd: CommandDefinition = {
     }
 
     logger.info("Storing current character selection ...");
-    const setDataErr = await sessionService.setData<CharacterReference>(
+    const [setDataErr] = await sessionService.setData<CharacterReference>(
       sessionId,
       SessionDataName.CurrentCharacterInfo,
       {

@@ -25,7 +25,7 @@ export class Destiny2ManifestService {
   async getManifestComponent<T>(
     language: Destiny2ManifestLanguage,
     component: Destiny2ManifestComponent
-  ): Promise<[Error, null] | [null, T]> {
+  ): Promise<ErrorXOR<T>> {
     const logger = this.getLogger();
     const cacheNamespace = `destiny2-manifest-component-${language}-${component}`;
     const cacheKey = "manifest-content";
@@ -63,7 +63,7 @@ export class Destiny2ManifestService {
           return [fetchManifestComponentErr, null];
         }
 
-        const writeCacheErr = await this.cacheService.set(
+        const [writeCacheErr] = await this.cacheService.set(
           cacheNamespace,
           cacheKey,
           manifestComponent,
@@ -78,7 +78,7 @@ export class Destiny2ManifestService {
     }
   }
 
-  async getManifest(): Promise<[Error, null] | [null, DestinyManifest]> {
+  async getManifest(): Promise<ErrorXOR<DestinyManifest>> {
     const logger = this.getLogger();
     const cacheNamespace = "destiny2-manifest";
     const cacheKey = "manifest-content";
@@ -102,7 +102,7 @@ export class Destiny2ManifestService {
         return [fetchManifestErr, null];
       }
 
-      const writeCacheErr = await this.cacheService.set(
+      const [writeCacheErr] = await this.cacheService.set(
         cacheNamespace,
         cacheKey,
         manifest,
@@ -116,9 +116,7 @@ export class Destiny2ManifestService {
     }
   }
 
-  private async fetchManifestComponent<T>(
-    manifestComponentPath: string
-  ): Promise<[Error, null] | [null, T]> {
+  private async fetchManifestComponent<T>(manifestComponentPath: string): Promise<ErrorXOR<T>> {
     const logger = this.getLogger();
 
     const manifestComponentUrl = this.config.getBungieAssetRoot() + manifestComponentPath;
@@ -151,7 +149,7 @@ export class Destiny2ManifestService {
     return [null, manifestComponentJson as T];
   }
 
-  private async fetchManifest(): Promise<[Error, null] | [null, DestinyManifest]> {
+  private async fetchManifest(): Promise<ErrorXOR<DestinyManifest>> {
     const logger = this.getLogger();
 
     logger.debug(`Fetching Destiny 2 manifest ...`);

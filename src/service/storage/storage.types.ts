@@ -9,10 +9,7 @@ export type StorageFile<T> = {
 };
 
 export interface IStorageInterface {
-  read<T>(
-    namespace: StorageNamespace,
-    filePath: string
-  ): Promise<[Error, null] | [null, StorageFile<T>]>;
+  read<T>(namespace: StorageNamespace, filePath: string): Promise<ErrorXOR<StorageFile<T>>>;
 
-  write<T>(namespace: StorageNamespace, file: StorageFile<T>): Promise<Error | null>;
+  write<T>(namespace: StorageNamespace, file: StorageFile<T>): Promise<ErrorXOR<void>>;
 }
