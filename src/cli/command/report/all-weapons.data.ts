@@ -1,5 +1,7 @@
 import { InventoryBucket, InventoryBucketHashes } from "~src/enum/inventory.enum";
 import { SOCKET_TYPE_INTRINSIC_TRAITS } from "~src/enum/socket.enum";
+import { cachedGetter } from "~src/helper/cache.helper";
+import { minutesInMilliseconds } from "~src/helper/time.helper";
 import { CacheService } from "~src/service/cache/cache.service";
 import { CharacterService } from "~src/service/character/character.service";
 import { CharacterDescriptionService } from "~src/service/character-description/character-description.service";
@@ -176,6 +178,8 @@ type ReportData = {
   allItemDefinitions: Record<string, DestinyInventoryItemDefinition>;
 };
 
+const CACHE_NS = "report:all-weapons";
+
 export const getDataSource = (
   logger: Logger,
   manifestDefinitionService: ManifestDefinitionService,
@@ -185,8 +189,15 @@ export const getDataSource = (
   inventoryService: InventoryService
 ) => {
   const getReportData = async (sessionId: string): Promise<[Error, null] | [null, ReportData]> => {
+    const cachedGet = cachedGetter(cacheService);
+
     logger.info("Retrieving characters ...");
-    const [charactersErr, characters] = await characterService.getCharacters(sessionId);
+    const [charactersErr, characters] = await cachedGet(
+      () => characterService.getCharacters(sessionId),
+      CACHE_NS,
+      "characters",
+      minutesInMilliseconds(5)
+    );
     if (charactersErr) {
       return [logger.loggedError(`Unable to get characters: ${charactersErr.message}`), null];
     }
@@ -197,8 +208,12 @@ export const getDataSource = (
     logger.info("Retrieving character descriptions ...");
     const characterDescriptionById: Record<string, string> = {};
     for (const character of characters) {
-      const [characterDescriptionErr, characterDescription] =
-        await characterDescriptionService.getDescription(character);
+      const [characterDescriptionErr, characterDescription] = await cachedGet(
+        () => characterDescriptionService.getDescription(character),
+        CACHE_NS,
+        "character-descriptions",
+        minutesInMilliseconds(5)
+      );
       if (characterDescriptionErr) {
         return [
           logger.loggedError(
@@ -226,11 +241,17 @@ export const getDataSource = (
       const characterDescription = characterDescriptionById[character.characterId];
 
       logger.info(`Retrieving equipment items for ${characterDescription} ...`);
-      const [equipmentItemsErr, equipmentItems] = await inventoryService.getEquipmentItems(
-        sessionId,
-        character.membershipType,
-        character.membershipId,
-        character.characterId
+      const [equipmentItemsErr, equipmentItems] = await cachedGet(
+        () =>
+          inventoryService.getEquipmentItems(
+            sessionId,
+            character.membershipType,
+            character.membershipId,
+            character.characterId
+          ),
+        CACHE_NS,
+        `equipment-items-${character.membershipType}-${character.membershipId}-${character.characterId}`,
+        minutesInMilliseconds(1)
       );
       if (equipmentItemsErr) {
         return [
@@ -244,11 +265,17 @@ export const getDataSource = (
       allItemInstances = { ...allItemInstances, ...equipmentItems.instances };
 
       logger.info(`Retrieving inventory items for ${characterDescription} ...`);
-      const [inventoryItemsErr, inventoryItems] = await inventoryService.getInventoryItems(
-        sessionId,
-        character.membershipType,
-        character.membershipId,
-        character.characterId
+      const [inventoryItemsErr, inventoryItems] = await cachedGet(
+        () =>
+          inventoryService.getInventoryItems(
+            sessionId,
+            character.membershipType,
+            character.membershipId,
+            character.characterId
+          ),
+        CACHE_NS,
+        `inventory-items-${character.membershipType}-${character.membershipId}-${character.characterId}`,
+        minutesInMilliseconds(1)
       );
       if (inventoryItemsErr) {
         return [
@@ -263,10 +290,16 @@ export const getDataSource = (
     }
 
     logger.info("Retrieving vault items ...");
-    const [vaultItemsErr, vaultItems] = await inventoryService.getVaultItems(
-      sessionId,
-      characters[0].membershipType,
-      characters[0].membershipId
+    const [vaultItemsErr, vaultItems] = await cachedGet(
+      () =>
+        inventoryService.getVaultItems(
+          sessionId,
+          characters[0].membershipType,
+          characters[0].membershipId
+        ),
+      CACHE_NS,
+      `vault-items-${characters[0].membershipType}-${characters[0].membershipId}`,
+      minutesInMilliseconds(1)
     );
     if (vaultItemsErr) {
       return [logger.loggedError(`Unable to retrieve vault items: ${vaultItemsErr.message}`), null];
