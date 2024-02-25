@@ -528,6 +528,16 @@ const inventoryDataGetter =
     ];
   };
 
+const inventoryItemsProcessor =
+  (processors: ((items: InventoryItem[]) => InventoryItem[])[]) =>
+  (inventoryItems: InventoryItem[]) => {
+    let processedItems: InventoryItem[] = inventoryItems;
+    for (const processItems of processors) {
+      processedItems = processItems(processedItems);
+    }
+    return processedItems;
+  };
+
 const sortTableByColumns = (
   headers: string[],
   rows: string[][],
@@ -648,27 +658,23 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
         damageTypeDefinitions
       } = inventoryData;
 
-      const slotTaggedInventoryItems = tagInventoryItemsSlot(inventoryItems, itemDefinitions);
-      const exclusiveInventoryItems = excludeInventoryItems(slotTaggedInventoryItems);
-      const inclusiveInventoryItems = includeInventoryItems(exclusiveInventoryItems);
-      const tierTaggedInventoryItems = tagInventoryItemsTier(
-        inclusiveInventoryItems,
-        itemDefinitions
-      );
-      const nameTaggedInventoryItems = tagInventoryItemsName(
-        tierTaggedInventoryItems,
-        itemDefinitions
-      );
-      const lightTaggedInventoryItems = tagInventoryItemsLightLevel(
-        nameTaggedInventoryItems,
-        itemInstances
-      );
-      const weaponTaggedInventoryItems = tagInventoryItemsWeapon(
-        lightTaggedInventoryItems,
-        itemDefinitions,
-        intrinsicItemDefinitions,
-        damageTypeDefinitions
-      );
+      const processInventoryItems = inventoryItemsProcessor([
+        (items) => tagInventoryItemsSlot(items, itemDefinitions),
+        (items) => excludeInventoryItems(items),
+        (items) => includeInventoryItems(items),
+        (items) => tagInventoryItemsTier(items, itemDefinitions),
+        (items) => tagInventoryItemsName(items, itemDefinitions),
+        (items) => tagInventoryItemsLightLevel(items, itemInstances),
+        (items) =>
+          tagInventoryItemsWeapon(
+            items,
+            itemDefinitions,
+            intrinsicItemDefinitions,
+            damageTypeDefinitions
+          )
+      ]);
+
+      const processedInventoryItems = processInventoryItems(inventoryItems);
 
       const tableColumns = [
         "Slot",
@@ -681,7 +687,7 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
         ...(verbose ? ["ID"] : [])
       ];
 
-      const displayRows = weaponTaggedInventoryItems.map((inventoryItem) => {
+      const displayRows = processedInventoryItems.map((inventoryItem) => {
         const fields = [
           { name: "ID", value: `${inventoryItem.itemHash}:${inventoryItem.itemInstanceId}` }
         ];
