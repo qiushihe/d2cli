@@ -4,10 +4,10 @@ import auth from "./auth.cmd";
 import character from "./character.cmd";
 import config from "./config.cmd";
 import equipment from "./equipment.cmd";
+import inventory from "./inventory.cmd";
 import mod from "./mod.cmd";
 import postmaster from "./postmaster.cmd";
 import progression from "./progression.cmd";
-import report from "./report.cmd";
 import subclass from "./subclass.cmd";
 import vault from "./vault.cmd";
 import vendor from "./vendor.cmd";
@@ -17,10 +17,10 @@ export const commands: CommandDefinitions = {
   character,
   config,
   equipment,
+  inventory,
   mod,
   postmaster,
   progression,
-  report,
   subclass,
   vault,
   vendor

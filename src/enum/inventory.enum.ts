@@ -10,7 +10,16 @@ export enum InventoryBucket {
   Gauntlet = "gauntlet",
   ChestArmour = "chestArmour",
   LegArmour = "legArmour",
-  ClassItem = "classItem"
+  ClassItem = "classItem",
+  ClanBanner = "clanBanner",
+  Emblem = "emblem",
+  Finisher = "finisher",
+  Quest = "quest",
+  Consumable = "consumable",
+  Emote = "emote",
+  CommonEmotes = "commonEmotes",
+  SeasonalArtifact = "seasonalArtifact",
+  Modification = "modification"
 }
 
 export const InventoryBucketHashes: Record<InventoryBucket, number> = {
@@ -25,7 +34,16 @@ export const InventoryBucketHashes: Record<InventoryBucket, number> = {
   [InventoryBucket.Gauntlet]: 3551918588,
   [InventoryBucket.ChestArmour]: 14239492,
   [InventoryBucket.LegArmour]: 20886954,
-  [InventoryBucket.ClassItem]: 1585787867
+  [InventoryBucket.ClassItem]: 1585787867,
+  [InventoryBucket.ClanBanner]: 4292445962,
+  [InventoryBucket.Emblem]: 4274335291,
+  [InventoryBucket.Finisher]: 3683254069,
+  [InventoryBucket.Quest]: 1345459588,
+  [InventoryBucket.Consumable]: 1469714392,
+  [InventoryBucket.Emote]: 2401704334,
+  [InventoryBucket.CommonEmotes]: 1107761855,
+  [InventoryBucket.SeasonalArtifact]: 1506418338,
+  [InventoryBucket.Modification]: 3313201758
 };
 
 export const InventoryBucketLabels: Record<InventoryBucket, string> = {
@@ -40,7 +58,16 @@ export const InventoryBucketLabels: Record<InventoryBucket, string> = {
   [InventoryBucket.Gauntlet]: "Gauntlet",
   [InventoryBucket.ChestArmour]: "Chest Armour",
   [InventoryBucket.LegArmour]: "Leg Armour",
-  [InventoryBucket.ClassItem]: "Class Item"
+  [InventoryBucket.ClassItem]: "Class Item",
+  [InventoryBucket.ClanBanner]: "Clan Banner",
+  [InventoryBucket.Emblem]: "Emblem",
+  [InventoryBucket.Finisher]: "Finisher",
+  [InventoryBucket.Quest]: "Quest",
+  [InventoryBucket.Consumable]: "Consumable",
+  [InventoryBucket.Emote]: "Emote",
+  [InventoryBucket.CommonEmotes]: "Common Emote",
+  [InventoryBucket.SeasonalArtifact]: "Seasonal Artifact",
+  [InventoryBucket.Modification]: "Modification"
 };
 
 export const WeaponBuckets = [
@@ -64,7 +91,3 @@ export const EquipmentBuckets = [
   InventoryBucket.Vehicle,
   InventoryBucket.Ship
 ];
-
-export const WeaponBucketHashes = WeaponBuckets.map((bucket) => InventoryBucketHashes[bucket]);
-
-export const ArmourBucketHashes = ArmourBuckets.map((bucket) => InventoryBucketHashes[bucket]);
