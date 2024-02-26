@@ -85,7 +85,7 @@ export type DestinyItemInventoryBlockDefinition = {
   expiredInActivityMessage: string;
   expiredInOrbitMessage: string;
   suppressExpirationWhenObjectivesComplete: boolean;
-  recipeItemHash: number;
+  recipeItemHash?: number;
 };
 
 export type DestinyInventoryItemDefinition = AbstractDefinition<{

@@ -112,25 +112,45 @@ const inventoryItemsSlotTagger =
     for (const item of taggedItems) {
       const itemDefinition = itemDefinitions[`${item.itemHash}:${item.itemInstanceId}`];
 
-      if (itemDefinition && itemDefinition.inventory) {
-        const bucketTypeHash = itemDefinition.inventory.bucketTypeHash;
-
-        let label: string | null = null;
-        for (const labler of BUCKET_LABELERS) {
-          label = labler(bucketTypeHash);
-          if (label) {
-            break;
-          }
-        }
-
-        if (label) {
-          item.tags.push(`Slot:${label}`);
-        } else {
-          logger.warn(`Unknown inventory bucket: ${bucketTypeHash} for item: ${item.itemHash}`);
-        }
-      } else {
-        logger.error(`Item missing inventory data: ${item.itemHash}`);
+      if (!itemDefinition) {
+        logger.error(`Item missing definition: ${item.itemHash}`);
+        continue;
       }
+
+      // Name
+      // ------------------------------------------------------------------------------------------
+
+      item.tags.push(`Name:${itemDefinition.displayProperties.name || "UNKNOWN"}`);
+
+      if (!itemDefinition.inventory) {
+        logger.error(`Item missing inventory data: ${item.itemHash}`);
+        continue;
+      }
+
+      // Bucket Label
+      // ------------------------------------------------------------------------------------------
+
+      const bucketTypeHash = itemDefinition.inventory.bucketTypeHash;
+      let bucketLabel: string | null = null;
+      for (const getBucketLabel of BUCKET_LABELERS) {
+        bucketLabel = getBucketLabel(bucketTypeHash);
+        if (bucketLabel) {
+          break;
+        }
+      }
+
+      if (bucketLabel) {
+        item.tags.push(`Slot:${bucketLabel}`);
+      } else {
+        logger.warn(`Unknown inventory bucket: ${bucketTypeHash} for item: ${item.itemHash}`);
+      }
+
+      // Tier Label
+      // ------------------------------------------------------------------------------------------
+
+      const tierLabel =
+        TIER_LABEL[itemDefinition.inventory.tierType] || TIER_LABEL[TierType.Unknown];
+      item.tags.push(`Tier:${tierLabel}`);
     }
 
     return taggedItems;
@@ -169,36 +189,6 @@ const TIER_LABEL = {
   [TierType.Superior]: "Legendary",
   [TierType.Exotic]: "Exotic"
 };
-
-const inventoryItemsWeaponTierTagger =
-  () =>
-  (
-    inventoryItems: InventoryItem[],
-    itemDefinitions: Record<string, DestinyInventoryItemDefinition>
-  ): InventoryItem[] => {
-    return inventoryItems.map(({ itemHash, itemInstanceId, tags }) => {
-      const itemDefinition = itemDefinitions[`${itemHash}:${itemInstanceId}`];
-      const label = TIER_LABEL[itemDefinition.inventory.tierType] || TIER_LABEL[TierType.Unknown];
-      return { itemHash, itemInstanceId, tags: [...tags, `Tier:${label}`] };
-    });
-  };
-
-const inventoryItemsNameTagger =
-  () =>
-  (
-    inventoryItems: InventoryItem[],
-    itemDefinitions: Record<string, DestinyInventoryItemDefinition>
-  ): InventoryItem[] => {
-    return inventoryItems.map(({ itemHash, itemInstanceId, tags }) => {
-      const itemDefinition = itemDefinitions[`${itemHash}:${itemInstanceId}`];
-
-      return {
-        itemHash,
-        itemInstanceId,
-        tags: [...tags, `Name:${itemDefinition.displayProperties.name || "UNKNOWN"}`]
-      };
-    });
-  };
 
 const inventoryItemsLightLevelTagger =
   (slots: string[]) =>
@@ -275,8 +265,14 @@ const inventoryItemsWeaponTagger =
         if (itemDefinition) {
           const weaponTags: string[] = [];
 
+          // Weapon type
+          // --------------------------------------------------------------------------------------
+
           const weaponType = WEAPON_TYPE[itemDefinition.itemSubType] || "Unknown";
           weaponTags.push(`Weapon:${weaponType}`);
+
+          // Weapon frame
+          // --------------------------------------------------------------------------------------
 
           const intrinsicTraitSocket = (itemDefinition.sockets?.socketEntries || []).find(
             ({ socketTypeHash }) => socketTypeHash === SOCKET_TYPE_INTRINSIC_TRAITS
@@ -292,10 +288,20 @@ const inventoryItemsWeaponTagger =
             weaponTags.push(`Frame:${frameName}`);
           }
 
+          // Weapon damage type
+          // --------------------------------------------------------------------------------------
+
           const damageTypeDefinition = damageTypeDefinitions[inventoryItem.itemHash];
           if (damageTypeDefinition) {
             const damageTypeName = WEAPON_DAMAGE_TYPE[damageTypeDefinition.enumValue] || "Unknown";
             weaponTags.push(`Damage:${damageTypeName}`);
+          }
+
+          // Crafted weapon
+          // --------------------------------------------------------------------------------------
+
+          if (itemDefinition.inventory.recipeItemHash) {
+            weaponTags.push(`#:#`);
           }
 
           return {
@@ -631,8 +637,6 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
       const tagInventoryItemsSlot = inventoryItemsSlotTagger(logger);
       const excludeInventoryItems = inventoryItemsExcluder(["Emotes", "Subclass", "Unlabeled"]);
       const includeInventoryItems = inventoryItemsIncluder(options.includeSlots);
-      const tagInventoryItemsTier = inventoryItemsWeaponTierTagger();
-      const tagInventoryItemsName = inventoryItemsNameTagger();
       const tagInventoryItemsLightLevel = inventoryItemsLightLevelTagger([
         "Kinetic",
         "Energy",
@@ -662,8 +666,6 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
         (items) => tagInventoryItemsSlot(items, itemDefinitions),
         (items) => excludeInventoryItems(items),
         (items) => includeInventoryItems(items),
-        (items) => tagInventoryItemsTier(items, itemDefinitions),
-        (items) => tagInventoryItemsName(items, itemDefinitions),
         (items) => tagInventoryItemsLightLevel(items, itemInstances),
         (items) =>
           tagInventoryItemsWeapon(
@@ -682,6 +684,7 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
         "Weapon",
         "Frame",
         "Damage",
+        "#",
         "Name",
         "Light",
         ...(verbose ? ["ID"] : [])
@@ -753,7 +756,7 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
 
           if (!emptyColumns.includes(columnIndex)) {
             if (column === "@@NO@DATA@@") {
-              cleanedUpColumns.push("--");
+              cleanedUpColumns.push("");
             } else {
               cleanedUpColumns.push(column);
             }
