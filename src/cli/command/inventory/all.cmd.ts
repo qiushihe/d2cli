@@ -3,7 +3,10 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 
 const cmd: CommandDefinition = inventoryCommand({
   description: "List items",
-  includeSlots: null
+  slots: null,
+  filter: (items) => items,
+  group: (items) => [items],
+  hideStaticColumns: () => false
 });
 
 export default cmd;

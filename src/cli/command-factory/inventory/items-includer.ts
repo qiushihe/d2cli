@@ -1,7 +1,7 @@
 import { InventoryItem } from "./type";
 
 export const itemsIncluder =
-  (slots?: string[] | null) =>
+  (slots: string[] | null) =>
   (inventoryItems: InventoryItem[]): InventoryItem[] => {
     if (!slots) {
       return inventoryItems;

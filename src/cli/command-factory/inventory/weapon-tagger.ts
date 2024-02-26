@@ -92,7 +92,7 @@ export const weaponTagger =
           // --------------------------------------------------------------------------------------
 
           if (itemDefinition.inventory.recipeItemHash) {
-            weaponTags.push(`#:#`);
+            weaponTags.push(`Crafted:true`);
           }
 
           return {

@@ -12,10 +12,13 @@ import { ManifestDefinitionService } from "~src/service/manifest-definition/mani
 
 import { dataGetter } from "./inventory/data-getter";
 import {
+  craftedValue,
+  frameSortValue,
+  slotSortValue,
   sortTableByColumns,
-  transformFrameColumn,
-  transformSlotColumn,
-  transformTierColumn
+  tierSortValue,
+  transformDataColumn,
+  transformHeaderColumn
 } from "./inventory/display";
 import { itemsExcluder } from "./inventory/items-excluder";
 import { itemsIncluder } from "./inventory/items-includer";
@@ -28,7 +31,10 @@ type CmdOptions = SessionIdCommandOptions & VerboseCommandOptions;
 
 type InventoryCommandOptions = {
   description: string;
-  includeSlots?: string[] | null;
+  hideStaticColumns: (column: string) => boolean;
+  slots: string[] | null;
+  filter: (items: InventoryItem[]) => InventoryItem[];
+  group: (items: InventoryItem[]) => InventoryItem[][];
 };
 
 const itemsProcessor =
@@ -60,7 +66,7 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
 
       const tagInventoryItemsSlot = slotTagger(logger);
       const excludeInventoryItems = itemsExcluder(["Emotes", "Subclass", "Unlabeled"]);
-      const includeInventoryItems = itemsIncluder(options.includeSlots);
+      const includeInventoryItems = itemsIncluder(options.slots);
       const tagInventoryItemsLightLevel = lightLevelTagger([
         "Kinetic",
         "Energy",
@@ -100,7 +106,7 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
           )
       ]);
 
-      const processedInventoryItems = processItems(inventoryItems);
+      const tableData: string[][] = [];
 
       const tableColumns = [
         "Slot",
@@ -108,77 +114,117 @@ export const inventoryCommand = (options: InventoryCommandOptions): CommandDefin
         "Weapon",
         "Frame",
         "Damage",
-        "#",
+        "Crafted",
         "Name",
         "Light",
         ...(verbose ? ["ID"] : [])
       ];
 
-      const displayRows = processedInventoryItems.map((inventoryItem) => {
-        const fields = [
-          { name: "ID", value: `${inventoryItem.itemHash}:${inventoryItem.itemInstanceId}` }
-        ];
+      const tableDisplayColumns = tableColumns
+        .map(transformHeaderColumn)
+        .map((val) => val.toLocaleUpperCase());
 
-        const displayTags = inventoryItem.tags.filter((tag) => {
-          return tableColumns.find((column) => tag.startsWith(`${column}:`));
+      tableData.push(tableDisplayColumns);
+
+      const rowsGroups: string[][][] = [];
+
+      const displayItemsGroups = options.group(options.filter(processItems(inventoryItems)));
+
+      for (const displayItems of displayItemsGroups) {
+        const displayRows = displayItems.map((inventoryItem) => {
+          const fields = [
+            { name: "ID", value: `${inventoryItem.itemHash}:${inventoryItem.itemInstanceId}` }
+          ];
+
+          const displayTags = inventoryItem.tags.filter((tag) => {
+            return tableColumns.find((column) => tag.startsWith(`${column}:`));
+          });
+
+          displayTags.forEach((displayTag) => {
+            const tagParts = displayTag.split(":", 2);
+            fields.push({ name: tagParts[0], value: tagParts[1] });
+          });
+
+          return fields;
         });
 
-        displayTags.forEach((displayTag) => {
-          const tagParts = displayTag.split(":", 2);
-          fields.push({ name: tagParts[0], value: tagParts[1] });
-        });
-
-        return fields;
-      });
-
-      const tableData: string[][] = [];
-
-      tableData.push(tableColumns);
-
-      const tableRows: string[][] = [];
-      for (const displayRow of displayRows) {
-        const tableRow: string[] = [];
-        for (const tableColumn of tableColumns) {
-          const displayColumn = displayRow.find(({ name }) => name === tableColumn);
-          if (displayColumn) {
-            tableRow.push(displayColumn.value);
-          } else {
-            tableRow.push("@@NO@DATA@@");
+        const tableRows: string[][] = [];
+        for (const displayRow of displayRows) {
+          const tableRow: string[] = [];
+          for (const tableColumn of tableColumns) {
+            const displayColumn = displayRow.find(({ name }) => name === tableColumn);
+            if (displayColumn) {
+              tableRow.push(displayColumn.value);
+            } else {
+              tableRow.push("@@NO@DATA@@");
+            }
           }
+          tableRows.push(tableRow);
         }
-        tableRows.push(tableRow);
+        rowsGroups.push(tableRows);
       }
 
-      const emptyColumns = [];
-      for (const columnIndex in tableColumns) {
+      const hideColumnIndices: number[] = [];
+      for (let columnIndex = 0; columnIndex < tableColumns.length; columnIndex++) {
         let isEmpty = true;
-        for (const rowIndex in tableRows) {
-          if (tableRows[rowIndex][columnIndex] !== "@@NO@DATA@@") {
-            isEmpty = false;
+        let isStatic = true;
+
+        let lastColumnValue: string | null = null;
+        for (const tableRows of rowsGroups) {
+          for (const rowIndex in tableRows) {
+            if (tableRows[rowIndex][columnIndex] !== "@@NO@DATA@@") {
+              isEmpty = false;
+            }
+
+            if (lastColumnValue === null) {
+              lastColumnValue = tableRows[rowIndex][columnIndex];
+            } else if (lastColumnValue !== tableRows[rowIndex][columnIndex]) {
+              isStatic = false;
+            }
           }
         }
+
+        // Hide empty columns
         if (isEmpty) {
-          emptyColumns.push(columnIndex);
+          hideColumnIndices.push(columnIndex);
+        }
+
+        // Hide static columns
+        if (isStatic && options.hideStaticColumns(tableColumns[columnIndex])) {
+          hideColumnIndices.push(columnIndex);
         }
       }
 
-      tableData.push(
-        ...sortTableByColumns(tableColumns, tableRows, {
-          ["Slot"]: transformSlotColumn,
-          ["Tier"]: transformTierColumn,
-          ["Frame"]: transformFrameColumn
-        })
-      );
+      for (let groupIndex = 0; groupIndex < rowsGroups.length; groupIndex++) {
+        const tableRows = rowsGroups[groupIndex];
+
+        tableData.push(
+          ...transformDataColumn(
+            tableColumns,
+            sortTableByColumns(tableColumns, tableRows, {
+              ["Slot"]: slotSortValue,
+              ["Tier"]: tierSortValue,
+              ["Frame"]: frameSortValue
+            }),
+            { ["Crafted"]: craftedValue }
+          )
+        );
+
+        if (groupIndex < rowsGroups.length - 1) {
+          tableData.push(tableDisplayColumns.map(() => ""));
+          tableData.push(tableDisplayColumns);
+        }
+      }
 
       const cleanedUpTableData: string[][] = [];
       for (const rowIndex in tableData) {
         const columns = tableData[rowIndex];
         const cleanedUpColumns: string[] = [];
 
-        for (const columnIndex in columns) {
+        for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
           const column = tableData[rowIndex][columnIndex];
 
-          if (!emptyColumns.includes(columnIndex)) {
+          if (!hideColumnIndices.includes(columnIndex)) {
             if (column === "@@NO@DATA@@") {
               cleanedUpColumns.push("");
             } else {

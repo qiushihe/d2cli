@@ -3,7 +3,10 @@ import { CommandDefinition } from "~src/cli/d2cli.types";
 
 const cmd: CommandDefinition = inventoryCommand({
   description: "List weapons",
-  includeSlots: ["Kinetic", "Energy", "Power"]
+  slots: ["Kinetic", "Energy", "Power"],
+  filter: (items) => items,
+  group: (items) => [items],
+  hideStaticColumns: () => false
 });
 
 export default cmd;

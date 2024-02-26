@@ -1,8 +1,52 @@
+export const transformHeaderColumn = (val: string): string => {
+  if (val === "Crafted") {
+    return "";
+  } else {
+    return val;
+  }
+};
+
+export const transformDataColumn = (
+  headers: string[],
+  rows: string[][],
+  valueTransformers: Record<string, (val: string) => string>
+): string[][] => {
+  const newRows: string[][] = [];
+
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    const columns = rows[rowIndex];
+    const newColumns: string[] = [];
+
+    for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+      const column = columns[columnIndex];
+
+      let transform = valueTransformers[headers[columnIndex]];
+      if (!transform) {
+        transform = (val) => val;
+      }
+
+      newColumns.push(transform(column));
+    }
+
+    newRows.push(newColumns);
+  }
+
+  return newRows;
+};
+
+export const craftedValue = (val: string): string => {
+  if (val === "true") {
+    return "#";
+  } else {
+    return val;
+  }
+};
+
 export const sortTableByColumns = (
   headers: string[],
   rows: string[][],
   sortTransformers: Record<string, (val: string) => string>
-) => {
+): string[][] => {
   const newRows = [...rows];
 
   newRows.sort((rowA, rowB) => {
@@ -37,7 +81,7 @@ const TIER_ORDER: Record<string, string> = {
   ["Unknown"]: "ag"
 };
 
-export const transformTierColumn = (val: string) => {
+export const tierSortValue = (val: string): string => {
   const order = TIER_ORDER[val];
   return `${order || "zz"}:${val}`;
 };
@@ -56,12 +100,12 @@ const SLOT_ORDER: Record<string, string> = {
   ["Banner"]: "al"
 };
 
-export const transformSlotColumn = (val: string) => {
+export const slotSortValue = (val: string): string => {
   const order = SLOT_ORDER[val];
   return `${order || "zz"}:${val}`;
 };
 
-export const transformFrameColumn = (val: string) => {
+export const frameSortValue = (val: string): string => {
   if (val === "Häkke Precision") {
     return "Precision Frame:0";
   } else if (val === "Precision") {
